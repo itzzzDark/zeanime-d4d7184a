@@ -86,6 +86,41 @@ export type Database = {
         }
         Relationships: []
       }
+      comments: {
+        Row: {
+          anime_id: string
+          content: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          anime_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          anime_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_anime_id_fkey"
+            columns: ["anime_id"]
+            isOneToOne: false
+            referencedRelation: "anime"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       episodes: {
         Row: {
           anime_id: string
@@ -133,16 +168,142 @@ export type Database = {
           },
         ]
       }
+      favorites: {
+        Row: {
+          anime_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          anime_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          anime_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_anime_id_fkey"
+            columns: ["anime_id"]
+            isOneToOne: false
+            referencedRelation: "anime"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          id: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      watch_history: {
+        Row: {
+          anime_id: string
+          episode_id: string | null
+          id: string
+          last_watched: string | null
+          progress: number | null
+          user_id: string
+        }
+        Insert: {
+          anime_id: string
+          episode_id?: string | null
+          id?: string
+          last_watched?: string | null
+          progress?: number | null
+          user_id: string
+        }
+        Update: {
+          anime_id?: string
+          episode_id?: string | null
+          id?: string
+          last_watched?: string | null
+          progress?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watch_history_anime_id_fkey"
+            columns: ["anime_id"]
+            isOneToOne: false
+            referencedRelation: "anime"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "watch_history_episode_id_fkey"
+            columns: ["episode_id"]
+            isOneToOne: false
+            referencedRelation: "episodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       anime_status: "ongoing" | "completed" | "upcoming"
       anime_type: "series" | "movie" | "ova" | "special"
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -272,6 +433,7 @@ export const Constants = {
     Enums: {
       anime_status: ["ongoing", "completed", "upcoming"],
       anime_type: ["series", "movie", "ova", "special"],
+      app_role: ["admin", "moderator", "user"],
     },
   },
 } as const
