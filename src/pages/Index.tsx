@@ -4,9 +4,10 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { HeroBanner } from "@/components/HeroBanner";
 import { AnimeSection } from "@/components/AnimeSection";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, TrendingUp, Eye, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, TrendingUp, Eye, Sparkles, Play, Calendar, Users, Film } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Index = () => {
@@ -101,42 +102,91 @@ const Index = () => {
       )}
 
       <div className="container px-4 py-8 space-y-12">
-        {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
-          <Card className="p-6 border-border/50 bg-gradient-card backdrop-blur-sm hover-lift">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/20">
-                <TrendingUp className="h-6 w-6 text-primary" />
+        {/* Enhanced Stats Section */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-fade-in">
+          <Card className="p-6 border-border/50 bg-gradient-card backdrop-blur-sm hover-lift overflow-hidden relative">
+            <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/10 blur-2xl" />
+            <div className="relative flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-primary shadow-lg animate-glow">
+                <TrendingUp className="h-7 w-7 text-white" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Trending Titles</p>
-                <p className="text-2xl font-bold">{trendingAnime?.length || 0}</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Trending</p>
+                <p className="text-3xl font-bold">{trendingAnime?.length || 0}</p>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6 border-border/50 bg-gradient-card backdrop-blur-sm hover-lift">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/20">
-                <Eye className="h-6 w-6 text-secondary" />
+          <Card className="p-6 border-border/50 bg-gradient-card backdrop-blur-sm hover-lift overflow-hidden relative">
+            <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-secondary/10 blur-2xl" />
+            <div className="relative flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-secondary to-secondary/60 shadow-lg">
+                <Eye className="h-7 w-7 text-white" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Most Watched</p>
-                <p className="text-2xl font-bold">{mostWatchedAnime?.length || 0}</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Most Watched</p>
+                <p className="text-3xl font-bold">{mostWatchedAnime?.length || 0}</p>
               </div>
             </div>
           </Card>
 
-          <Card className="p-6 border-border/50 bg-gradient-card backdrop-blur-sm hover-lift">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent/20">
-                <Sparkles className="h-6 w-6 text-accent" />
+          <Card className="p-6 border-border/50 bg-gradient-card backdrop-blur-sm hover-lift overflow-hidden relative">
+            <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-accent/10 blur-2xl" />
+            <div className="relative flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent/60 shadow-lg">
+                <Sparkles className="h-7 w-7 text-white" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">New Releases</p>
-                <p className="text-2xl font-bold">{latestSeries?.length || 0}</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">New Series</p>
+                <p className="text-3xl font-bold">{latestSeries?.length || 0}</p>
               </div>
             </div>
+          </Card>
+
+          <Card className="p-6 border-border/50 bg-gradient-card backdrop-blur-sm hover-lift overflow-hidden relative">
+            <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/10 blur-2xl" />
+            <div className="relative flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg">
+                <Film className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Movies</p>
+                <p className="text-3xl font-bold">{latestMovies?.length || 0}</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Featured Quick Access */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slide-up">
+          <Card className="overflow-hidden border-border/50 hover-lift group cursor-pointer">
+            <Link to="/browse">
+              <div className="relative h-48 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-primary" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center space-y-2">
+                    <Play className="h-12 w-12 text-white mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                    <h3 className="text-2xl font-bold text-white">Browse Anime</h3>
+                    <p className="text-white/80">Discover thousands of titles</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </Card>
+
+          <Card className="overflow-hidden border-border/50 hover-lift group cursor-pointer">
+            <Link to="/schedule">
+              <div className="relative h-48 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-pink-600" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center space-y-2">
+                    <Calendar className="h-12 w-12 text-white mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                    <h3 className="text-2xl font-bold text-white">Release Schedule</h3>
+                    <p className="text-white/80">Never miss an episode</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
           </Card>
         </div>
 
@@ -172,17 +222,30 @@ const Index = () => {
           />
         </div>
 
-        {/* CTA Section */}
-        <Card className="p-12 border-border/50 bg-gradient-primary backdrop-blur-sm text-center animate-fade-in">
-          <h2 className="text-3xl font-bold mb-4">Ready to Start Watching?</h2>
-          <p className="text-lg mb-6 opacity-90">
-            Join thousands of anime fans and discover your next favorite series
-          </p>
-          <Link to="/browse">
-            <Button size="lg" variant="secondary" className="bg-white text-primary hover:bg-white/90">
-              Browse All Anime
-            </Button>
-          </Link>
+        {/* Community Section */}
+        <Card className="p-8 md:p-12 border-border/50 bg-gradient-card backdrop-blur-sm text-center animate-fade-in overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
+          <div className="relative">
+            <Users className="h-16 w-16 mx-auto mb-6 text-primary animate-glow" />
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Join Our Community</h2>
+            <p className="text-lg mb-6 text-muted-foreground max-w-2xl mx-auto">
+              Connect with thousands of anime fans, share your favorites, and discover your next obsession
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link to="/browse">
+                <Button size="lg" className="gap-2 bg-gradient-primary hover:opacity-90">
+                  <Play className="h-5 w-5" />
+                  Start Watching
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button size="lg" variant="outline" className="gap-2">
+                  <Sparkles className="h-5 w-5" />
+                  Create Account
+                </Button>
+              </Link>
+            </div>
+          </div>
         </Card>
       </div>
 

@@ -1,6 +1,7 @@
 import { AnimeCard } from "./AnimeCard";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 interface Anime {
   id: string;
@@ -22,14 +23,16 @@ export const AnimeSection = ({ title, animes, viewAllLink }: AnimeSectionProps) 
   if (!animes || animes.length === 0) return null;
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl md:text-3xl font-bold text-foreground">{title}</h2>
         {viewAllLink && (
-          <Button variant="ghost" className="gap-1 text-primary hover:text-primary/80">
-            View All
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          <Link to={viewAllLink}>
+            <Button variant="ghost" className="gap-1 text-primary hover:text-primary/80 hover-lift">
+              View All
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </Link>
         )}
       </div>
 

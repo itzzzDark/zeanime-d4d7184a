@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +19,7 @@ export default function EpisodeManagement() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     anime_id: '',
+    season_number: 1,
     episode_number: 1,
     title: '',
     description: '',
@@ -36,6 +38,7 @@ export default function EpisodeManagement() {
       .from('episodes')
       .select('*, anime(title)')
       .order('anime_id', { ascending: true })
+      .order('season_number', { ascending: true })
       .order('episode_number', { ascending: true });
     
     if (data) setEpisodes(data);
@@ -86,6 +89,7 @@ export default function EpisodeManagement() {
     setEditingId(item.id);
     setFormData({
       anime_id: item.anime_id,
+      season_number: item.season_number || 1,
       episode_number: item.episode_number,
       title: item.title || '',
       description: item.description || '',
@@ -116,6 +120,7 @@ export default function EpisodeManagement() {
   const resetForm = () => {
     setFormData({
       anime_id: '',
+      season_number: 1,
       episode_number: 1,
       title: '',
       description: '',
@@ -157,24 +162,37 @@ export default function EpisodeManagement() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label htmlFor="season_number">Season *</Label>
+                  <Input
+                    id="season_number"
+                    type="number"
+                    min="1"
+                    value={formData.season_number}
+                    onChange={(e) => setFormData({ ...formData, season_number: parseInt(e.target.value) })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="episode_number">Episode Number *</Label>
                   <Input
                     id="episode_number"
                     type="number"
+                    min="1"
                     value={formData.episode_number}
                     onChange={(e) => setFormData({ ...formData, episode_number: parseInt(e.target.value) })}
                     required
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="duration">Duration (minutes)</Label>
-                  <Input
-                    id="duration"
-                    type="number"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-                  />
-                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="duration">Duration (minutes)</Label>
+                <Input
+                  id="duration"
+                  type="number"
+                  value={formData.duration}
+                  onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
+                />
               </div>
 
               <div className="space-y-2">
@@ -226,17 +244,19 @@ export default function EpisodeManagement() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Anime</TableHead>
-            <TableHead>Episode</TableHead>
-            <TableHead>Title</TableHead>
-            <TableHead>Duration</TableHead>
-            <TableHead>Actions</TableHead>
+              <TableHead>Anime</TableHead>
+              <TableHead>Season</TableHead>
+              <TableHead>Episode</TableHead>
+              <TableHead>Title</TableHead>
+              <TableHead>Duration</TableHead>
+              <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {episodes.map((item) => (
             <TableRow key={item.id}>
               <TableCell>{item.anime?.title}</TableCell>
+              <TableCell><Badge variant="outline">{item.season_number || 1}</Badge></TableCell>
               <TableCell>Episode {item.episode_number}</TableCell>
               <TableCell>{item.title || '-'}</TableCell>
               <TableCell>{item.duration || '-'} min</TableCell>

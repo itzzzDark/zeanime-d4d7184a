@@ -34,6 +34,7 @@ const AnimeDetail = () => {
         .from("episodes")
         .select("*")
         .eq("anime_id", id)
+        .order("season_number", { ascending: true })
         .order("episode_number", { ascending: true });
       
       if (error) throw error;
@@ -41,6 +42,16 @@ const AnimeDetail = () => {
     },
     enabled: !!id,
   });
+
+  // Group episodes by season
+  const episodesBySeason = episodes?.reduce((acc, episode) => {
+    const season = episode.season_number || 1;
+    if (!acc[season]) {
+      acc[season] = [];
+    }
+    acc[season].push(episode);
+    return acc;
+  }, {} as Record<number, typeof episodes>);
 
   if (animeLoading || episodesLoading) {
     return (
@@ -193,39 +204,50 @@ const AnimeDetail = () => {
           </div>
         </div>
 
-        {/* Episodes List */}
-        {episodes && episodes.length > 0 && (
-          <div className="mt-12 space-y-4">
-            <h2 className="text-2xl font-bold">Episodes</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {episodes.map((episode) => (
-                <Link key={episode.id} to={`/watch/${episode.id}`}>
-                  <div className="p-4 rounded-lg bg-card border border-border/50 hover:border-primary/50 transition-all hover:shadow-card">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-16 h-16 rounded bg-gradient-primary flex items-center justify-center text-xl font-bold">
-                        {episode.episode_number}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold line-clamp-1">
-                          Episode {episode.episode_number}
-                          {episode.title && `: ${episode.title}`}
-                        </h3>
-                        {episode.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                            {episode.description}
-                          </p>
-                        )}
-                        {episode.duration && (
-                          <p className="text-xs text-muted-foreground mt-2">
-                            {Math.floor(episode.duration / 60)} min
-                          </p>
-                        )}
-                      </div>
-                    </div>
+        {/* Episodes List by Season */}
+        {episodesBySeason && Object.keys(episodesBySeason).length > 0 && (
+          <div className="mt-12 space-y-8">
+            {Object.entries(episodesBySeason)
+              .sort(([a], [b]) => Number(a) - Number(b))
+              .map(([season, seasonEpisodes]) => (
+                <div key={season} className="space-y-4 animate-fade-in">
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl font-bold">Season {season}</h2>
+                    <Badge variant="outline" className="text-sm">
+                      {seasonEpisodes.length} Episodes
+                    </Badge>
                   </div>
-                </Link>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {seasonEpisodes.map((episode) => (
+                      <Link key={episode.id} to={`/watch/${episode.id}`}>
+                        <div className="p-4 rounded-lg bg-card border border-border/50 hover:border-primary/50 transition-all hover:shadow-card hover-lift group">
+                          <div className="flex items-start gap-4">
+                            <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-gradient-primary flex items-center justify-center text-xl font-bold shadow-lg group-hover:scale-110 transition-transform">
+                              {episode.episode_number}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold line-clamp-1 group-hover:text-primary transition-colors">
+                                Episode {episode.episode_number}
+                                {episode.title && `: ${episode.title}`}
+                              </h3>
+                              {episode.description && (
+                                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                                  {episode.description}
+                                </p>
+                              )}
+                              {episode.duration && (
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  {Math.floor(episode.duration / 60)} min
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               ))}
-            </div>
           </div>
         )}
       </div>
