@@ -8,7 +8,11 @@ import Index from "./pages/Index";
 import AnimeDetail from "./pages/AnimeDetail";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
+import Browse from "./pages/Browse";
+import Movies from "./pages/Movies";
+import Schedule from "./pages/Schedule";
 import AdminDashboard from "./pages/admin/Dashboard";
+import AdminLogin from "./pages/admin/AdminLogin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,8 +27,12 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/anime/:id" element={<AnimeDetail />} />
+            <Route path="/browse" element={<Browse />} />
+            <Route path="/movies" element={<Movies />} />
+            <Route path="/schedule" element={<Schedule />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
