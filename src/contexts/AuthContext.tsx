@@ -118,20 +118,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      },
+    // Google auth removed - now using email OTP verification
+    toast({
+      title: "Feature Unavailable",
+      description: "Please use email verification to sign in.",
+      variant: "destructive",
     });
-    
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
   };
 
   return (
