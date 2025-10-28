@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,50 +13,31 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    // Hardcoded admin credentials
+    const adminEmail = "admin@dark.mail";
+    const adminPassword = "Dark";
 
-      if (authError) throw authError;
-
-      // Check if user has admin role
-      const { data: roleData, error: roleError } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", authData.user.id)
-        .eq("role", "admin")
-        .single();
-
-      if (roleError || !roleData) {
-        await supabase.auth.signOut();
+    setTimeout(() => {
+      if (email === adminEmail && password === adminPassword) {
+        localStorage.setItem("isAdmin", "true");
+        toast({
+          title: "Success",
+          description: "Welcome to the admin panel!",
+        });
+        navigate("/admin");
+      } else {
         toast({
           title: "Access Denied",
-          description: "You do not have admin privileges.",
+          description: "Invalid admin credentials.",
           variant: "destructive",
         });
-        return;
       }
-
-      toast({
-        title: "Success",
-        description: "Welcome to the admin panel!",
-      });
-      navigate("/admin");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
       setLoading(false);
-    }
+    }, 1000); // simulate async
   };
 
   return (
