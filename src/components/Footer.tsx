@@ -7,7 +7,7 @@ export const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <h3 className="font-bold text-lg text-gradient">AnimeStream</h3>
+            <h3 className="font-bold text-lg text-gradient">Reenime</h3>
             <div className="flex gap-3">
               <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
                 <Facebook className="h-4 w-4" />
@@ -40,7 +40,7 @@ export const Footer = () => {
           </div>
 
           <p className="text-xs text-muted-foreground">
-            &copy; 2025 AnimeStream. All rights reserved.
+            &copy; 2025 Reenime. All rights reserved.
           </p>
         </div>
       </div>
