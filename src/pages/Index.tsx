@@ -2,13 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { HeroBanner } from "@/components/HeroBanner";
+import { BannerCarousel } from "@/components/BannerCarousel";
 import { AnimeSection } from "@/components/AnimeSection";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, TrendingUp, Eye, Sparkles, Play, Calendar, Users, Film } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
 const Index = () => {
   // Fetch trending anime
@@ -20,7 +16,7 @@ const Index = () => {
         .select("*")
         .eq("is_trending", true)
         .order("view_count", { ascending: false })
-        .limit(6);
+        .limit(10);
       
       if (error) throw error;
       return data;
@@ -35,8 +31,8 @@ const Index = () => {
         .from("anime")
         .select("*")
         .eq("is_most_watched", true)
-        .order("view_count", { ascending: false })
-        .limit(6);
+        .order("view_count", { ascending: false})
+        .limit(10);
       
       if (error) throw error;
       return data;
@@ -51,8 +47,9 @@ const Index = () => {
         .from("anime")
         .select("*")
         .eq("type", "series")
+        .eq("status", "ongoing")
         .order("created_at", { ascending: false })
-        .limit(6);
+        .limit(10);
       
       if (error) throw error;
       return data;
@@ -68,17 +65,51 @@ const Index = () => {
         .select("*")
         .eq("type", "movie")
         .order("created_at", { ascending: false })
-        .limit(6);
+        .limit(10);
       
       if (error) throw error;
       return data;
     },
   });
 
-  // Get featured anime for hero banner
-  const featuredAnime = trendingAnime?.[0];
+  // Fetch top 10 (by rating)
+  const { data: top10Anime, isLoading: top10Loading } = useQuery({
+    queryKey: ["top10-anime"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("anime")
+        .select("*")
+        .order("rating", { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const isLoading = trendingLoading || mostWatchedLoading || latestSeriesLoading || latestMoviesLoading;
+  // Fetch upcoming (scheduled for future)
+  const { data: upcomingAnime, isLoading: upcomingLoading } = useQuery({
+    queryKey: ["upcoming-anime"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("anime")
+        .select("*")
+        .eq("status", "upcoming")
+        .order("release_year", { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const isLoading = 
+    trendingLoading || 
+    mostWatchedLoading || 
+    latestSeriesLoading || 
+    latestMoviesLoading || 
+    top10Loading || 
+    upcomingLoading;
 
   if (isLoading) {
     return (
@@ -92,106 +123,81 @@ const Index = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      {featuredAnime && (
-        <HeroBanner
-          title={featuredAnime.title}
-          description={featuredAnime.description || ""}
-          bannerImage={featuredAnime.banner_image || featuredAnime.cover_image || "/placeholder.svg"}
-          animeId={featuredAnime.id}
-        />
-      )}
+      {/* Banner Carousel */}
+      <BannerCarousel />
 
       <div className="container px-4 py-8 space-y-12">
-        {/* Featured Quick Access */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slide-up">
-          <Card className="overflow-hidden border-border/50 hover-lift group cursor-pointer">
-            <Link to="/browse">
-              <div className="relative h-48 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-primary" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center space-y-2">
-                    <Play className="h-12 w-12 text-white mx-auto mb-4 group-hover:scale-110 transition-transform" />
-                    <h3 className="text-2xl font-bold text-white">Browse Anime</h3>
-                    <p className="text-white/80">Discover thousands of titles</p>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          </Card>
-
-          <Card className="overflow-hidden border-border/50 hover-lift group cursor-pointer">
-            <Link to="/schedule">
-              <div className="relative h-48 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-600 to-pink-600" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center space-y-2">
-                    <Calendar className="h-12 w-12 text-white mx-auto mb-4 group-hover:scale-110 transition-transform" />
-                    <h3 className="text-2xl font-bold text-white">Release Schedule</h3>
-                    <p className="text-white/80">Never miss an episode</p>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          </Card>
-        </div>
-
-        <div className="animate-slide-up">
-          <AnimeSection
-            title="🔥 Trending Now"
-            animes={trendingAnime || []}
-            viewAllLink="/browse"
-          />
-        </div>
-
-        <div className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
-          <AnimeSection
-            title="👁️ Most Watched"
-            animes={mostWatchedAnime || []}
-            viewAllLink="/browse"
-          />
-        </div>
-
-        <div className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
-          <AnimeSection
-            title="📺 Latest Series"
-            animes={latestSeries || []}
-            viewAllLink="/browse"
-          />
-        </div>
-
-        <div className="animate-slide-up" style={{ animationDelay: "0.3s" }}>
-          <AnimeSection
-            title="🎬 Latest Movies"
-            animes={latestMovies || []}
-            viewAllLink="/movies"
-          />
-        </div>
-
-        {/* Community Section */}
-        <Card className="p-8 md:p-12 border-border/50 bg-gradient-card backdrop-blur-sm text-center animate-fade-in overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
-          <div className="relative">
-            <Users className="h-16 w-16 mx-auto mb-6 text-primary animate-glow" />
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Join Our Community</h2>
-            <p className="text-lg mb-6 text-muted-foreground max-w-2xl mx-auto">
-              Connect with thousands of anime fans, share your favorites, and discover your next obsession
-            </p>
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Link to="/browse">
-                <Button size="lg" className="gap-2 bg-gradient-primary hover:opacity-90">
-                  <Play className="h-5 w-5" />
-                  Start Watching
-                </Button>
-              </Link>
-              <Link to="/auth">
-                <Button size="lg" variant="outline" className="gap-2">
-                  <Sparkles className="h-5 w-5" />
-                  Create Account
-                </Button>
-              </Link>
-            </div>
+        {/* Trending Now */}
+        {trendingAnime && trendingAnime.length > 0 && (
+          <div className="animate-fade-in">
+            <AnimeSection
+              title="🔥 Trending Now"
+              animes={trendingAnime}
+              viewAllLink="/browse"
+              layout="scroll"
+            />
           </div>
-        </Card>
+        )}
+
+        {/* Most Watched */}
+        {mostWatchedAnime && mostWatchedAnime.length > 0 && (
+          <div className="animate-slide-up">
+            <AnimeSection
+              title="👁️ Most Watched"
+              animes={mostWatchedAnime}
+              viewAllLink="/browse"
+              layout="scroll"
+            />
+          </div>
+        )}
+
+        {/* Latest Series */}
+        {latestSeries && latestSeries.length > 0 && (
+          <div className="animate-fade-in">
+            <AnimeSection
+              title="📺 Latest Series"
+              animes={latestSeries}
+              viewAllLink="/browse"
+              layout="scroll"
+            />
+          </div>
+        )}
+
+        {/* Latest Movies */}
+        {latestMovies && latestMovies.length > 0 && (
+          <div className="animate-slide-up">
+            <AnimeSection
+              title="🎬 Latest Movies"
+              animes={latestMovies}
+              viewAllLink="/movies"
+              layout="scroll"
+            />
+          </div>
+        )}
+
+        {/* Top 10 */}
+        {top10Anime && top10Anime.length > 0 && (
+          <div className="animate-fade-in">
+            <AnimeSection
+              title="⭐ Top 10"
+              animes={top10Anime}
+              viewAllLink="/browse"
+              layout="grid"
+            />
+          </div>
+        )}
+
+        {/* Upcoming */}
+        {upcomingAnime && upcomingAnime.length > 0 && (
+          <div className="animate-slide-up">
+            <AnimeSection
+              title="📅 Upcoming"
+              animes={upcomingAnime}
+              viewAllLink="/schedule"
+              layout="scroll"
+            />
+          </div>
+        )}
       </div>
 
       <Footer />

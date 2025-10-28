@@ -222,3 +222,12 @@ All colors MUST be HSL.
     box-shadow: 0 0 40px hsl(271 91% 65% / 0.6), 0 0 60px hsl(189 94% 43% / 0.4);
   }
 }
+
+/* Scrollbar hide utility */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

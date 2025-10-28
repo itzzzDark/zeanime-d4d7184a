@@ -17,10 +17,13 @@ interface AnimeSectionProps {
   title: string;
   animes: Anime[];
   viewAllLink?: string;
+  layout?: 'grid' | 'scroll';
 }
 
-export const AnimeSection = ({ title, animes, viewAllLink }: AnimeSectionProps) => {
+export const AnimeSection = ({ title, animes, viewAllLink, layout = 'grid' }: AnimeSectionProps) => {
   if (!animes || animes.length === 0) return null;
+
+  const isScroll = layout === 'scroll';
 
   return (
     <section className="space-y-4 animate-fade-in">
@@ -36,18 +39,23 @@ export const AnimeSection = ({ title, animes, viewAllLink }: AnimeSectionProps) 
         )}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+      <div className={
+        isScroll 
+          ? "flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory" 
+          : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"
+      }>
         {animes.map((anime) => (
-          <AnimeCard
-            key={anime.id}
-            id={anime.id}
-            title={anime.title}
-            coverImage={anime.cover_image || "/placeholder.svg"}
-            rating={anime.rating}
-            type={anime.type}
-            status={anime.status}
-            episodes={anime.total_episodes}
-          />
+          <div key={anime.id} className={isScroll ? "flex-shrink-0 w-48 snap-start" : ""}>
+            <AnimeCard
+              id={anime.id}
+              title={anime.title}
+              coverImage={anime.cover_image || "/placeholder.svg"}
+              rating={anime.rating}
+              type={anime.type}
+              status={anime.status}
+              episodes={anime.total_episodes}
+            />
+          </div>
         ))}
       </div>
     </section>

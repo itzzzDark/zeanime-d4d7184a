@@ -11,6 +11,7 @@ import Profile from "./pages/Profile";
 import Browse from "./pages/Browse";
 import Movies from "./pages/Movies";
 import Schedule from "./pages/Schedule";
+import Watch from "./pages/Watch";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminLogin from "./pages/admin/AdminLogin";
 import NotFound from "./pages/NotFound";
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/browse" element={<Browse />} />
             <Route path="/movies" element={<Movies />} />
             <Route path="/schedule" element={<Schedule />} />
+            <Route path="/watch/:animeId/:episodeId?" element={<Watch />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/admin/login" element={<AdminLogin />} />
