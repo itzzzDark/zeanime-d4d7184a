@@ -102,61 +102,6 @@ const Index = () => {
       )}
 
       <div className="container px-4 py-8 space-y-12">
-        {/* Enhanced Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-fade-in">
-          <Card className="p-6 border-border/50 bg-gradient-card backdrop-blur-sm hover-lift overflow-hidden relative">
-            <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/10 blur-2xl" />
-            <div className="relative flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-primary shadow-lg animate-glow">
-                <TrendingUp className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Trending</p>
-                <p className="text-3xl font-bold">{trendingAnime?.length || 0}</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6 border-border/50 bg-gradient-card backdrop-blur-sm hover-lift overflow-hidden relative">
-            <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-secondary/10 blur-2xl" />
-            <div className="relative flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-secondary to-secondary/60 shadow-lg">
-                <Eye className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Most Watched</p>
-                <p className="text-3xl font-bold">{mostWatchedAnime?.length || 0}</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6 border-border/50 bg-gradient-card backdrop-blur-sm hover-lift overflow-hidden relative">
-            <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-accent/10 blur-2xl" />
-            <div className="relative flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent/60 shadow-lg">
-                <Sparkles className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">New Series</p>
-                <p className="text-3xl font-bold">{latestSeries?.length || 0}</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6 border-border/50 bg-gradient-card backdrop-blur-sm hover-lift overflow-hidden relative">
-            <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/10 blur-2xl" />
-            <div className="relative flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg">
-                <Film className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">Movies</p>
-                <p className="text-3xl font-bold">{latestMovies?.length || 0}</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-
         {/* Featured Quick Access */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slide-up">
           <Card className="overflow-hidden border-border/50 hover-lift group cursor-pointer">

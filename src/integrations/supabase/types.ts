@@ -86,6 +86,50 @@ export type Database = {
         }
         Relationships: []
       }
+      banners: {
+        Row: {
+          anime_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string
+          is_active: boolean
+          order_index: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          anime_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url: string
+          is_active?: boolean
+          order_index?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          anime_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          order_index?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banners_anime_id_fkey"
+            columns: ["anime_id"]
+            isOneToOne: false
+            referencedRelation: "anime"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           anime_id: string
@@ -199,33 +243,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      otp_verification: {
-        Row: {
-          code: string
-          created_at: string
-          email: string
-          expires_at: string
-          id: string
-          verified: boolean
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          email: string
-          expires_at: string
-          id?: string
-          verified?: boolean
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          email?: string
-          expires_at?: string
-          id?: string
-          verified?: boolean
-        }
-        Relationships: []
       }
       profiles: {
         Row: {
