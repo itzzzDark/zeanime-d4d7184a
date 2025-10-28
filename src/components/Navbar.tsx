@@ -32,9 +32,9 @@ export const Navbar = ({ onSearch }: NavbarProps) => {
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-primary animate-glow">
-              <span className="text-xl font-bold text-white">A</span>
+              <span className="text-xl font-bold text-white">R</span>
             </div>
-            <span className="text-xl font-bold text-gradient">AnimeStream</span>
+            <span className="text-xl font-bold text-gradient">Reenime</span>
           </Link>
           
           <div className="hidden md:flex items-center gap-4">
