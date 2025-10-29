@@ -198,55 +198,64 @@ export type Database = {
         ]
       }
       episodes: {
-        Row: {
-          anime_id: string
-          created_at: string | null
-          description: string | null
-          duration: number | null
-          episode_number: number
-          id: string
-          season_number: number
-          thumbnail: string | null
-          title: string | null
-          updated_at: string | null
-          video_url: string
-        }
-        Insert: {
-          anime_id: string
-          created_at?: string | null
-          description?: string | null
-          duration?: number | null
-          episode_number: number
-          id?: string
-          season_number?: number
-          thumbnail?: string | null
-          title?: string | null
-          updated_at?: string | null
-          video_url: string
-        }
-        Update: {
-          anime_id?: string
-          created_at?: string | null
-          description?: string | null
-          duration?: number | null
-          episode_number?: number
-          id?: string
-          season_number?: number
-          thumbnail?: string | null
-          title?: string | null
-          updated_at?: string | null
-          video_url?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "episodes_anime_id_fkey"
-            columns: ["anime_id"]
-            isOneToOne: false
-            referencedRelation: "anime"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+  Row: {
+    id: string
+    anime_id: string
+    season_number: number
+    episode_number: number
+    title: string | null
+    description: string | null
+    video_url: string
+    filemoon_url: string | null
+    abyss_url: string | null
+    player4me_url: string | null
+    thumbnail: string | null
+    duration: number | null
+    created_at: string | null
+    updated_at: string | null
+  }
+  Insert: {
+    id?: string
+    anime_id: string
+    season_number?: number
+    episode_number: number
+    title?: string | null
+    description?: string | null
+    video_url: string
+    filemoon_url?: string | null
+    abyss_url?: string | null
+    player4me_url?: string | null
+    thumbnail?: string | null
+    duration?: number | null
+    created_at?: string | null
+    updated_at?: string | null
+  }
+  Update: {
+    id?: string
+    anime_id?: string
+    season_number?: number
+    episode_number?: number
+    title?: string | null
+    description?: string | null
+    video_url?: string
+    filemoon_url?: string | null
+    abyss_url?: string | null
+    player4me_url?: string | null
+    thumbnail?: string | null
+    duration?: number | null
+    created_at?: string | null
+    updated_at?: string | null
+  }
+  Relationships: [
+    {
+      foreignKeyName: "episodes_anime_id_fkey"
+      columns: ["anime_id"]
+      isOneToOne: false
+      referencedRelation: "anime"
+      referencedColumns: ["id"]
+    },
+  ]
+}
       favorites: {
         Row: {
           anime_id: string
