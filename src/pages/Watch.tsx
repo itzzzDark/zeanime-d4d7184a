@@ -41,9 +41,9 @@ interface Anime {
 
 // Multi-server configuration for embed players
 const EMBED_SERVERS = [
-  { id: "filemoon", name: "Filemoon", baseUrl: "https://filemoon.sx/e/" },
-  { id: "abyss", name: "Abyss", baseUrl: "https://abyss.to/embed/" },
-  { id: "vidstream", name: "Vidstream", baseUrl: "https://vidstream.to/embed/" },
+  { id: "filemoon", name: "Moon", baseUrl: "https://filemoon.sx/e/" },
+  { id: "abyss", name: "Abyss", baseUrl: "https://short.icu/" },
+  { id: "player4me", name: "PlayMe", baseUrl: "https://reenime.player4me.vip/#" },
   { id: "default", name: "Default", baseUrl: "" }
 ];
 
