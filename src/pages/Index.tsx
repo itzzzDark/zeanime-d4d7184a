@@ -17,7 +17,7 @@ const Index = () => {
         .eq("is_trending", true)
         .order("view_count", { ascending: false })
         .limit(10);
-      
+
       if (error) throw error;
       return data;
     },
@@ -31,9 +31,9 @@ const Index = () => {
         .from("anime")
         .select("*")
         .eq("is_most_watched", true)
-        .order("view_count", { ascending: false})
+        .order("view_count", { ascending: false })
         .limit(10);
-      
+
       if (error) throw error;
       return data;
     },
@@ -50,7 +50,7 @@ const Index = () => {
         .eq("status", "ongoing")
         .order("created_at", { ascending: false })
         .limit(10);
-      
+
       if (error) throw error;
       return data;
     },
@@ -66,7 +66,7 @@ const Index = () => {
         .eq("type", "movie")
         .order("created_at", { ascending: false })
         .limit(10);
-      
+
       if (error) throw error;
       return data;
     },
@@ -81,7 +81,7 @@ const Index = () => {
         .select("*")
         .order("rating", { ascending: false })
         .limit(10);
-      
+
       if (error) throw error;
       return data;
     },
@@ -97,108 +97,110 @@ const Index = () => {
         .eq("status", "upcoming")
         .order("release_year", { ascending: false })
         .limit(10);
-      
+
       if (error) throw error;
       return data;
     },
   });
 
-  const isLoading = 
-    trendingLoading || 
-    mostWatchedLoading || 
-    latestSeriesLoading || 
-    latestMoviesLoading || 
-    top10Loading || 
+  const isLoading =
+    trendingLoading ||
+    mostWatchedLoading ||
+    latestSeriesLoading ||
+    latestMoviesLoading ||
+    top10Loading ||
     upcomingLoading;
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#0f0f0f] via-[#0c0c0c] to-black">
+        <Loader2 className="h-10 w-10 animate-spin text-purple-400 drop-shadow-glow" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#0a0a0a] via-[#0b0b0b] to-black text-gray-100 relative overflow-hidden">
+      {/* Glow background effect */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-40 left-1/3 w-96 h-96 bg-purple-700/20 blur-[180px] rounded-full"></div>
+        <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-indigo-700/20 blur-[160px] rounded-full"></div>
+      </div>
+
       <Navbar />
 
-      {/* Banner Carousel */}
-      <BannerCarousel />
+      {/* Banner */}
+      <div className="relative z-10">
+        <BannerCarousel />
+      </div>
 
-      <div className="container px-4 py-8 space-y-12">
-        {/* Trending Now */}
-        {trendingAnime && trendingAnime.length > 0 && (
-          <div className="animate-fade-in">
+      <main className="relative z-20 container mx-auto px-4 py-10 space-y-16">
+        {trendingAnime?.length > 0 && (
+          <section className="animate-fade-in-up">
             <AnimeSection
               title="🔥 Trending Now"
               animes={trendingAnime}
               viewAllLink="/browse"
               layout="scroll"
             />
-          </div>
+          </section>
         )}
 
-        {/* Most Watched */}
-        {mostWatchedAnime && mostWatchedAnime.length > 0 && (
-          <div className="animate-slide-up">
+        {mostWatchedAnime?.length > 0 && (
+          <section className="animate-fade-in-up delay-100">
             <AnimeSection
               title="👁️ Most Watched"
               animes={mostWatchedAnime}
               viewAllLink="/browse"
               layout="scroll"
             />
-          </div>
+          </section>
         )}
 
-        {/* Latest Series */}
-        {latestSeries && latestSeries.length > 0 && (
-          <div className="animate-fade-in">
+        {latestSeries?.length > 0 && (
+          <section className="animate-fade-in-up delay-200">
             <AnimeSection
               title="📺 Latest Series"
               animes={latestSeries}
               viewAllLink="/browse"
               layout="scroll"
             />
-          </div>
+          </section>
         )}
 
-        {/* Latest Movies */}
-        {latestMovies && latestMovies.length > 0 && (
-          <div className="animate-slide-up">
+        {latestMovies?.length > 0 && (
+          <section className="animate-fade-in-up delay-300">
             <AnimeSection
               title="🎬 Latest Movies"
               animes={latestMovies}
               viewAllLink="/movies"
               layout="scroll"
             />
-          </div>
+          </section>
         )}
 
-        {/* Top 10 */}
-        {top10Anime && top10Anime.length > 0 && (
-          <div className="animate-fade-in">
+        {top10Anime?.length > 0 && (
+          <section className="animate-fade-in-up delay-400">
             <AnimeSection
               title="⭐ Top 10"
               animes={top10Anime}
               viewAllLink="/browse"
               layout="grid"
             />
-          </div>
+          </section>
         )}
 
-        {/* Upcoming */}
-        {upcomingAnime && upcomingAnime.length > 0 && (
-          <div className="animate-slide-up">
+        {upcomingAnime?.length > 0 && (
+          <section className="animate-fade-in-up delay-500">
             <AnimeSection
               title="📅 Upcoming"
               animes={upcomingAnime}
               viewAllLink="/schedule"
               layout="scroll"
             />
-          </div>
+          </section>
         )}
-      </div>
+      </main>
 
       <Footer />
     </div>
