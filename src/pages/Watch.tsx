@@ -8,35 +8,54 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Play, ChevronLeft, ChevronRight, Server } from 'lucide-react';
+import { Loader2, Play, ChevronLeft, ChevronRight, Server, Maximize, SkipForward } from 'lucide-react';
 import { AnimeSection } from '@/components/AnimeSection';
 import { useQuery } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 
 interface Episode {
   id: string;
   episode_number: number;
   season_number: number;
   title: string | null;
+  description: string | null;
   video_url: string;
   thumbnail: string | null;
+  duration: number | null;
 }
 
 interface Anime {
   id: string;
   title: string;
+  title_english: string | null;
+  title_japanese: string | null;
   description: string | null;
   cover_image: string | null;
+  banner_image: string | null;
   genres: string[];
   type: string;
+  status: string;
+  rating: number | null;
+  release_year: number | null;
 }
+
+// Multi-server configuration for embed players
+const EMBED_SERVERS = [
+  { id: "filemoon", name: "Filemoon", baseUrl: "https://filemoon.sx/e/" },
+  { id: "abyss", name: "Abyss", baseUrl: "https://abyss.to/embed/" },
+  { id: "vidstream", name: "Vidstream", baseUrl: "https://vidstream.to/embed/" },
+  { id: "default", name: "Default", baseUrl: "" }
+];
 
 export default function Watch() {
   const { animeId, episodeId } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
-  const [selectedServer, setSelectedServer] = useState('server1');
+  const [selectedServer, setSelectedServer] = useState('filemoon');
   const [episodeRange, setEpisodeRange] = useState(0);
+  const [isTheaterMode, setIsTheaterMode] = useState(false);
 
   // Fetch anime details
   const { data: anime } = useQuery({
@@ -78,7 +97,7 @@ export default function Watch() {
         .from('anime')
         .select('*')
         .neq('id', animeId)
-        .limit(6);
+        .limit(12);
       if (error) throw error;
       return data;
     },
@@ -97,6 +116,16 @@ export default function Watch() {
     (episodeRange + 1) * episodesPerPage
   );
 
+  // Get embed URL based on selected server
+  const getEmbedUrl = (videoUrl: string) => {
+    const server = EMBED_SERVERS.find(s => s.id === selectedServer);
+    if (!server || server.id === "default") return videoUrl;
+    
+    // Extract video ID from URL or use as is
+    const videoId = videoUrl.split('/').pop() || videoUrl;
+    return `${server.baseUrl}${videoId}`;
+  };
+
   useEffect(() => {
     if (episodeId && episodes) {
       const episode = episodes.find(e => e.id === episodeId);
@@ -112,6 +141,29 @@ export default function Watch() {
   const handleEpisodeSelect = (episode: Episode) => {
     setSelectedEpisode(episode);
     navigate(`/watch/${animeId}/${episode.id}`);
+    
+    // Track watch history (async, fire and forget)
+    if (animeId) {
+      supabase.auth.getUser().then(({ data }) => {
+        if (data.user) {
+          supabase
+            .from('watch_history')
+            .upsert({
+              user_id: data.user.id,
+              anime_id: animeId,
+              episode_id: episode.id,
+              progress: 0,
+              last_watched: new Date().toISOString()
+            })
+            .then(() => {
+              toast({
+                title: "Progress saved",
+                description: `Watching Episode ${episode.episode_number}`,
+              });
+            });
+        }
+      });
+    }
   };
 
   const handleNextEpisode = () => {
@@ -130,6 +182,18 @@ export default function Watch() {
     }
   };
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') handleNextEpisode();
+      if (e.key === 'ArrowLeft') handlePrevEpisode();
+      if (e.key === 'f' || e.key === 'F') setIsTheaterMode(!isTheaterMode);
+    };
+    
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [selectedEpisode, isTheaterMode]);
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -142,17 +206,26 @@ export default function Watch() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8 space-y-6">
+      <div className={`container mx-auto px-4 py-8 space-y-6 ${isTheaterMode ? 'max-w-full' : ''}`}>
         {/* Video Player */}
         <Card className="overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
-          <div className="aspect-video bg-black relative">
+          <div className="aspect-video bg-black relative group">
             {selectedEpisode ? (
-              <iframe
-                src={selectedEpisode.video_url}
-                className="w-full h-full"
-                allowFullScreen
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              />
+              <>
+                <iframe
+                  src={getEmbedUrl(selectedEpisode.video_url)}
+                  className="w-full h-full"
+                  allowFullScreen
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  title={`Episode ${selectedEpisode.episode_number}`}
+                />
+                {/* Overlay hint */}
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Badge variant="secondary" className="bg-black/80 text-white">
+                    Press F for theater mode
+                  </Badge>
+                </div>
+              </>
             ) : (
               <div className="flex items-center justify-center h-full">
                 <p className="text-white">Select an episode to watch</p>
@@ -161,64 +234,97 @@ export default function Watch() {
           </div>
 
           {/* Player Controls */}
-          <div className="p-4 space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="p-4 space-y-4 bg-gradient-to-b from-card to-card/95">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-bold">{anime?.title}</h2>
                 {selectedEpisode && (
-                  <p className="text-muted-foreground">
-                    Season {selectedEpisode.season_number} - Episode {selectedEpisode.episode_number}
-                    {selectedEpisode.title && `: ${selectedEpisode.title}`}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="secondary">
+                      Season {selectedEpisode.season_number} • EP {selectedEpisode.episode_number}
+                    </Badge>
+                    {selectedEpisode.duration && (
+                      <Badge variant="outline">{selectedEpisode.duration}m</Badge>
+                    )}
+                  </div>
+                )}
+                {selectedEpisode?.title && (
+                  <p className="text-muted-foreground mt-1">{selectedEpisode.title}</p>
                 )}
               </div>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  size="icon"
+                  size="sm"
                   onClick={handlePrevEpisode}
                   disabled={!episodes || !selectedEpisode || episodes[0].id === selectedEpisode.id}
+                  className="hover-lift"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
                 </Button>
                 <Button
                   variant="outline"
-                  size="icon"
+                  size="sm"
                   onClick={handleNextEpisode}
                   disabled={!episodes || !selectedEpisode || episodes[episodes.length - 1].id === selectedEpisode.id}
+                  className="hover-lift"
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsTheaterMode(!isTheaterMode)}
+                  className="hover-lift"
+                >
+                  <Maximize className="h-4 w-4 mr-1" />
+                  {isTheaterMode ? 'Normal' : 'Theater'}
                 </Button>
               </div>
             </div>
 
             {/* Server Selection */}
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <span className="text-sm text-muted-foreground flex items-center gap-1">
                 <Server className="h-4 w-4" />
-                Server:
+                Select Server:
               </span>
-              {['server1', 'server2', 'server3', 'server4'].map((server) => (
-                <Button
-                  key={server}
-                  variant={selectedServer === server ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedServer(server)}
-                >
-                  {server.toUpperCase()}
-                </Button>
-              ))}
+              <div className="flex gap-2 flex-wrap">
+                {EMBED_SERVERS.map((server) => (
+                  <Button
+                    key={server.id}
+                    variant={selectedServer === server.id ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setSelectedServer(server.id);
+                      toast({
+                        title: "Server changed",
+                        description: `Now using ${server.name}`,
+                      });
+                    }}
+                    className="hover-lift"
+                  >
+                    {server.name}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
         </Card>
 
         {/* Episodes List */}
         <Card className="p-6 border-border/50 bg-card/50 backdrop-blur-sm">
+          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Play className="h-5 w-5 text-primary" />
+            Episodes
+          </h3>
           <Tabs value={selectedSeason.toString()} onValueChange={(v) => {
             setSelectedSeason(parseInt(v));
             setEpisodeRange(0);
           }}>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <TabsList>
                 {seasons.map((season) => (
                   <TabsTrigger key={season} value={season.toString()}>
@@ -229,7 +335,7 @@ export default function Watch() {
 
               {totalPages > 1 && (
                 <Select value={episodeRange.toString()} onValueChange={(v) => setEpisodeRange(parseInt(v))}>
-                  <SelectTrigger className="w-[200px]">
+                  <SelectTrigger className="w-full sm:w-[200px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -244,13 +350,13 @@ export default function Watch() {
             </div>
 
             {seasons.map((season) => (
-              <TabsContent key={season} value={season.toString()} className="space-y-2">
+              <TabsContent key={season} value={season.toString()}>
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
                   {displayedEpisodes.map((episode) => (
                     <Button
                       key={episode.id}
                       variant={selectedEpisode?.id === episode.id ? 'default' : 'outline'}
-                      className="h-12"
+                      className="h-12 hover-lift"
                       onClick={() => handleEpisodeSelect(episode)}
                     >
                       {episode.episode_number}
@@ -264,21 +370,36 @@ export default function Watch() {
 
         {/* Anime Info */}
         {anime && (
-          <Card className="p-6 border-border/50 bg-card/50 backdrop-blur-sm">
-            <div className="flex gap-4">
+          <Card className="p-6 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in">
+            <div className="flex flex-col md:flex-row gap-4">
               {anime.cover_image && (
                 <img
                   src={anime.cover_image}
                   alt={anime.title}
-                  className="w-32 h-48 object-cover rounded"
+                  className="w-full md:w-32 h-auto md:h-48 object-cover rounded-lg hover-lift"
                 />
               )}
-              <div className="flex-1 space-y-2">
-                <h3 className="text-xl font-bold">{anime.title}</h3>
-                <p className="text-muted-foreground line-clamp-3">{anime.description}</p>
+              <div className="flex-1 space-y-3">
+                <div>
+                  <h3 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                    {anime.title}
+                  </h3>
+                  {anime.title_english && (
+                    <p className="text-sm text-muted-foreground">{anime.title_english}</p>
+                  )}
+                </div>
+                {anime.description && (
+                  <p className="text-muted-foreground line-clamp-3 leading-relaxed">
+                    {anime.description}
+                  </p>
+                )}
                 <div className="flex gap-2 flex-wrap">
                   <Badge variant="secondary">{anime.type}</Badge>
-                  {anime.genres?.map((genre) => (
+                  <Badge variant="outline">{anime.status}</Badge>
+                  {anime.rating && (
+                    <Badge variant="outline">⭐ {anime.rating}/10</Badge>
+                  )}
+                  {anime.genres?.slice(0, 4).map((genre) => (
                     <Badge key={genre} variant="outline">{genre}</Badge>
                   ))}
                 </div>
@@ -289,10 +410,15 @@ export default function Watch() {
 
         {/* Recommended Anime */}
         {recommendedAnime && recommendedAnime.length > 0 && (
-          <div className="animate-fade-in">
+          <div className="animate-fade-in space-y-4">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <SkipForward className="h-6 w-6 text-primary" />
+              You Might Also Like
+            </h2>
             <AnimeSection
-              title="Recommended for You"
+              title=""
               animes={recommendedAnime}
+              layout="scroll"
             />
           </div>
         )}

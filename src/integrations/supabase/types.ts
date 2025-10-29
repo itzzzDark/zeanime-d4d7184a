@@ -86,6 +86,38 @@ export type Database = {
         }
         Relationships: []
       }
+      anime_views: {
+        Row: {
+          anime_id: string
+          created_at: string | null
+          id: string
+          user_id: string | null
+          view_date: string | null
+        }
+        Insert: {
+          anime_id: string
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+          view_date?: string | null
+        }
+        Update: {
+          anime_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+          view_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anime_views_anime_id_fkey"
+            columns: ["anime_id"]
+            isOneToOne: false
+            referencedRelation: "anime"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       banners: {
         Row: {
           anime_id: string | null
@@ -248,26 +280,41 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          cover_image: string | null
           created_at: string | null
+          custom_theme: Json | null
+          favorite_genres: string[] | null
           id: string
+          social_links: Json | null
           updated_at: string | null
           username: string | null
+          watch_preferences: Json | null
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          cover_image?: string | null
           created_at?: string | null
+          custom_theme?: Json | null
+          favorite_genres?: string[] | null
           id: string
+          social_links?: Json | null
           updated_at?: string | null
           username?: string | null
+          watch_preferences?: Json | null
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          cover_image?: string | null
           created_at?: string | null
+          custom_theme?: Json | null
+          favorite_genres?: string[] | null
           id?: string
+          social_links?: Json | null
           updated_at?: string | null
           username?: string | null
+          watch_preferences?: Json | null
         }
         Relationships: []
       }
@@ -295,6 +342,7 @@ export type Database = {
       watch_history: {
         Row: {
           anime_id: string
+          completed: boolean | null
           episode_id: string | null
           id: string
           last_watched: string | null
@@ -303,6 +351,7 @@ export type Database = {
         }
         Insert: {
           anime_id: string
+          completed?: boolean | null
           episode_id?: string | null
           id?: string
           last_watched?: string | null
@@ -311,6 +360,7 @@ export type Database = {
         }
         Update: {
           anime_id?: string
+          completed?: boolean | null
           episode_id?: string | null
           id?: string
           last_watched?: string | null
