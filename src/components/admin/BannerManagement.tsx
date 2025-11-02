@@ -160,16 +160,22 @@ export default function BannerManagement() {
   };
 
   const moveOrder = async (banner: Banner, direction: 'up' | 'down') => {
-    const newIndex = direction === 'up' ? banner.order_index - 1 : banner.order_index + 1;
+    const currentIndex = banner.order_index;
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     
-    const { error } = await supabase
-      .from('banners')
-      .update({ order_index: newIndex })
-      .eq('id', banner.id);
-
-    if (!error) {
-      fetchBanners();
+    // Find the banner at target position
+    const targetBanner = banners.find(b => b.order_index === targetIndex);
+    
+    if (targetBanner) {
+      // Swap orders
+      await supabase.from('banners').update({ order_index: targetIndex }).eq('id', banner.id);
+      await supabase.from('banners').update({ order_index: currentIndex }).eq('id', targetBanner.id);
+    } else {
+      // Just move
+      await supabase.from('banners').update({ order_index: targetIndex }).eq('id', banner.id);
     }
+    
+    fetchBanners();
   };
 
   const resetForm = () => {
@@ -251,6 +257,18 @@ export default function BannerManagement() {
               onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
               required
             />
+            {formData.image_url && (
+              <div className="mt-2 border border-border/50 rounded-lg overflow-hidden">
+                <img 
+                  src={formData.image_url} 
+                  alt="Preview" 
+                  className="w-full h-40 object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = '/placeholder.svg';
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

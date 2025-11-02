@@ -59,6 +59,8 @@ export default function Watch() {
   const [selectedServer, setSelectedServer] = useState('filemoon');
   const [episodeRange, setEpisodeRange] = useState(0);
   const [isTheaterMode, setIsTheaterMode] = useState(false);
+  const [autoPlay, setAutoPlay] = useState(true);
+  const [watchProgress, setWatchProgress] = useState(0);
 
   // Fetch anime
   const { data: anime } = useQuery({
@@ -142,36 +144,61 @@ export default function Watch() {
     }
   }, [episodeId, episodes, selectedEpisode]);
 
-  // Watch history (debounced)
+  // Load watch progress
+  useEffect(() => {
+    if (!selectedEpisode) return;
+    const loadProgress = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!data?.user) return;
+      
+      const { data: history } = await supabase
+        .from('watch_history')
+        .select('progress')
+        .eq('user_id', data.user.id)
+        .eq('episode_id', selectedEpisode.id)
+        .maybeSingle();
+      
+      if (history) setWatchProgress(history.progress || 0);
+    };
+    loadProgress();
+  }, [selectedEpisode]);
+
+  // Watch history with progress
   const saveWatchHistory = useCallback(
-    async (episode: Episode) => {
+    async (episode: Episode, progress = 0) => {
       const { data } = await supabase.auth.getUser();
       if (!data?.user) return;
       await supabase.from('watch_history').upsert({
         user_id: data.user.id,
         anime_id: animeId,
         episode_id: episode.id,
-        progress: 0,
+        progress,
         last_watched: new Date().toISOString(),
+        completed: progress >= 90,
       });
     },
     [animeId]
   );
 
-  const handleEpisodeSelect = (episode: Episode) => {
+  const handleEpisodeSelect = (episode: Episode, showToast = true) => {
     setSelectedEpisode(episode);
     navigate(`/watch/${animeId}/${episode.id}`);
-    saveWatchHistory(episode);
-    toast({
-      title: 'Now Watching',
-      description: `Episode ${episode.episode_number}`,
-    });
+    saveWatchHistory(episode, 0);
+    if (showToast) {
+      toast({
+        title: 'Now Watching',
+        description: `Episode ${episode.episode_number}`,
+      });
+    }
   };
 
   const handleNext = () => {
     if (!episodes || !selectedEpisode) return;
     const idx = episodes.findIndex(e => e.id === selectedEpisode.id);
-    if (idx < episodes.length - 1) handleEpisodeSelect(episodes[idx + 1]);
+    if (idx < episodes.length - 1) {
+      saveWatchHistory(selectedEpisode, 100);
+      handleEpisodeSelect(episodes[idx + 1], autoPlay);
+    }
   };
 
   const handlePrev = () => {
@@ -255,22 +282,46 @@ export default function Watch() {
               </div>
             </div>
 
-            {/* Server Buttons */}
-            <div className="flex flex-wrap items-center gap-2">
-              <Server className="h-4 w-4 text-muted-foreground" />
-              {EMBED_SERVERS.map(server => (
-                <Button
-                  key={server.id}
-                  size="sm"
-                  variant={selectedServer === server.id ? 'default' : 'outline'}
-                  onClick={() => {
-                    setSelectedServer(server.id);
-                    toast({ title: 'Server changed', description: `Now using ${server.name}` });
-                  }}
-                >
-                  {server.name}
-                </Button>
-              ))}
+            {/* Controls */}
+            <div className="flex flex-col gap-4">
+              {/* Server Buttons */}
+              <div className="flex flex-wrap items-center gap-2">
+                <Server className="h-4 w-4 text-muted-foreground" />
+                {EMBED_SERVERS.map(server => (
+                  <Button
+                    key={server.id}
+                    size="sm"
+                    variant={selectedServer === server.id ? 'default' : 'outline'}
+                    onClick={() => {
+                      setSelectedServer(server.id);
+                      toast({ title: 'Server changed', description: `Now using ${server.name}` });
+                    }}
+                  >
+                    {server.name}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Settings */}
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="autoplay"
+                    checked={autoPlay}
+                    onChange={(e) => setAutoPlay(e.target.checked)}
+                    className="rounded"
+                  />
+                  <label htmlFor="autoplay" className="text-muted-foreground cursor-pointer">
+                    Autoplay next episode
+                  </label>
+                </div>
+                {watchProgress > 0 && (
+                  <Badge variant="outline">
+                    Progress: {watchProgress}%
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
         </Card>

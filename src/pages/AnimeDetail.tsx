@@ -1,17 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AnimeSection } from "@/components/AnimeSection";
-import { Play, Star, Calendar, TrendingUp, Loader2, Clock, Bookmark, Heart, Share2, SkipForward } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  Play, Star, Calendar, TrendingUp, Loader2, Clock, 
+  Bookmark, Heart, Share2, SkipForward, Check 
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const AnimeDetail = () => {
   const { id } = useParams();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [watchlistStatus, setWatchlistStatus] = useState<string | null>(null);
 
   // Fetch anime details
   const { data: anime, isLoading: animeLoading } = useQuery({
@@ -78,6 +94,133 @@ const AnimeDetail = () => {
       return data;
     },
   });
+
+  // Check favorite status
+  useEffect(() => {
+    if (user && id) {
+      const checkFavorite = async () => {
+        const { data } = await supabase
+          .from('favorites')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('anime_id', id)
+          .maybeSingle();
+        setIsFavorited(!!data);
+      };
+      checkFavorite();
+    }
+  }, [user, id]);
+
+  // Check watchlist status
+  useEffect(() => {
+    if (user && id) {
+      const checkWatchlist = async () => {
+        const { data } = await supabase
+          .from('watchlist')
+          .select('status')
+          .eq('user_id', user.id)
+          .eq('anime_id', id)
+          .maybeSingle();
+        setWatchlistStatus(data?.status || null);
+      };
+      checkWatchlist();
+    }
+  }, [user, id]);
+
+  // Toggle favorite
+  const favoriteMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('Please sign in');
+      
+      if (isFavorited) {
+        const { error } = await supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('anime_id', id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('favorites')
+          .insert({ user_id: user.id, anime_id: id });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      setIsFavorited(!isFavorited);
+      toast({
+        title: isFavorited ? 'Removed from favorites' : 'Added to favorites',
+        description: isFavorited ? '' : '❤️',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Update watchlist
+  const watchlistMutation = useMutation({
+    mutationFn: async (status: string) => {
+      if (!user) throw new Error('Please sign in');
+      
+      const { error } = await supabase
+        .from('watchlist')
+        .upsert({ 
+          user_id: user.id, 
+          anime_id: id,
+          status 
+        });
+      if (error) throw error;
+      return status;
+    },
+    onSuccess: (status) => {
+      setWatchlistStatus(status);
+      toast({
+        title: 'List updated',
+        description: `Moved to ${status.replace('_', ' ')}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Share anime
+  const handleShare = async (platform: string) => {
+    const url = window.location.href;
+    const text = `Check out ${anime?.title}!`;
+    
+    // Track share
+    if (user) {
+      await supabase.from('anime_shares').insert({
+        anime_id: id,
+        user_id: user.id,
+        platform,
+      });
+    }
+
+    const shareUrls: Record<string, string> = {
+      twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      reddit: `https://reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(text)}`,
+      copy: url,
+    };
+
+    if (platform === 'copy') {
+      navigator.clipboard.writeText(url);
+      toast({ title: 'Link copied!', description: 'Share it with your friends' });
+    } else {
+      window.open(shareUrls[platform], '_blank');
+    }
+  };
 
   // Group episodes by season
   const episodesBySeason = episodes?.reduce((acc, episode) => {
@@ -161,18 +304,63 @@ const AnimeDetail = () => {
                   </Button>
                 </Link>
               )}
-              <Button size="lg" variant="outline" className="w-full gap-2 hover-lift">
-                <Bookmark className="h-5 w-5" />
-                Add to List
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="lg" variant="outline" className="w-full gap-2 hover-lift">
+                    {watchlistStatus ? <Check className="h-5 w-5" /> : <Bookmark className="h-5 w-5" />}
+                    {watchlistStatus ? watchlistStatus.replace('_', ' ') : 'Add to List'}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56">
+                  <DropdownMenuItem onClick={() => watchlistMutation.mutate('watching')}>
+                    📺 Watching
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => watchlistMutation.mutate('completed')}>
+                    ✅ Completed
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => watchlistMutation.mutate('on_hold')}>
+                    ⏸️ On Hold
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => watchlistMutation.mutate('plan_to_watch')}>
+                    📋 Plan to Watch
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => watchlistMutation.mutate('dropped')}>
+                    ❌ Dropped
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <div className="flex gap-2">
-                <Button size="lg" variant="outline" className="flex-1 gap-2 hover-lift">
-                  <Heart className="h-5 w-5" />
-                  Favorite
+                <Button 
+                  size="lg" 
+                  variant={isFavorited ? "default" : "outline"}
+                  className="flex-1 gap-2 hover-lift"
+                  onClick={() => favoriteMutation.mutate()}
+                  disabled={!user}
+                >
+                  <Heart className={`h-5 w-5 ${isFavorited ? 'fill-current' : ''}`} />
+                  {isFavorited ? 'Favorited' : 'Favorite'}
                 </Button>
-                <Button size="lg" variant="outline" className="gap-2 hover-lift">
-                  <Share2 className="h-5 w-5" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="lg" variant="outline" className="gap-2 hover-lift">
+                      <Share2 className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => handleShare('twitter')}>
+                      🐦 Twitter
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleShare('facebook')}>
+                      📘 Facebook
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleShare('reddit')}>
+                      🤖 Reddit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleShare('copy')}>
+                      📋 Copy Link
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>
