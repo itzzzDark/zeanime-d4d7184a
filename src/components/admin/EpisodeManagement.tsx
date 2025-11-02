@@ -41,6 +41,7 @@ export default function EpisodeManagement() {
   const [selectedEpisodes, setSelectedEpisodes] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterAnime, setFilterAnime] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("anime_id");
 
   const [formData, setFormData] = useState({
     anime_id: "",
@@ -169,9 +170,9 @@ export default function EpisodeManagement() {
     player4me_url: "Player4Me",
   };
 
-  // Filtered episodes
+  // Filtered and sorted episodes
   const filteredEpisodes = useMemo(() => {
-    return episodes.filter(ep => {
+    let filtered = episodes.filter(ep => {
       const matchesSearch = !searchTerm || 
         ep.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ep.anime?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -181,7 +182,27 @@ export default function EpisodeManagement() {
       
       return matchesSearch && matchesAnime;
     });
-  }, [episodes, searchTerm, filterAnime]);
+
+    // Sort
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'episode_asc':
+          return a.episode_number - b.episode_number;
+        case 'episode_desc':
+          return b.episode_number - a.episode_number;
+        case 'season_asc':
+          return a.season_number - b.season_number;
+        case 'season_desc':
+          return b.season_number - a.season_number;
+        case 'created_asc':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'created_desc':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        default:
+          return 0;
+      }
+    });
+  }, [episodes, searchTerm, filterAnime, sortBy]);
 
   // Bulk delete
   const handleBulkDelete = async () => {
@@ -369,7 +390,7 @@ export default function EpisodeManagement() {
         </div>
 
         {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Input
             placeholder="Search episodes..."
             value={searchTerm}
@@ -386,6 +407,20 @@ export default function EpisodeManagement() {
                   {a.title}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger>
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="anime_id">Default</SelectItem>
+              <SelectItem value="episode_asc">Episode ↑</SelectItem>
+              <SelectItem value="episode_desc">Episode ↓</SelectItem>
+              <SelectItem value="season_asc">Season ↑</SelectItem>
+              <SelectItem value="season_desc">Season ↓</SelectItem>
+              <SelectItem value="created_asc">Oldest First</SelectItem>
+              <SelectItem value="created_desc">Newest First</SelectItem>
             </SelectContent>
           </Select>
           <div className="text-sm text-muted-foreground flex items-center">

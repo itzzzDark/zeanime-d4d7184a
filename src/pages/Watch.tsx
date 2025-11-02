@@ -8,8 +8,9 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Play, ChevronLeft, ChevronRight, Server, Maximize, SkipForward } from 'lucide-react';
+import { Loader2, Play, ChevronLeft, ChevronRight, Server, Maximize, SkipForward, PictureInPicture2, FastForward, MessageSquare } from 'lucide-react';
 import { AnimeSection } from '@/components/AnimeSection';
+import { Comments } from '@/components/Comments';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
@@ -61,6 +62,8 @@ export default function Watch() {
   const [isTheaterMode, setIsTheaterMode] = useState(false);
   const [autoPlay, setAutoPlay] = useState(true);
   const [watchProgress, setWatchProgress] = useState(0);
+  const [skipIntro, setSkipIntro] = useState({ start: 85, end: 110 }); // Default skip times in seconds
+  const [skipOutro, setSkipOutro] = useState({ start: 1320, end: 1440 }); // Default skip outro times
 
   // Fetch anime
   const { data: anime } = useQuery({
@@ -207,12 +210,33 @@ export default function Watch() {
     if (idx > 0) handleEpisodeSelect(episodes[idx - 1]);
   };
 
+  // Picture in Picture
+  const handlePiP = async () => {
+    const iframe = document.querySelector('iframe');
+    if (!iframe) return;
+    
+    try {
+      // @ts-ignore
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+      } else {
+        toast({
+          title: 'Picture-in-Picture',
+          description: 'PiP mode is controlled by the video player. Look for the PiP button in the player controls.',
+        });
+      }
+    } catch (err) {
+      console.error('PiP error:', err);
+    }
+  };
+
   // Keyboard control
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') handleNext();
       if (e.key === 'ArrowLeft') handlePrev();
       if (e.key.toLowerCase() === 'f') setIsTheaterMode(prev => !prev);
+      if (e.key.toLowerCase() === 'p') handlePiP();
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
@@ -279,6 +303,9 @@ export default function Watch() {
                 <Button size="sm" variant="outline" onClick={() => setIsTheaterMode(v => !v)}>
                   <Maximize className="h-4 w-4 mr-1" /> {isTheaterMode ? 'Normal' : 'Theater'}
                 </Button>
+                <Button size="sm" variant="outline" onClick={handlePiP} title="Picture-in-Picture (P)">
+                  <PictureInPicture2 className="h-4 w-4" />
+                </Button>
               </div>
             </div>
 
@@ -302,8 +329,8 @@ export default function Watch() {
                 ))}
               </div>
 
-              {/* Settings */}
-              <div className="flex items-center gap-4 text-sm">
+              {/* Settings & Info */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -321,7 +348,23 @@ export default function Watch() {
                     Progress: {watchProgress}%
                   </Badge>
                 )}
+                <div className="flex gap-2 ml-auto">
+                  <Badge variant="secondary" className="gap-1">
+                    <MessageSquare className="h-3 w-3" />
+                    Scroll down for comments
+                  </Badge>
+                </div>
               </div>
+
+              {/* Episode Info */}
+              {selectedEpisode?.title && (
+                <div className="pt-2 border-t border-border/50">
+                  <h4 className="font-semibold text-lg mb-1">{selectedEpisode.title}</h4>
+                  {selectedEpisode.description && (
+                    <p className="text-muted-foreground text-sm line-clamp-2">{selectedEpisode.description}</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </Card>
@@ -359,17 +402,24 @@ export default function Watch() {
 
             {seasons.map(season => (
               <TabsContent key={season} value={season.toString()}>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-                  {displayedEpisodes.map(ep => (
-                    <Button
-                      key={ep.id}
-                      variant={selectedEpisode?.id === ep.id ? 'default' : 'outline'}
-                      className="h-12"
-                      onClick={() => handleEpisodeSelect(ep)}
-                    >
-                      {ep.episode_number}
-                    </Button>
-                  ))}
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
+                  {displayedEpisodes.map(ep => {
+                    const isWatched = watchProgress >= 90 && ep.id === selectedEpisode?.id;
+                    return (
+                      <Button
+                        key={ep.id}
+                        variant={selectedEpisode?.id === ep.id ? 'default' : 'outline'}
+                        className="h-12 relative group"
+                        onClick={() => handleEpisodeSelect(ep)}
+                        title={ep.title || `Episode ${ep.episode_number}`}
+                      >
+                        {ep.episode_number}
+                        {isWatched && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
+                        )}
+                      </Button>
+                    );
+                  })}
                 </div>
               </TabsContent>
             ))}
@@ -402,6 +452,13 @@ export default function Watch() {
                 </div>
               </div>
             </div>
+          </Card>
+        )}
+
+        {/* Comments */}
+        {animeId && (
+          <Card className="p-6 border-border/50 bg-card/50 backdrop-blur-sm">
+            <Comments animeId={animeId} />
           </Card>
         )}
 
