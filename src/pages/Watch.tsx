@@ -30,6 +30,7 @@ interface Episode {
 
 interface Anime {
   id: string;
+  slug?: string | null;
   title: string;
   title_english?: string | null;
   title_japanese?: string | null;
@@ -52,7 +53,7 @@ const EMBED_SERVERS = [
 ];
 
 export default function Watch() {
-  const { animeId, episodeId } = useParams();
+  const { animeId: animeSlugOrId, episodeId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedSeason, setSelectedSeason] = useState(1);
@@ -65,31 +66,40 @@ export default function Watch() {
   const [skipIntro, setSkipIntro] = useState({ start: 85, end: 110 }); // Default skip times in seconds
   const [skipOutro, setSkipOutro] = useState({ start: 1320, end: 1440 }); // Default skip outro times
 
-  // Fetch anime
+  // Fetch anime by slug or ID
   const { data: anime } = useQuery({
-    queryKey: ['anime', animeId],
+    queryKey: ['anime', animeSlugOrId],
     queryFn: async () => {
-      const { data, error } = await supabase.from('anime').select('*').eq('id', animeId).single();
+      // Try slug first
+      let { data, error } = await supabase.from('anime').select('*').eq('slug', animeSlugOrId).maybeSingle();
+      
+      // Fallback to ID if slug doesn't match
+      if (!data && !error) {
+        const result = await supabase.from('anime').select('*').eq('id', animeSlugOrId).maybeSingle();
+        data = result.data;
+        error = result.error;
+      }
+      
       if (error) throw error;
       return data as Anime;
     },
-    enabled: !!animeId,
+    enabled: !!animeSlugOrId,
   });
 
   // Fetch episodes
   const { data: episodes, isLoading } = useQuery({
-    queryKey: ['episodes', animeId],
+    queryKey: ['episodes', anime?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('episodes')
         .select('*')
-        .eq('anime_id', animeId)
+        .eq('anime_id', anime.id)
         .order('season_number')
         .order('episode_number');
       if (error) throw error;
       return data as Episode[];
     },
-    enabled: !!animeId,
+    enabled: !!anime?.id,
   });
 
   // Recommendations
@@ -100,7 +110,7 @@ export default function Watch() {
       const { data, error } = await supabase
         .from('anime')
         .select('*')
-        .neq('id', animeId)
+        .neq('id', anime.id)
         .limit(12);
       if (error) throw error;
       return data;
@@ -170,22 +180,22 @@ export default function Watch() {
   const saveWatchHistory = useCallback(
     async (episode: Episode, progress = 0) => {
       const { data } = await supabase.auth.getUser();
-      if (!data?.user) return;
+      if (!data?.user || !anime?.id) return;
       await supabase.from('watch_history').upsert({
         user_id: data.user.id,
-        anime_id: animeId,
+        anime_id: anime.id,
         episode_id: episode.id,
         progress,
         last_watched: new Date().toISOString(),
         completed: progress >= 90,
       });
     },
-    [animeId]
+    [anime?.id]
   );
 
   const handleEpisodeSelect = (episode: Episode, showToast = true) => {
     setSelectedEpisode(episode);
-    navigate(`/watch/${animeId}/${episode.id}`);
+    navigate(`/watch/${anime?.slug || anime?.id}/${episode.id}`);
     saveWatchHistory(episode, 0);
     if (showToast) {
       toast({
@@ -456,9 +466,9 @@ export default function Watch() {
         )}
 
         {/* Comments */}
-        {animeId && (
+        {anime?.id && (
           <Card className="p-6 border-border/50 bg-card/50 backdrop-blur-sm">
-            <Comments animeId={animeId} />
+            <Comments animeId={anime.id} />
           </Card>
         )}
 

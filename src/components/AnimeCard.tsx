@@ -24,8 +24,8 @@ export const AnimeCard = ({
 }: AnimeCardProps) => {
   return (
     <Link to={`/anime/${id}`}>
-      <Card className="group relative overflow-hidden rounded-xl border-border/50 bg-card transition-all duration-300 hover:border-primary/50 hover:shadow-card hover:-translate-y-1">
-        <div className="aspect-[2/3] relative overflow-hidden">
+      <Card className="group relative overflow-hidden rounded-lg border-border/50 bg-card/80 backdrop-blur-sm transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/20 hover:scale-105">
+        <div className="aspect-[3/4] relative overflow-hidden">
           <img 
             src={coverImage} 
             alt={title}
@@ -55,20 +55,20 @@ export const AnimeCard = ({
           </Badge>
         </div>
 
-        <div className="p-3 space-y-2">
-          <h3 className="font-semibold text-sm line-clamp-2 text-foreground group-hover:text-primary transition-colors">
+        <div className="p-2 space-y-1">
+          <h3 className="font-semibold text-xs line-clamp-2 text-foreground group-hover:text-primary transition-colors leading-tight">
             {title}
           </h3>
           
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
             {rating && (
-              <div className="flex items-center gap-1">
-                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+              <div className="flex items-center gap-0.5">
+                <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
                 <span>{rating.toFixed(1)}</span>
               </div>
             )}
             {episodes && episodes > 0 && (
-              <span>{episodes} episodes</span>
+              <span className="text-[10px]">{episodes}ep</span>
             )}
           </div>
         </div>

@@ -63,6 +63,7 @@ export default function AnimeManagement({ onUpdate }: { onUpdate: () => void }) 
       rating: formData.rating,
       is_trending: formData.is_trending,
       is_most_watched: formData.is_most_watched,
+      slug: null, // Let the trigger auto-generate from title
     };
 
     if (editingId) {

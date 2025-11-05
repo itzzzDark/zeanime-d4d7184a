@@ -26,14 +26,18 @@ export const AnimeSection = ({ title, animes, viewAllLink, layout = 'grid' }: An
   const isScroll = layout === 'scroll';
 
   return (
-    <section className="space-y-4 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl md:text-3xl font-bold text-foreground">{title}</h2>
+    <section className="space-y-3 animate-fade-in">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 flex-1">
+          <div className="h-0.5 w-8 bg-gradient-to-r from-primary to-primary/50 rounded-full" />
+          <h2 className="text-base md:text-lg font-bold text-foreground uppercase tracking-wide">{title}</h2>
+          <div className="h-px flex-1 bg-gradient-to-r from-border/50 to-transparent" />
+        </div>
         {viewAllLink && (
           <Link to={viewAllLink}>
-            <Button variant="ghost" className="gap-1 text-primary hover:text-primary/80 hover-lift">
+            <Button variant="ghost" size="sm" className="gap-1 text-xs text-primary hover:text-primary/80 hover-lift h-7">
               View All
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3 w-3" />
             </Button>
           </Link>
         )}
@@ -41,11 +45,11 @@ export const AnimeSection = ({ title, animes, viewAllLink, layout = 'grid' }: An
 
       <div className={
         isScroll 
-          ? "flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory" 
-          : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"
+          ? "flex gap-3 overflow-x-auto pb-3 scrollbar-hide snap-x snap-mandatory" 
+          : "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3"
       }>
         {animes.map((anime) => (
-          <div key={anime.id} className={isScroll ? "flex-shrink-0 w-48 snap-start" : ""}>
+          <div key={anime.id} className={isScroll ? "flex-shrink-0 w-32 snap-start" : ""}>
             <AnimeCard
               id={anime.id}
               title={anime.title}

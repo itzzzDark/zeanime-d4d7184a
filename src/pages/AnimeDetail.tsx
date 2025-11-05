@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const AnimeDetail = () => {
-  const { id } = useParams();
+  const { id: slugOrId } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -29,37 +29,49 @@ const AnimeDetail = () => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [watchlistStatus, setWatchlistStatus] = useState<string | null>(null);
 
-  // Fetch anime details
+  // Fetch anime details by slug or ID
   const { data: anime, isLoading: animeLoading } = useQuery({
-    queryKey: ["anime", id],
+    queryKey: ["anime", slugOrId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Try slug first
+      let { data, error } = await supabase
         .from("anime")
         .select("*")
-        .eq("id", id)
-        .single();
+        .eq("slug", slugOrId)
+        .maybeSingle();
+      
+      // Fallback to ID if slug doesn't match
+      if (!data && !error) {
+        const result = await supabase
+          .from("anime")
+          .select("*")
+          .eq("id", slugOrId)
+          .maybeSingle();
+        data = result.data;
+        error = result.error;
+      }
       
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!slugOrId,
   });
 
   // Fetch episodes
   const { data: episodes, isLoading: episodesLoading } = useQuery({
-    queryKey: ["episodes", id],
+    queryKey: ["episodes", anime?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("episodes")
         .select("*")
-        .eq("anime_id", id)
+        .eq("anime_id", anime.id)
         .order("season_number", { ascending: true })
         .order("episode_number", { ascending: true });
       
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!anime?.id,
   });
 
   // Fetch recommended anime based on genres
@@ -71,7 +83,7 @@ const AnimeDetail = () => {
       const { data, error } = await supabase
         .from('anime')
         .select('*')
-        .neq('id', id)
+        .neq('id', anime.id)
         .limit(12);
 
       if (error) throw error;
@@ -97,52 +109,52 @@ const AnimeDetail = () => {
 
   // Check favorite status
   useEffect(() => {
-    if (user && id) {
+    if (user && anime?.id) {
       const checkFavorite = async () => {
         const { data } = await supabase
           .from('favorites')
           .select('id')
           .eq('user_id', user.id)
-          .eq('anime_id', id)
+          .eq('anime_id', anime.id)
           .maybeSingle();
         setIsFavorited(!!data);
       };
       checkFavorite();
     }
-  }, [user, id]);
+  }, [user, anime?.id]);
 
   // Check watchlist status
   useEffect(() => {
-    if (user && id) {
+    if (user && anime?.id) {
       const checkWatchlist = async () => {
         const { data } = await supabase
           .from('watchlist')
           .select('status')
           .eq('user_id', user.id)
-          .eq('anime_id', id)
+          .eq('anime_id', anime.id)
           .maybeSingle();
         setWatchlistStatus(data?.status || null);
       };
       checkWatchlist();
     }
-  }, [user, id]);
+  }, [user, anime?.id]);
 
   // Toggle favorite
   const favoriteMutation = useMutation({
     mutationFn: async () => {
-      if (!user) throw new Error('Please sign in');
+      if (!user || !anime?.id) throw new Error('Please sign in');
       
       if (isFavorited) {
         const { error } = await supabase
           .from('favorites')
           .delete()
           .eq('user_id', user.id)
-          .eq('anime_id', id);
+          .eq('anime_id', anime.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('favorites')
-          .insert({ user_id: user.id, anime_id: id });
+          .insert({ user_id: user.id, anime_id: anime.id });
         if (error) throw error;
       }
     },
@@ -165,13 +177,13 @@ const AnimeDetail = () => {
   // Update watchlist
   const watchlistMutation = useMutation({
     mutationFn: async (status: string) => {
-      if (!user) throw new Error('Please sign in');
+      if (!user || !anime?.id) throw new Error('Please sign in');
       
       const { error } = await supabase
         .from('watchlist')
         .upsert({ 
           user_id: user.id, 
-          anime_id: id,
+          anime_id: anime.id,
           status 
         });
       if (error) throw error;
@@ -199,9 +211,9 @@ const AnimeDetail = () => {
     const text = `Check out ${anime?.title}!`;
     
     // Track share
-    if (user) {
+    if (user && anime?.id) {
       await supabase.from('anime_shares').insert({
-        anime_id: id,
+        anime_id: anime.id,
         user_id: user.id,
         platform,
       });
@@ -296,8 +308,8 @@ const AnimeDetail = () => {
             
             {/* Action Buttons */}
             <div className="mt-6 space-y-3">
-              {episodes && episodes.length > 0 && (
-                <Link to={`/watch/${id}/${episodes[0].id}`}>
+              {episodes && episodes.length > 0 && anime && (
+                <Link to={`/watch/${anime.slug || anime.id}/${episodes[0].id}`}>
                   <Button size="lg" className="w-full gap-2 hover-lift">
                     <Play className="h-5 w-5 fill-current" />
                     Watch Episode 1
@@ -508,7 +520,7 @@ const AnimeDetail = () => {
                     {seasonEpisodes.map((episode: any) => (
                       <Link
                         key={episode.id}
-                        to={`/watch/${id}/${episode.id}`}
+                        to={`/watch/${anime.slug || anime.id}/${episode.id}`}
                         className="group block p-4 bg-card hover:bg-card/80 border border-border/50 rounded-xl transition-all hover-lift"
                       >
                         <div className="flex gap-4">
