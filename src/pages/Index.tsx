@@ -122,7 +122,6 @@ const Index = () => {
           <section className="animate-fade-in-up">
             <AnimeSection
               title="🔥 Trending Now"
-              subtitle="What’s hot this week"
               animes={trendingAnime}
               viewAllLink="/browse"
               layout="scroll"
@@ -134,7 +133,6 @@ const Index = () => {
           <section className="animate-fade-in-up delay-100">
             <AnimeSection
               title="👁️ Most Watched"
-              subtitle="Fan-favorite hits everyone’s watching"
               animes={mostWatchedAnime}
               viewAllLink="/browse"
               layout="scroll"
@@ -146,7 +144,6 @@ const Index = () => {
           <section className="animate-fade-in-up delay-200">
             <AnimeSection
               title="📺 Latest Series"
-              subtitle="Ongoing series updated weekly"
               animes={latestSeries}
               viewAllLink="/browse"
               layout="scroll"
@@ -158,7 +155,6 @@ const Index = () => {
           <section className="animate-fade-in-up delay-300">
             <AnimeSection
               title="🎬 Latest Movies"
-              subtitle="Fresh cinematic adventures"
               animes={latestMovies}
               viewAllLink="/movies"
               layout="scroll"
@@ -170,7 +166,6 @@ const Index = () => {
           <section className="animate-fade-in-up delay-400">
             <AnimeSection
               title="⭐ Top 10 Anime"
-              subtitle="Critically acclaimed and top-rated gems"
               animes={top10Anime}
               viewAllLink="/top"
               layout="grid"
@@ -182,7 +177,6 @@ const Index = () => {
           <section className="animate-fade-in-up delay-500">
             <AnimeSection
               title="📅 Upcoming Releases"
-              subtitle="Mark your calendars — new anime are coming!"
               animes={upcomingAnime}
               viewAllLink="/schedule"
               layout="scroll"
