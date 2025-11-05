@@ -40,7 +40,7 @@ export default function EpisodeManagement() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedEpisodes, setSelectedEpisodes] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterAnime, setFilterAnime] = useState<string>("");
+  const [filterAnime, setFilterAnime] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("anime_id");
 
   const [formData, setFormData] = useState({
@@ -178,7 +178,7 @@ export default function EpisodeManagement() {
         ep.anime?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ep.episode_number.toString().includes(searchTerm);
       
-      const matchesAnime = !filterAnime || ep.anime_id === filterAnime;
+      const matchesAnime = filterAnime === "all" || ep.anime_id === filterAnime;
       
       return matchesSearch && matchesAnime;
     });
@@ -401,7 +401,7 @@ export default function EpisodeManagement() {
               <SelectValue placeholder="Filter by anime" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Anime</SelectItem>
+              <SelectItem value="all">All Anime</SelectItem>
               {anime.map((a) => (
                 <SelectItem key={a.id} value={a.id}>
                   {a.title}
