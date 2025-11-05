@@ -28,6 +28,7 @@ export type Database = {
           release_year: number | null
           schedule_day: string | null
           schedule_time: string | null
+          slug: string
           status: Database["public"]["Enums"]["anime_status"]
           studio: string | null
           title: string
@@ -51,6 +52,7 @@ export type Database = {
           release_year?: number | null
           schedule_day?: string | null
           schedule_time?: string | null
+          slug: string
           status?: Database["public"]["Enums"]["anime_status"]
           studio?: string | null
           title: string
@@ -74,6 +76,7 @@ export type Database = {
           release_year?: number | null
           schedule_day?: string | null
           schedule_time?: string | null
+          slug?: string
           status?: Database["public"]["Enums"]["anime_status"]
           studio?: string | null
           title?: string
@@ -516,6 +519,7 @@ export type Database = {
     }
     Functions: {
       cleanup_expired_otps: { Args: never; Returns: undefined }
+      generate_slug: { Args: { title: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
