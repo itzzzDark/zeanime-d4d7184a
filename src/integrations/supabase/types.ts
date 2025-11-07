@@ -299,6 +299,36 @@ export type Database = {
           },
         ]
       }
+      embed_servers: {
+        Row: {
+          created_at: string
+          embed_url: string
+          id: string
+          is_active: boolean
+          name: string
+          order_index: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          embed_url: string
+          id?: string
+          is_active?: boolean
+          name: string
+          order_index?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          embed_url?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          order_index?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       episodes: {
         Row: {
           anime_id: string
@@ -308,6 +338,7 @@ export type Database = {
           episode_number: number
           id: string
           season_number: number
+          server_urls: Json | null
           thumbnail: string | null
           title: string | null
           updated_at: string | null
@@ -321,6 +352,7 @@ export type Database = {
           episode_number: number
           id?: string
           season_number?: number
+          server_urls?: Json | null
           thumbnail?: string | null
           title?: string | null
           updated_at?: string | null
@@ -334,6 +366,7 @@ export type Database = {
           episode_number?: number
           id?: string
           season_number?: number
+          server_urls?: Json | null
           thumbnail?: string | null
           title?: string | null
           updated_at?: string | null

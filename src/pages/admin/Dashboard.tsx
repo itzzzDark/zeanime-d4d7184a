@@ -12,6 +12,8 @@ import EpisodeManagement from '@/components/admin/EpisodeManagement';
 import UserManagement from '@/components/admin/UserManagement';
 import BannerManagement from '@/components/admin/BannerManagement';
 
+import ServerManagement from '@/components/admin/ServerManagement';
+
 export default function AdminDashboard() {
   const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
@@ -199,7 +201,7 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="anime" className="w-full animate-fade-in">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="anime" className="gap-2">
               <BarChart3 className="h-4 w-4" />
               Anime
@@ -207,6 +209,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="episodes" className="gap-2">
               <Play className="h-4 w-4" />
               Episodes
+            </TabsTrigger>
+            <TabsTrigger value="servers" className="gap-2">
+              <Activity className="h-4 w-4" />
+              Servers
             </TabsTrigger>
             <TabsTrigger value="banners" className="gap-2">
               <Film className="h-4 w-4" />
@@ -224,6 +230,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="episodes" className="mt-6">
             <EpisodeManagement />
+          </TabsContent>
+
+          <TabsContent value="servers" className="mt-6">
+            <ServerManagement />
           </TabsContent>
 
           <TabsContent value="banners" className="mt-6">

@@ -35,6 +35,7 @@ import { toast } from "@/hooks/use-toast";
 export default function EpisodeManagement() {
   const [episodes, setEpisodes] = useState<any[]>([]);
   const [anime, setAnime] = useState<any[]>([]);
+  const [servers, setServers] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [preview, setPreview] = useState<{ url: string; server: string } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -50,9 +51,7 @@ export default function EpisodeManagement() {
     title: "",
     description: "",
     video_url: "",
-    filemoon_url: "",
-    abyss_url: "",
-    player4me_url: "",
+    server_urls: {} as Record<string, string>,
     thumbnail: "",
     duration: 0,
   });
@@ -60,7 +59,17 @@ export default function EpisodeManagement() {
   useEffect(() => {
     fetchEpisodes();
     fetchAnime();
+    fetchServers();
   }, []);
+
+  const fetchServers = async () => {
+    const { data } = await supabase
+      .from("embed_servers")
+      .select("*")
+      .eq("is_active", true)
+      .order("order_index");
+    if (data) setServers(data);
+  };
 
   const fetchEpisodes = async () => {
     const { data, error } = await supabase
@@ -129,9 +138,7 @@ export default function EpisodeManagement() {
       title: item.title || "",
       description: item.description || "",
       video_url: item.video_url || "",
-      filemoon_url: item.filemoon_url || "",
-      abyss_url: item.abyss_url || "",
-      player4me_url: item.player4me_url || "",
+      server_urls: item.server_urls || {},
       thumbnail: item.thumbnail || "",
       duration: item.duration || 0,
     });
@@ -157,18 +164,15 @@ export default function EpisodeManagement() {
       title: "",
       description: "",
       video_url: "",
-      filemoon_url: "",
-      abyss_url: "",
-      player4me_url: "",
+      server_urls: {},
       thumbnail: "",
       duration: 0,
     });
 
-  const serverLabels: Record<string, string> = {
-    filemoon_url: "FileMoon",
-    abyss_url: "Abyss",
-    player4me_url: "Player4Me",
-  };
+  const serverLabels: Record<string, string> = servers.reduce((acc, server) => {
+    acc[server.id] = server.name;
+    return acc;
+  }, {} as Record<string, string>);
 
   // Filtered and sorted episodes
   const filteredEpisodes = useMemo(() => {
@@ -349,26 +353,28 @@ export default function EpisodeManagement() {
                     />
                   </div>
 
-                  {/* URLs */}
-                  {["video_url", "filemoon_url", "abyss_url", "player4me_url"].map((key) => (
-                    <div key={key}>
-                      <Label>
-                        {key === "video_url"
-                          ? "Primary Video URL *"
-                          : serverLabels[key] + " URL"}
-                      </Label>
-                      <Input
-                        value={formData[key as keyof typeof formData] as string}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            [key]: e.target.value,
-                          })
-                        }
-                        required={key === "video_url"}
-                      />
-                    </div>
-                  ))}
+                  {/* Server URLs */}
+                  <div className="space-y-3">
+                    <Label>Server URLs</Label>
+                    {servers.map((server) => (
+                      <div key={server.id}>
+                        <Label className="text-sm text-muted-foreground">{server.name}</Label>
+                        <Input
+                          placeholder={server.embed_url}
+                          value={formData.server_urls[server.id] || ''}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              server_urls: {
+                                ...formData.server_urls,
+                                [server.id]: e.target.value,
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
 
                   <div>
                     <Label>Thumbnail</Label>
@@ -473,19 +479,33 @@ export default function EpisodeManagement() {
               {/* Preview buttons */}
               <TableCell>
                 <div className="flex gap-2 flex-wrap">
-                  {Object.keys(serverLabels).map((key) => (
+                  {item.video_url && (
                     <Button
-                      key={key}
                       size="sm"
                       variant="outline"
-                      disabled={!item[key]}
                       onClick={() =>
-                        setPreview({ url: item[key], server: serverLabels[key] })
+                        setPreview({ url: item.video_url, server: "Primary" })
                       }
                     >
-                      <Play className="h-3 w-3 mr-1" /> {serverLabels[key]}
+                      <Play className="h-3 w-3 mr-1" /> Primary
                     </Button>
-                  ))}
+                  )}
+                  {item.server_urls && Object.entries(item.server_urls).map(([serverId, url]) => {
+                    const server = servers.find(s => s.id === serverId);
+                    if (!server || !url) return null;
+                    return (
+                      <Button
+                        key={serverId}
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          setPreview({ url: url as string, server: server.name })
+                        }
+                      >
+                        <Play className="h-3 w-3 mr-1" /> {server.name}
+                      </Button>
+                    );
+                  })}
                 </div>
               </TableCell>
 

@@ -21,9 +21,7 @@ interface Episode {
   title?: string | null;
   description?: string | null;
   video_url?: string;
-  filemoon_url?: string;
-  abyss_url?: string;
-  player4me_url?: string;
+  server_urls?: Record<string, string>;
   thumbnail?: string | null;
   duration?: number | null;
 }
@@ -44,13 +42,11 @@ interface Anime {
   release_year?: number | null;
 }
 
-// Supported servers
-const EMBED_SERVERS = [
-  { id: 'filemoon', name: 'FileMoon', baseUrl: 'https://filemoon.sx/e/' },
-  { id: 'abyss', name: 'Abyss', baseUrl: 'https://short.icu/' },
-  { id: 'player4me', name: 'Player4Me', baseUrl: 'https://reenime.player4me.vip/#' },
-  { id: 'default', name: 'Default', baseUrl: '' }
-];
+interface EmbedServer {
+  id: string;
+  name: string;
+  embed_url: string;
+}
 
 export default function Watch() {
   const { animeId: animeSlugOrId, episodeId } = useParams();
@@ -58,13 +54,25 @@ export default function Watch() {
   const { toast } = useToast();
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
-  const [selectedServer, setSelectedServer] = useState('filemoon');
+  const [selectedServer, setSelectedServer] = useState<string>('');
   const [episodeRange, setEpisodeRange] = useState(0);
   const [isTheaterMode, setIsTheaterMode] = useState(false);
   const [autoPlay, setAutoPlay] = useState(true);
   const [watchProgress, setWatchProgress] = useState(0);
-  const [skipIntro, setSkipIntro] = useState({ start: 85, end: 110 }); // Default skip times in seconds
-  const [skipOutro, setSkipOutro] = useState({ start: 1320, end: 1440 }); // Default skip outro times
+
+  // Fetch available servers
+  const { data: servers } = useQuery({
+    queryKey: ['embed_servers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('embed_servers')
+        .select('*')
+        .eq('is_active', true)
+        .order('order_index');
+      if (error) throw error;
+      return data as EmbedServer[];
+    },
+  });
 
   // Fetch anime by slug or ID
   const { data: anime } = useQuery({
@@ -124,25 +132,28 @@ export default function Watch() {
   const totalPages = Math.ceil(seasonEpisodes.length / episodesPerPage);
   const displayedEpisodes = seasonEpisodes.slice(episodeRange * episodesPerPage, (episodeRange + 1) * episodesPerPage);
 
-  // Get best embed URL
+  // Get embed URL
   const getEmbedUrl = useCallback(
     (episode: Episode) => {
-      const server = EMBED_SERVERS.find(s => s.id === selectedServer);
       if (!episode) return '';
-
-      const urlFromDB =
-        (selectedServer === 'filemoon' && episode.filemoon_url) ||
-        (selectedServer === 'abyss' && episode.abyss_url) ||
-        (selectedServer === 'player4me' && episode.player4me_url) ||
-        episode.video_url;
-
-      if (!server || server.id === 'default') return urlFromDB || '';
-
-      const id = urlFromDB?.split('/').pop() || urlFromDB;
-      return `${server.baseUrl}${id}`;
+      
+      // If a server is selected and episode has server URLs, use that
+      if (selectedServer && episode.server_urls?.[selectedServer]) {
+        return episode.server_urls[selectedServer];
+      }
+      
+      // Fallback to video_url
+      return episode.video_url || '';
     },
     [selectedServer]
   );
+
+  // Set default server when servers load
+  useEffect(() => {
+    if (servers && servers.length > 0 && !selectedServer) {
+      setSelectedServer(servers[0].id);
+    }
+  }, [servers, selectedServer]);
 
   // Load episode
   useEffect(() => {
@@ -322,22 +333,24 @@ export default function Watch() {
             {/* Controls */}
             <div className="flex flex-col gap-4">
               {/* Server Buttons */}
-              <div className="flex flex-wrap items-center gap-2">
-                <Server className="h-4 w-4 text-muted-foreground" />
-                {EMBED_SERVERS.map(server => (
-                  <Button
-                    key={server.id}
-                    size="sm"
-                    variant={selectedServer === server.id ? 'default' : 'outline'}
-                    onClick={() => {
-                      setSelectedServer(server.id);
-                      toast({ title: 'Server changed', description: `Now using ${server.name}` });
-                    }}
-                  >
-                    {server.name}
-                  </Button>
-                ))}
-              </div>
+              {servers && servers.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Server className="h-4 w-4 text-muted-foreground" />
+                  {servers.map(server => (
+                    <Button
+                      key={server.id}
+                      size="sm"
+                      variant={selectedServer === server.id ? 'default' : 'outline'}
+                      onClick={() => {
+                        setSelectedServer(server.id);
+                        toast({ title: 'Server changed', description: `Now using ${server.name}` });
+                      }}
+                    >
+                      {server.name}
+                    </Button>
+                  ))}
+                </div>
+              )}
 
               {/* Settings & Info */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm">
