@@ -121,7 +121,7 @@ const Index = () => {
         {trendingAnime?.length > 0 && (
           <section className="animate-fade-in-up">
             <AnimeSection
-              title="🔥 Trending Now"
+              title="Trending Now"
               animes={trendingAnime}
               viewAllLink="/browse"
               layout="scroll"
@@ -132,7 +132,7 @@ const Index = () => {
         {mostWatchedAnime?.length > 0 && (
           <section className="animate-fade-in-up delay-100">
             <AnimeSection
-              title="👁️ Most Watched"
+              title="Most Watched"
               animes={mostWatchedAnime}
               viewAllLink="/browse"
               layout="scroll"
@@ -143,7 +143,7 @@ const Index = () => {
         {latestSeries?.length > 0 && (
           <section className="animate-fade-in-up delay-200">
             <AnimeSection
-              title="📺 Latest Series"
+              title="Latest Series"
               animes={latestSeries}
               viewAllLink="/browse"
               layout="scroll"
@@ -154,7 +154,7 @@ const Index = () => {
         {latestMovies?.length > 0 && (
           <section className="animate-fade-in-up delay-300">
             <AnimeSection
-              title="🎬 Latest Movies"
+              title="Latest Movies"
               animes={latestMovies}
               viewAllLink="/movies"
               layout="scroll"
@@ -165,7 +165,7 @@ const Index = () => {
         {top10Anime?.length > 0 && (
           <section className="animate-fade-in-up delay-400">
             <AnimeSection
-              title="⭐ Top 10 Anime"
+              title="Top Rated"
               animes={top10Anime}
               viewAllLink="/top"
               layout="grid"
@@ -176,7 +176,7 @@ const Index = () => {
         {upcomingAnime?.length > 0 && (
           <section className="animate-fade-in-up delay-500">
             <AnimeSection
-              title="📅 Upcoming Releases"
+              title="Coming Soon"
               animes={upcomingAnime}
               viewAllLink="/schedule"
               layout="scroll"

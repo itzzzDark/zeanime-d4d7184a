@@ -331,7 +331,7 @@ export type Database = {
       }
       episodes: {
         Row: {
-          anime_id: string
+          anime_slug: string
           created_at: string | null
           description: string | null
           duration: number | null
@@ -345,7 +345,7 @@ export type Database = {
           video_url: string
         }
         Insert: {
-          anime_id: string
+          anime_slug: string
           created_at?: string | null
           description?: string | null
           duration?: number | null
@@ -359,7 +359,7 @@ export type Database = {
           video_url: string
         }
         Update: {
-          anime_id?: string
+          anime_slug?: string
           created_at?: string | null
           description?: string | null
           duration?: number | null
@@ -372,15 +372,7 @@ export type Database = {
           updated_at?: string | null
           video_url?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "episodes_anime_id_fkey"
-            columns: ["anime_id"]
-            isOneToOne: false
-            referencedRelation: "anime"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       favorites: {
         Row: {

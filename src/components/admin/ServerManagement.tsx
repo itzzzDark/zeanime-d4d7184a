@@ -183,14 +183,17 @@ export default function ServerManagement() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="embed_url">Embed URL</Label>
+              <Label htmlFor="embed_url">Embed URL Base</Label>
               <Input
                 id="embed_url"
                 value={formData.embed_url}
                 onChange={(e) => setFormData({ ...formData, embed_url: e.target.value })}
-                placeholder="e.g., https://example.com/embed/"
+                placeholder="e.g., https://filemoon.sx/e/"
                 required
               />
+              <p className="text-xs text-muted-foreground">
+                Enter the base URL ending with /. Episode slug will be appended. Example: https://filemoon.sx/e/
+              </p>
             </div>
           </div>
 

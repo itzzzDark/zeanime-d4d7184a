@@ -45,7 +45,7 @@ export default function EpisodeManagement() {
   const [sortBy, setSortBy] = useState<string>("anime_id");
 
   const [formData, setFormData] = useState({
-    anime_id: "",
+    anime_slug: "",
     season_number: 1,
     episode_number: 1,
     title: "",
@@ -74,8 +74,8 @@ export default function EpisodeManagement() {
   const fetchEpisodes = async () => {
     const { data, error } = await supabase
       .from("episodes")
-      .select("*, anime(title)")
-      .order("anime_id", { ascending: true })
+      .select("*, anime(title, slug)")
+      .order("anime_slug", { ascending: true })
       .order("season_number", { ascending: true })
       .order("episode_number", { ascending: true });
 
@@ -85,7 +85,7 @@ export default function EpisodeManagement() {
   };
 
   const fetchAnime = async () => {
-    const { data, error } = await supabase.from("anime").select("id, title").order("title");
+    const { data, error } = await supabase.from("anime").select("slug, title").order("title");
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else if (data) setAnime(data);
@@ -95,10 +95,10 @@ export default function EpisodeManagement() {
     e.preventDefault();
 
     // basic validation
-    if (!formData.anime_id || !formData.video_url) {
+    if (!formData.anime_slug) {
       toast({
         title: "Missing Required Fields",
-        description: "Anime and video URL are required.",
+        description: "Anime is required.",
         variant: "destructive",
       });
       return;
@@ -132,7 +132,7 @@ export default function EpisodeManagement() {
   const handleEdit = (item: any) => {
     setEditingId(item.id);
     setFormData({
-      anime_id: item.anime_id,
+      anime_slug: item.anime_slug,
       season_number: item.season_number || 1,
       episode_number: item.episode_number || 1,
       title: item.title || "",
@@ -158,7 +158,7 @@ export default function EpisodeManagement() {
 
   const resetForm = () =>
     setFormData({
-      anime_id: "",
+      anime_slug: "",
       season_number: 1,
       episode_number: 1,
       title: "",
@@ -182,7 +182,7 @@ export default function EpisodeManagement() {
         ep.anime?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ep.episode_number.toString().includes(searchTerm);
       
-      const matchesAnime = filterAnime === "all" || ep.anime_id === filterAnime;
+      const matchesAnime = filterAnime === "all" || ep.anime_slug === filterAnime;
       
       return matchesSearch && matchesAnime;
     });
@@ -270,15 +270,15 @@ export default function EpisodeManagement() {
                   <div className="space-y-2">
                     <Label>Anime *</Label>
                     <Select
-                      value={formData.anime_id}
-                      onValueChange={(v) => setFormData({ ...formData, anime_id: v })}
+                      value={formData.anime_slug}
+                      onValueChange={(v) => setFormData({ ...formData, anime_slug: v })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select anime" />
                       </SelectTrigger>
                       <SelectContent>
                         {anime.map((a) => (
-                          <SelectItem key={a.id} value={a.id}>
+                          <SelectItem key={a.slug} value={a.slug}>
                             {a.title}
                           </SelectItem>
                         ))}
@@ -355,12 +355,16 @@ export default function EpisodeManagement() {
 
                   {/* Server URLs */}
                   <div className="space-y-3">
-                    <Label>Server URLs</Label>
+                    <Label>Server URLs (Episode Slug Only)</Label>
+                    <p className="text-xs text-muted-foreground">Enter only the episode slug/ID. Example: abc123xyz or episode-5</p>
                     {servers.map((server) => (
-                      <div key={server.id}>
-                        <Label className="text-sm text-muted-foreground">{server.name}</Label>
+                      <div key={server.id} className="space-y-1">
+                        <Label className="text-sm text-muted-foreground flex items-center justify-between">
+                          <span>{server.name}</span>
+                          <span className="text-xs font-mono bg-muted px-2 py-0.5 rounded">{server.embed_url}[slug]</span>
+                        </Label>
                         <Input
-                          placeholder={server.embed_url}
+                          placeholder="e.g., abc123xyz"
                           value={formData.server_urls[server.id] || ''}
                           onChange={(e) =>
                             setFormData({
@@ -409,7 +413,7 @@ export default function EpisodeManagement() {
             <SelectContent>
               <SelectItem value="all">All Anime</SelectItem>
               {anime.map((a) => (
-                <SelectItem key={a.id} value={a.id}>
+                <SelectItem key={a.slug} value={a.slug}>
                   {a.title}
                 </SelectItem>
               ))}

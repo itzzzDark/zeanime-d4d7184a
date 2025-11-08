@@ -96,18 +96,18 @@ export default function Watch() {
 
   // Fetch episodes
   const { data: episodes, isLoading } = useQuery({
-    queryKey: ['episodes', anime?.id],
+    queryKey: ['episodes', anime?.slug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('episodes')
         .select('*')
-        .eq('anime_id', anime.id)
+        .eq('anime_slug', anime.slug)
         .order('season_number')
         .order('episode_number');
       if (error) throw error;
       return data as Episode[];
     },
-    enabled: !!anime?.id,
+    enabled: !!anime?.slug,
   });
 
   // Recommendations
@@ -137,15 +137,19 @@ export default function Watch() {
     (episode: Episode) => {
       if (!episode) return '';
       
-      // If a server is selected and episode has server URLs, use that
+      // If a server is selected and episode has server URLs, construct full URL
       if (selectedServer && episode.server_urls?.[selectedServer]) {
-        return episode.server_urls[selectedServer];
+        const server = servers?.find(s => s.id === selectedServer);
+        const episodeSlug = episode.server_urls[selectedServer];
+        if (server && episodeSlug) {
+          return `${server.embed_url}${episodeSlug}`;
+        }
       }
       
       // Fallback to video_url
       return episode.video_url || '';
     },
-    [selectedServer]
+    [selectedServer, servers]
   );
 
   // Set default server when servers load
@@ -190,10 +194,10 @@ export default function Watch() {
   // Watch history with progress
   const saveWatchHistory = useCallback(
     async (episode: Episode, progress = 0) => {
-      const { data } = await supabase.auth.getUser();
-      if (!data?.user || !anime?.id) return;
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData?.user || !anime?.id) return;
       await supabase.from('watch_history').upsert({
-        user_id: data.user.id,
+        user_id: authData.user.id,
         anime_id: anime.id,
         episode_id: episode.id,
         progress,
@@ -271,10 +275,10 @@ export default function Watch() {
     );
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background via-background/95 to-background">
       <Navbar />
-      <div className={`container mx-auto px-4 py-8 space-y-6 ${isTheaterMode ? 'max-w-full' : ''}`}>
-        <Card className="overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm">
+      <div className={`container mx-auto px-4 py-8 space-y-6 ${isTheaterMode ? 'max-w-full px-2' : ''}`}>
+        <Card className="overflow-hidden border-border/30 bg-gradient-to-br from-card/80 via-card/60 to-card/80 backdrop-blur-xl shadow-card">
           <div className="aspect-video bg-black relative group">
             {selectedEpisode ? (
               <>
@@ -299,7 +303,7 @@ export default function Watch() {
           </div>
 
           {/* Player Controls */}
-          <div className="p-4 space-y-4 bg-gradient-to-b from-card to-card/95">
+          <div className="p-6 space-y-4 bg-gradient-to-b from-card/90 via-card/80 to-card/70 backdrop-blur-md border-t border-border/30">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-bold">{anime?.title}</h2>
@@ -393,7 +397,7 @@ export default function Watch() {
         </Card>
 
         {/* Episode list */}
-        <Card className="p-6 border-border/50 bg-card/50 backdrop-blur-sm">
+        <Card className="p-6 border-border/30 bg-gradient-to-br from-card/70 via-card/50 to-card/70 backdrop-blur-xl shadow-card">
           <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
             <Play className="h-5 w-5 text-primary" /> Episodes
           </h3>
@@ -451,7 +455,7 @@ export default function Watch() {
 
         {/* Anime Info */}
         {anime && (
-          <Card className="p-6 border-border/50 bg-card/50 backdrop-blur-sm animate-fade-in">
+          <Card className="p-6 border-border/30 bg-gradient-to-br from-card/70 via-card/50 to-card/70 backdrop-blur-xl shadow-card animate-fade-in">
             <div className="flex flex-col md:flex-row gap-4">
               {anime.cover_image && (
                 <img

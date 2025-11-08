@@ -59,19 +59,19 @@ const AnimeDetail = () => {
 
   // Fetch episodes
   const { data: episodes, isLoading: episodesLoading } = useQuery({
-    queryKey: ["episodes", anime?.id],
+    queryKey: ["episodes", anime?.slug],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("episodes")
         .select("*")
-        .eq("anime_id", anime.id)
+        .eq("anime_slug", anime.slug)
         .order("season_number", { ascending: true })
         .order("episode_number", { ascending: true });
       
       if (error) throw error;
       return data;
     },
-    enabled: !!anime?.id,
+    enabled: !!anime?.slug,
   });
 
   // Fetch recommended anime based on genres
