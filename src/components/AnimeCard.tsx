@@ -42,13 +42,6 @@ export const AnimeCard = ({
             </div>
           </div>
 
-          {/* Status badge */}
-          {status && (
-            <Badge className="absolute top-2 left-2 bg-primary text-primary-foreground">
-              {status}
-            </Badge>
-          )}
-
           {/* Type badge */}
           <Badge className="absolute top-2 right-2 bg-secondary text-secondary-foreground">
             {type}

@@ -29,27 +29,15 @@ const AnimeDetail = () => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [watchlistStatus, setWatchlistStatus] = useState<string | null>(null);
 
-  // Fetch anime details by slug or ID
+  // Fetch anime details by ID
   const { data: anime, isLoading: animeLoading } = useQuery({
     queryKey: ["anime", slugOrId],
     queryFn: async () => {
-      // Try slug first
-      let { data, error } = await supabase
+      const { data, error } = await supabase
         .from("anime")
         .select("*")
-        .eq("slug", slugOrId)
+        .eq("id", slugOrId)
         .maybeSingle();
-      
-      // Fallback to ID if slug doesn't match
-      if (!data && !error) {
-        const result = await supabase
-          .from("anime")
-          .select("*")
-          .eq("id", slugOrId)
-          .maybeSingle();
-        data = result.data;
-        error = result.error;
-      }
       
       if (error) throw error;
       return data;
@@ -309,7 +297,7 @@ const AnimeDetail = () => {
             {/* Action Buttons */}
             <div className="mt-6 space-y-3">
               {episodes && episodes.length > 0 && anime && (
-                <Link to={`/watch/${anime.slug || anime.id}/${episodes[0].id}`}>
+                <Link to={`/watch/${anime.id}/${episodes[0].id}`}>
                   <Button size="lg" className="w-full gap-2 hover-lift">
                     <Play className="h-5 w-5 fill-current" />
                     Watch Episode 1
@@ -520,7 +508,7 @@ const AnimeDetail = () => {
                     {seasonEpisodes.map((episode: any) => (
                       <Link
                         key={episode.id}
-                        to={`/watch/${anime.slug || anime.id}/${episode.id}`}
+                        to={`/watch/${anime.id}/${episode.id}`}
                         className="group block p-4 bg-card hover:bg-card/80 border border-border/50 rounded-xl transition-all hover-lift"
                       >
                         <div className="flex gap-4">
@@ -584,15 +572,11 @@ const AnimeDetail = () => {
           </div>
         )}
 
-        {/* Top 10 Anime */}
+        {/* Recommended Series */}
         {top10Anime && top10Anime.length > 0 && (
           <div className="mb-12 animate-fade-in">
-            <h2 className="text-2xl font-bold flex items-center gap-2 mb-4">
-              <SkipForward className="h-6 w-6 text-primary" />
-              Top 10 Anime
-            </h2>
             <AnimeSection
-              title=""
+              title="Recommended Series"
               animes={top10Anime}
               layout="scroll"
             />
