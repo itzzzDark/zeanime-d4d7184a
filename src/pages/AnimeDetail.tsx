@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Play, Star, Calendar, TrendingUp, Loader2, Clock, 
-  Bookmark, Heart, Share2, SkipForward, Check 
+  Heart, Share2, SkipForward 
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -27,7 +27,6 @@ const AnimeDetail = () => {
   const queryClient = useQueryClient();
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
-  const [watchlistStatus, setWatchlistStatus] = useState<string | null>(null);
 
   // Fetch anime details by ID
   const { data: anime, isLoading: animeLoading } = useQuery({
@@ -111,22 +110,6 @@ const AnimeDetail = () => {
     }
   }, [user, anime?.id]);
 
-  // Check watchlist status
-  useEffect(() => {
-    if (user && anime?.id) {
-      const checkWatchlist = async () => {
-        const { data } = await supabase
-          .from('watchlist')
-          .select('status')
-          .eq('user_id', user.id)
-          .eq('anime_id', anime.id)
-          .maybeSingle();
-        setWatchlistStatus(data?.status || null);
-      };
-      checkWatchlist();
-    }
-  }, [user, anime?.id]);
-
   // Toggle favorite
   const favoriteMutation = useMutation({
     mutationFn: async () => {
@@ -151,39 +134,6 @@ const AnimeDetail = () => {
       toast({
         title: isFavorited ? 'Removed from favorites' : 'Added to favorites',
         description: isFavorited ? '' : '❤️',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Update watchlist
-  const watchlistMutation = useMutation({
-    mutationFn: async (status: string) => {
-      if (!user || !anime?.id) throw new Error('Please sign in');
-      
-      const { error } = await supabase
-        .from('watchlist')
-        .upsert({ 
-          user_id: user.id, 
-          anime_id: anime.id,
-          status 
-        }, {
-          onConflict: 'user_id,anime_id'
-        });
-      if (error) throw error;
-      return status;
-    },
-    onSuccess: (status) => {
-      setWatchlistStatus(status);
-      toast({
-        title: 'List updated',
-        description: `Moved to ${status.replace('_', ' ')}`,
       });
     },
     onError: (error: any) => {
@@ -306,33 +256,8 @@ const AnimeDetail = () => {
                   </Button>
                 </Link>
               )}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="lg" variant="outline" className="w-full gap-2 hover-lift">
-                    {watchlistStatus ? <Check className="h-5 w-5" /> : <Bookmark className="h-5 w-5" />}
-                    {watchlistStatus ? watchlistStatus.replace('_', ' ') : 'Add to List'}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
-                  <DropdownMenuItem onClick={() => watchlistMutation.mutate('watching')}>
-                    📺 Watching
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => watchlistMutation.mutate('completed')}>
-                    ✅ Completed
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => watchlistMutation.mutate('on_hold')}>
-                    ⏸️ On Hold
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => watchlistMutation.mutate('plan_to_watch')}>
-                    📋 Plan to Watch
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => watchlistMutation.mutate('dropped')}>
-                    ❌ Dropped
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
               <div className="flex gap-2">
-                <Button 
+                <Button
                   size="lg" 
                   variant={isFavorited ? "default" : "outline"}
                   className="flex-1 gap-2 hover-lift"

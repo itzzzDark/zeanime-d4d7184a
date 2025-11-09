@@ -137,12 +137,26 @@ export default function Watch() {
     (episode: Episode) => {
       if (!episode) return '';
       
-      // If a server is selected and episode has server URLs, construct full URL
-      if (selectedServer && episode.server_urls?.[selectedServer]) {
+      // If a server is selected, check if episode has URL for it
+      if (selectedServer) {
         const server = servers?.find(s => s.id === selectedServer);
-        const episodeSlug = episode.server_urls[selectedServer];
+        const episodeSlug = episode.server_urls?.[selectedServer];
+        
+        // If episode has this server URL, construct full URL
         if (server && episodeSlug) {
           return `${server.embed_url}${episodeSlug}`;
+        }
+        
+        // Server selected but episode doesn't have it - check for fallback
+        // Try to find any available server URL
+        if (episode.server_urls && Object.keys(episode.server_urls).length > 0) {
+          const firstAvailableServerId = Object.keys(episode.server_urls)[0];
+          const firstServer = servers?.find(s => s.id === firstAvailableServerId);
+          if (firstServer && episode.server_urls[firstAvailableServerId]) {
+            // Auto-switch to available server
+            setSelectedServer(firstAvailableServerId);
+            return `${firstServer.embed_url}${episode.server_urls[firstAvailableServerId]}`;
+          }
         }
       }
       
@@ -340,19 +354,27 @@ export default function Watch() {
               {servers && servers.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2">
                   <Server className="h-4 w-4 text-muted-foreground" />
-                  {servers.map(server => (
-                    <Button
-                      key={server.id}
-                      size="sm"
-                      variant={selectedServer === server.id ? 'default' : 'outline'}
-                      onClick={() => {
-                        setSelectedServer(server.id);
-                        toast({ title: 'Server changed', description: `Now using ${server.name}` });
-                      }}
-                    >
-                      {server.name}
-                    </Button>
-                  ))}
+                  {servers.map(server => {
+                    const hasServerUrl = selectedEpisode?.server_urls?.[server.id];
+                    return (
+                      <Button
+                        key={server.id}
+                        size="sm"
+                        variant={selectedServer === server.id ? 'default' : 'outline'}
+                        onClick={() => {
+                          if (hasServerUrl) {
+                            setSelectedServer(server.id);
+                            toast({ title: 'Server changed', description: `Now using ${server.name}` });
+                          }
+                        }}
+                        disabled={!hasServerUrl}
+                        className={!hasServerUrl ? 'opacity-50 cursor-not-allowed' : ''}
+                      >
+                        {server.name}
+                        {!hasServerUrl && ' (N/A)'}
+                      </Button>
+                    );
+                  })}
                 </div>
               )}
 
