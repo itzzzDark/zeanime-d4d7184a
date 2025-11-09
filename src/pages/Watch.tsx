@@ -8,7 +8,17 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Play, ChevronLeft, ChevronRight, Server, Maximize, SkipForward, PictureInPicture2, FastForward, MessageSquare } from 'lucide-react';
+import {
+  Loader2,
+  Play,
+  ChevronLeft,
+  ChevronRight,
+  Server,
+  Maximize,
+  SkipForward,
+  PictureInPicture2,
+  MessageSquare
+} from 'lucide-react';
 import { AnimeSection } from '@/components/AnimeSection';
 import { Comments } from '@/components/Comments';
 import { useQuery } from '@tanstack/react-query';
@@ -45,13 +55,14 @@ interface Anime {
 interface EmbedServer {
   id: string;
   name: string;
-  embed_url: string;
+  embed_url: string; // base embed url, e.g. https://streamsb.com/e/
 }
 
 export default function Watch() {
   const { animeId: animeSlugOrId, episodeId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
   const [selectedServer, setSelectedServer] = useState<string>('');
@@ -60,216 +71,246 @@ export default function Watch() {
   const [autoPlay, setAutoPlay] = useState(true);
   const [watchProgress, setWatchProgress] = useState(0);
 
-  // Fetch available servers
-  const { data: servers } = useQuery({
+  // ---- Supabase queries (safe defaults) ----
+  const { data: servers = [] } = useQuery({
     queryKey: ['embed_servers'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('embed_servers')
         .select('*')
         .eq('is_active', true)
-        .order('order_index');
+        .order('order_index', { ascending: true });
       if (error) throw error;
-      return data as EmbedServer[];
+      return (data || []) as EmbedServer[];
     },
   });
 
-  // Fetch anime by slug or ID
   const { data: anime } = useQuery({
     queryKey: ['anime', animeSlugOrId],
     queryFn: async () => {
-      // Try slug first
-      let { data, error } = await supabase.from('anime').select('*').eq('slug', animeSlugOrId).maybeSingle();
-      
-      // Fallback to ID if slug doesn't match
-      if (!data && !error) {
-        const result = await supabase.from('anime').select('*').eq('id', animeSlugOrId).maybeSingle();
-        data = result.data;
-        error = result.error;
-      }
-      
+      if (!animeSlugOrId) return null;
+      // try slug first
+      const { data, error } = await supabase.from('anime').select('*').eq('slug', animeSlugOrId).maybeSingle();
       if (error) throw error;
-      return data as Anime;
+      if (data) return data as Anime;
+      // fallback to id
+      const res = await supabase.from('anime').select('*').eq('id', animeSlugOrId).maybeSingle();
+      if (res.error) throw res.error;
+      return res.data as Anime | null;
     },
     enabled: !!animeSlugOrId,
   });
 
-  // Fetch episodes
-  const { data: episodes, isLoading } = useQuery({
-    queryKey: ['episodes', anime?.slug],
+  const { data: episodes = [], isLoading } = useQuery({
+    queryKey: ['episodes', anime?.slug ?? anime?.id],
     queryFn: async () => {
+      if (!anime?.slug && !anime?.id) return [] as Episode[];
+      // prefer slug but fallback to anime.id if slug missing
+      const key = anime?.slug ?? anime?.id;
       const { data, error } = await supabase
         .from('episodes')
         .select('*')
-        .eq('anime_slug', anime.slug)
-        .order('season_number')
-        .order('episode_number');
+        // try matching by anime_slug if available, otherwise try anime_id
+        .or(`anime_slug.eq.${key},anime_id.eq.${key}`)
+        .order('season_number', { ascending: true })
+        .order('episode_number', { ascending: true });
       if (error) throw error;
-      return data as Episode[];
+      return (data || []) as Episode[];
     },
-    enabled: !!anime?.slug,
+    enabled: !!anime,
   });
 
-  // Recommendations
-  const { data: recommendedAnime } = useQuery({
+  const { data: recommendedAnime = [] } = useQuery({
     queryKey: ['recommended', anime?.genres],
     queryFn: async () => {
       if (!anime?.genres?.length) return [];
+      // very simple recommendations: same genres, exclude current anime
       const { data, error } = await supabase
         .from('anime')
         .select('*')
-        .neq('id', anime.id)
+        .neq('id', anime?.id)
         .limit(12);
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!anime?.genres,
   });
 
-  const seasons = useMemo(() => [...new Set(episodes?.map(e => e.season_number) || [])].sort(), [episodes]);
-  const seasonEpisodes = useMemo(() => episodes?.filter(e => e.season_number === selectedSeason) || [], [episodes, selectedSeason]);
+  // ---- derived lists ----
+  const seasons = useMemo(() => {
+    return [...new Set((episodes || []).map(e => e.season_number))].sort((a, b) => a - b);
+  }, [episodes]);
+
+  useEffect(() => {
+    if (seasons.length && !seasons.includes(selectedSeason)) {
+      setSelectedSeason(seasons[0]);
+    }
+  }, [seasons, selectedSeason]);
+
+  const seasonEpisodes = useMemo(() => {
+    return (episodes || []).filter(e => e.season_number === selectedSeason);
+  }, [episodes, selectedSeason]);
+
   const episodesPerPage = 100;
-  const totalPages = Math.ceil(seasonEpisodes.length / episodesPerPage);
+  const totalPages = Math.max(1, Math.ceil(seasonEpisodes.length / episodesPerPage));
   const displayedEpisodes = seasonEpisodes.slice(episodeRange * episodesPerPage, (episodeRange + 1) * episodesPerPage);
 
-  // Get embed URL
-  const getEmbedUrl = useCallback(
-    (episode: Episode) => {
-      if (!episode) return '';
-      
-      // If a server is selected, check if episode has URL for it
-      if (selectedServer) {
-        const server = servers?.find(s => s.id === selectedServer);
-        const episodeSlug = episode.server_urls?.[selectedServer];
-        
-        // If episode has this server URL, construct full URL
-        if (server && episodeSlug) {
-          return `${server.embed_url}${episodeSlug}`;
+  // ---- choose a sensible server when episode changes (no state in render) ----
+  useEffect(() => {
+    if (!selectedEpisode) return;
+    // prefer current selectedServer if episode has it
+    if (selectedServer && selectedEpisode.server_urls?.[selectedServer]) return;
+    // else pick first compatible server from episode.server_urls that exists in servers list
+    if (selectedEpisode.server_urls) {
+      const keys = Object.keys(selectedEpisode.server_urls);
+      for (const id of keys) {
+        if (servers.find(s => s.id === id)) {
+          setSelectedServer(id);
+          return;
         }
-        
-        // Server selected but episode doesn't have it - check for fallback
-        // Try to find any available server URL
-        if (episode.server_urls && Object.keys(episode.server_urls).length > 0) {
-          const firstAvailableServerId = Object.keys(episode.server_urls)[0];
-          const firstServer = servers?.find(s => s.id === firstAvailableServerId);
-          if (firstServer && episode.server_urls[firstAvailableServerId]) {
-            // Auto-switch to available server
-            setSelectedServer(firstAvailableServerId);
-            return `${firstServer.embed_url}${episode.server_urls[firstAvailableServerId]}`;
+      }
+    }
+    // last fallback: pick first active server globally
+    if (servers.length > 0) {
+      setSelectedServer(prev => prev || servers[0].id);
+    }
+  }, [selectedEpisode, servers, selectedServer]);
+
+  // ---- safe embed URL (no state set here) ----
+  const getEmbedUrl = useCallback(
+    (episode?: Episode) => {
+      if (!episode) return '';
+      // try selectedServer first
+      if (selectedServer && episode.server_urls?.[selectedServer]) {
+        const server = servers.find(s => s.id === selectedServer);
+        if (server) return `${server.embed_url}${episode.server_urls[selectedServer]}`;
+      }
+      // try any server available on episode
+      if (episode.server_urls) {
+        for (const sid of Object.keys(episode.server_urls)) {
+          const server = servers.find(s => s.id === sid);
+          if (server && episode.server_urls[sid]) {
+            return `${server.embed_url}${episode.server_urls[sid]}`;
           }
         }
       }
-      
-      // Fallback to video_url
+      // fallback to direct video_url
       return episode.video_url || '';
     },
     [selectedServer, servers]
   );
 
-  // Set default server when servers load
+  // ---- default server on servers load ----
   useEffect(() => {
-    if (servers && servers.length > 0 && !selectedServer) {
+    if (!selectedServer && servers.length > 0) {
       setSelectedServer(servers[0].id);
     }
   }, [servers, selectedServer]);
 
-  // Load episode
+  // ---- select episode logic ----
   useEffect(() => {
-    if (episodeId && episodes) {
+    // if route contains episodeId, pick it
+    if (episodeId && episodes.length > 0) {
       const ep = episodes.find(e => e.id === episodeId);
       if (ep) {
         setSelectedEpisode(ep);
         setSelectedSeason(ep.season_number);
+        return;
       }
-    } else if (episodes && episodes.length > 0 && !selectedEpisode) {
+    }
+    // otherwise default to first episode if none selected
+    if (!selectedEpisode && episodes.length > 0) {
       setSelectedEpisode(episodes[0]);
+      setSelectedSeason(episodes[0].season_number);
     }
   }, [episodeId, episodes, selectedEpisode]);
 
-  // Load watch progress
+  // ---- load watch progress for selectedEpisode ----
   useEffect(() => {
-    if (!selectedEpisode) return;
-    const loadProgress = async () => {
+    if (!selectedEpisode) {
+      setWatchProgress(0);
+      return;
+    }
+    let mounted = true;
+    (async () => {
       const { data } = await supabase.auth.getUser();
-      if (!data?.user) return;
-      
+      if (!data?.user || !mounted) return;
       const { data: history } = await supabase
         .from('watch_history')
         .select('progress')
         .eq('user_id', data.user.id)
         .eq('episode_id', selectedEpisode.id)
         .maybeSingle();
-      
-      if (history) setWatchProgress(history.progress || 0);
+      if (mounted && history) setWatchProgress(history.progress || 0);
+    })();
+    return () => {
+      mounted = false;
     };
-    loadProgress();
   }, [selectedEpisode]);
 
-  // Watch history with progress
+  // ---- save watch history helper ----
   const saveWatchHistory = useCallback(
     async (episode: Episode, progress = 0) => {
       const { data: authData } = await supabase.auth.getUser();
       if (!authData?.user || !anime?.id) return;
-      await supabase.from('watch_history').upsert({
-        user_id: authData.user.id,
-        anime_id: anime.id,
-        episode_id: episode.id,
-        progress,
-        last_watched: new Date().toISOString(),
-        completed: progress >= 90,
-      });
+      try {
+        await supabase.from('watch_history').upsert({
+          user_id: authData.user.id,
+          anime_id: anime.id,
+          episode_id: episode.id,
+          progress,
+          last_watched: new Date().toISOString(),
+          completed: progress >= 90,
+        });
+      } catch (err) {
+        // ignore silently
+        console.warn('watch_history upsert failed', err);
+      }
     },
     [anime?.id]
   );
 
-  const handleEpisodeSelect = (episode: Episode, showToast = true) => {
-    setSelectedEpisode(episode);
-    navigate(`/watch/${anime?.slug || anime?.id}/${episode.id}`);
-    saveWatchHistory(episode, 0);
-    if (showToast) {
-      toast({
-        title: 'Now Watching',
-        description: `Episode ${episode.episode_number}`,
-      });
-    }
-  };
+  const handleEpisodeSelect = useCallback(
+    (episode: Episode, showToast = true) => {
+      setSelectedEpisode(episode);
+      setSelectedSeason(episode.season_number);
+      navigate(`/watch/${anime?.slug || anime?.id}/${episode.id}`);
+      saveWatchHistory(episode, 0);
+      if (showToast) {
+        toast({
+          title: 'Now Watching',
+          description: `Episode ${episode.episode_number}`,
+        });
+      }
+    },
+    [anime?.slug, anime?.id, navigate, saveWatchHistory, toast]
+  );
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (!episodes || !selectedEpisode) return;
     const idx = episodes.findIndex(e => e.id === selectedEpisode.id);
     if (idx < episodes.length - 1) {
       saveWatchHistory(selectedEpisode, 100);
       handleEpisodeSelect(episodes[idx + 1], autoPlay);
     }
-  };
+  }, [episodes, selectedEpisode, saveWatchHistory, handleEpisodeSelect, autoPlay]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     if (!episodes || !selectedEpisode) return;
     const idx = episodes.findIndex(e => e.id === selectedEpisode.id);
     if (idx > 0) handleEpisodeSelect(episodes[idx - 1]);
-  };
+  }, [episodes, selectedEpisode, handleEpisodeSelect]);
 
-  // Picture in Picture
-  const handlePiP = async () => {
-    const iframe = document.querySelector('iframe');
-    if (!iframe) return;
-    
-    try {
-      // @ts-ignore
-      if (document.pictureInPictureElement) {
-        await document.exitPictureInPicture();
-      } else {
-        toast({
-          title: 'Picture-in-Picture',
-          description: 'PiP mode is controlled by the video player. Look for the PiP button in the player controls.',
-        });
-      }
-    } catch (err) {
-      console.error('PiP error:', err);
-    }
-  };
+  // Picture in Picture: iframe-based players often cannot be controlled from outer doc.
+  const handlePiP = useCallback(async () => {
+    // For many embed players, PiP is provided by the player UI inside iframe.
+    toast({
+      title: 'Picture-in-Picture',
+      description: 'PiP is controlled by the embedded player. Use the player controls to enable PiP if supported.',
+    });
+  }, [toast]);
 
-  // Keyboard control
+  // keyboard controls
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') handleNext();
@@ -279,23 +320,27 @@ export default function Watch() {
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [selectedEpisode, isTheaterMode]);
+  }, [handleNext, handlePrev, handlePiP]);
 
   if (isLoading)
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#07070a] to-black">
+        <Loader2 className="h-10 w-10 animate-spin text-violet-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
       </div>
     );
 
+  // ---- UI ----
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background via-background/95 to-background">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#030307] via-[#07070a] to-black text-gray-100">
       <Navbar />
-      <div className={`container mx-auto px-4 py-8 space-y-6 ${isTheaterMode ? 'max-w-full px-2' : ''}`}>
-        <Card className="overflow-hidden border-border/30 bg-gradient-to-br from-card/80 via-card/60 to-card/80 backdrop-blur-xl shadow-card">
-          <div className="aspect-video bg-black relative group">
+
+      <div className={`container mx-auto px-4 py-8 space-y-6 ${isTheaterMode ? 'max-w-screen-xl' : ''}`}>
+        {/* VIDEO + PLAYER */}
+        <Card className={`overflow-hidden ${isTheaterMode ? 'bg-black/70' : 'bg-gradient-to-br from-card/80 via-card/60 to-card/80'} backdrop-blur-xl shadow-lg`}>
+          <div className={`aspect-video relative group rounded-md overflow-hidden bg-black ${isTheaterMode ? 'shadow-none' : 'shadow-lg'}`}>
             {selectedEpisode ? (
               <>
+                {/* embed iframe */}
                 <iframe
                   src={getEmbedUrl(selectedEpisode)}
                   className="w-full h-full"
@@ -303,139 +348,136 @@ export default function Watch() {
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   title={`Episode ${selectedEpisode.episode_number}`}
                 />
+
+                {/* small purple hint badge */}
                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Badge variant="secondary" className="bg-black/80 text-white">
-                    Press F for theater mode
+                  <Badge className="bg-black/60 text-white px-2 py-0.5 text-xs">
+                    Press F for theater
                   </Badge>
+                </div>
+
+                {/* centered play hint on mobile (subtle, appears on hover / tap) */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="opacity-0 group-hover:opacity-80 transition-opacity duration-300 transform group-hover:scale-100">
+                    {/* layered subtle glow */}
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-500 text-white text-xs rounded-full shadow-lg">
+                      <Play className="h-4 w-4" />
+                      <span>Watch Now</span>
+                    </div>
+                  </div>
                 </div>
               </>
             ) : (
               <div className="flex items-center justify-center h-full">
-                <p className="text-white">Select an episode to watch</p>
+                <p className="text-muted-foreground">Select an episode to watch</p>
               </div>
             )}
           </div>
 
-          {/* Player Controls */}
-          <div className="p-6 space-y-4 bg-gradient-to-b from-card/90 via-card/80 to-card/70 backdrop-blur-md border-t border-border/30">
+          {/* CONTROLS */}
+          <div className="p-6 bg-black/60 backdrop-blur-sm border-t border-white/5">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-bold">{anime?.title}</h2>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-2xl font-bold truncate">{anime?.title}</h2>
                 {selectedEpisode && (
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="secondary">
-                      S{selectedEpisode.season_number} • E{selectedEpisode.episode_number}
-                    </Badge>
-                    {selectedEpisode.duration && (
-                      <Badge variant="outline">{selectedEpisode.duration}m</Badge>
-                    )}
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <Badge className="bg-white/5 text-white/90 px-2 py-0.5">S{selectedEpisode.season_number} • E{selectedEpisode.episode_number}</Badge>
+                    {selectedEpisode.duration && <Badge className="bg-white/5 text-white/80 px-2 py-0.5">{selectedEpisode.duration}m</Badge>}
+                    {anime?.rating && <Badge className="bg-white/5 text-white/80 px-2 py-0.5">⭐ {anime.rating}/10</Badge>}
                   </div>
                 )}
               </div>
-              <div className="flex gap-2">
+
+              <div className="flex items-center gap-2">
                 <Button size="sm" variant="outline" onClick={handlePrev} disabled={!episodes || episodes[0]?.id === selectedEpisode?.id}>
                   <ChevronLeft className="h-4 w-4 mr-1" /> Prev
                 </Button>
-                <Button size="sm" variant="outline" onClick={handleNext} disabled={!episodes || episodes[episodes.length - 1]?.id === selectedEpisode?.id}>
+
+                <Button size="sm" className="bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:brightness-105" onClick={handleNext} disabled={!episodes || episodes[episodes.length - 1]?.id === selectedEpisode?.id}>
                   Next <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
+
                 <Button size="sm" variant="outline" onClick={() => setIsTheaterMode(v => !v)}>
-                  <Maximize className="h-4 w-4 mr-1" /> {isTheaterMode ? 'Normal' : 'Theater'}
+                  <Maximize className="h-4 w-4 mr-1" /> {isTheaterMode ? 'Exit' : 'Theater'}
                 </Button>
+
                 <Button size="sm" variant="outline" onClick={handlePiP} title="Picture-in-Picture (P)">
                   <PictureInPicture2 className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            {/* Controls */}
-            <div className="flex flex-col gap-4">
-              {/* Server Buttons */}
-              {servers && servers.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2">
+            {/* server buttons & settings */}
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
+              {servers.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
                   <Server className="h-4 w-4 text-muted-foreground" />
                   {servers.map(server => {
-                    const hasServerUrl = selectedEpisode?.server_urls?.[server.id];
+                    const hasUrl = !!selectedEpisode?.server_urls?.[server.id];
                     return (
                       <Button
                         key={server.id}
                         size="sm"
                         variant={selectedServer === server.id ? 'default' : 'outline'}
                         onClick={() => {
-                          if (hasServerUrl) {
+                          if (hasUrl) {
                             setSelectedServer(server.id);
                             toast({ title: 'Server changed', description: `Now using ${server.name}` });
+                          } else {
+                            toast({ title: 'Server unavailable', description: `${server.name} not available for this episode` });
                           }
                         }}
-                        disabled={!hasServerUrl}
-                        className={!hasServerUrl ? 'opacity-50 cursor-not-allowed' : ''}
+                        disabled={!hasUrl}
+                        className={!hasUrl ? 'opacity-50 cursor-not-allowed' : ''}
                       >
-                        {server.name}
-                        {!hasServerUrl && ' (N/A)'}
+                        {server.name}{!hasUrl && ' (N/A)'}
                       </Button>
                     );
                   })}
                 </div>
               )}
 
-              {/* Settings & Info */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="autoplay"
-                    checked={autoPlay}
-                    onChange={(e) => setAutoPlay(e.target.checked)}
-                    className="rounded"
-                  />
-                  <label htmlFor="autoplay" className="text-muted-foreground cursor-pointer">
-                    Autoplay next episode
-                  </label>
-                </div>
-                {watchProgress > 0 && (
-                  <Badge variant="outline">
-                    Progress: {watchProgress}%
-                  </Badge>
-                )}
-                <div className="flex gap-2 ml-auto">
-                  <Badge variant="secondary" className="gap-1">
-                    <MessageSquare className="h-3 w-3" />
-                    Scroll down for comments
-                  </Badge>
-                </div>
-              </div>
+              <div className="ml-auto flex items-center gap-3">
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <input type="checkbox" checked={autoPlay} onChange={(e) => setAutoPlay(e.target.checked)} className="rounded" />
+                  Autoplay
+                </label>
 
-              {/* Episode Info */}
-              {selectedEpisode?.title && (
-                <div className="pt-2 border-t border-border/50">
-                  <h4 className="font-semibold text-lg mb-1">{selectedEpisode.title}</h4>
-                  {selectedEpisode.description && (
-                    <p className="text-muted-foreground text-sm line-clamp-2">{selectedEpisode.description}</p>
-                  )}
-                </div>
-              )}
+                {watchProgress > 0 && <Badge className="bg-white/5 px-2 py-0.5">Progress: {watchProgress}%</Badge>}
+
+                <Badge className="bg-white/5 px-2 py-0.5 flex items-center gap-1"><MessageSquare className="h-3 w-3" /> Comments below</Badge>
+              </div>
             </div>
+
+            {/* episode title/description */}
+            {selectedEpisode?.title && (
+              <div className="mt-4 border-t border-white/5 pt-3">
+                <h3 className="font-semibold text-lg">{selectedEpisode.title}</h3>
+                {selectedEpisode.description && <p className="text-sm text-muted-foreground line-clamp-3 mt-1">{selectedEpisode.description}</p>}
+              </div>
+            )}
           </div>
         </Card>
 
-        {/* Episode list */}
-        <Card className="p-6 border-border/30 bg-gradient-to-br from-card/70 via-card/50 to-card/70 backdrop-blur-xl shadow-card">
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Play className="h-5 w-5 text-primary" /> Episodes
-          </h3>
-          <Tabs value={selectedSeason.toString()} onValueChange={v => setSelectedSeason(parseInt(v))}>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-              <TabsList>
-                {seasons.map(season => (
-                  <TabsTrigger key={season} value={season.toString()}>
-                    Season {season}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+        {/* EPISODE LIST */}
+        <Card className="p-6 bg-white/3 border border-white/5 backdrop-blur-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold flex items-center gap-2"><Play className="h-5 w-5 text-purple-400" /> Episodes</h3>
+
+            <div className="flex items-center gap-3">
+              <Tabs value={selectedSeason.toString()} onValueChange={(v) => setSelectedSeason(parseInt(v))}>
+                <TabsList className="flex gap-2">
+                  {seasons.map(season => (
+                    <TabsTrigger key={season} value={season.toString()} className="text-sm">
+                      Season {season}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
 
               {totalPages > 1 && (
-                <Select value={episodeRange.toString()} onValueChange={v => setEpisodeRange(parseInt(v))}>
-                  <SelectTrigger className="w-[200px]">
+                <Select value={episodeRange.toString()} onValueChange={(v) => setEpisodeRange(parseInt(v))}>
+                  <SelectTrigger className="w-[220px]">
                     <SelectValue placeholder="Page" />
                   </SelectTrigger>
                   <SelectContent>
@@ -448,79 +490,67 @@ export default function Watch() {
                 </Select>
               )}
             </div>
+          </div>
 
-            {seasons.map(season => (
-              <TabsContent key={season} value={season.toString()}>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
-                  {displayedEpisodes.map(ep => {
-                    const isWatched = watchProgress >= 90 && ep.id === selectedEpisode?.id;
-                    return (
-                      <Button
-                        key={ep.id}
-                        variant={selectedEpisode?.id === ep.id ? 'default' : 'outline'}
-                        className="h-12 relative group"
-                        onClick={() => handleEpisodeSelect(ep)}
-                        title={ep.title || `Episode ${ep.episode_number}`}
-                      >
-                        {ep.episode_number}
-                        {isWatched && (
-                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background" />
-                        )}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </TabsContent>
-            ))}
-          </Tabs>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
+            {displayedEpisodes.map(ep => {
+              const isCurrent = selectedEpisode?.id === ep.id;
+              const watchedMarker = watchProgress >= 90 && isCurrent;
+              return (
+                <Button
+                  key={ep.id}
+                  variant={isCurrent ? 'default' : 'outline'}
+                  className={`h-12 relative ${isCurrent ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white' : ''}`}
+                  onClick={() => handleEpisodeSelect(ep)}
+                  title={ep.title || `Episode ${ep.episode_number}`}
+                >
+                  <span className="z-10">{ep.episode_number}</span>
+                  {watchedMarker && <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-black" />}
+                </Button>
+              );
+            })}
+          </div>
         </Card>
 
-        {/* Anime Info */}
+        {/* ANIME INFO */}
         {anime && (
-          <Card className="p-6 border-border/30 bg-gradient-to-br from-card/70 via-card/50 to-card/70 backdrop-blur-xl shadow-card animate-fade-in">
-            <div className="flex flex-col md:flex-row gap-4">
+          <Card className="p-6 bg-white/3 border border-white/5 backdrop-blur-sm">
+            <div className="flex gap-4 items-start">
               {anime.cover_image && (
-                <img
-                  src={anime.cover_image}
-                  alt={anime.title}
-                  className="w-full md:w-32 h-auto md:h-48 object-cover rounded-lg hover-lift"
-                />
+                <img src={anime.cover_image} alt={anime.title} className="w-32 h-48 object-cover rounded-lg" />
               )}
-              <div className="flex-1 space-y-3">
-                <h3 className="text-xl font-bold">{anime.title}</h3>
-                {anime.description && <p className="text-muted-foreground line-clamp-3">{anime.description}</p>}
-                <div className="flex gap-2 flex-wrap">
-                  {anime.type && <Badge variant="secondary">{anime.type}</Badge>}
-                  {anime.status && <Badge variant="outline">{anime.status}</Badge>}
-                  {anime.rating && <Badge variant="outline">⭐ {anime.rating}/10</Badge>}
-                  {anime.genres?.slice(0, 4).map(g => (
-                    <Badge key={g} variant="outline">
-                      {g}
-                    </Badge>
-                  ))}
+              <div className="flex-1">
+                <h3 className="text-2xl font-bold">{anime.title}</h3>
+                {anime.description && <p className="text-muted-foreground line-clamp-4 mt-2">{anime.description}</p>}
+                <div className="flex gap-2 mt-3 flex-wrap">
+                  {anime.type && <Badge className="bg-white/5">{anime.type}</Badge>}
+                  {anime.status && <Badge className="bg-white/5">{anime.status}</Badge>}
+                  {anime.rating && <Badge className="bg-white/5">⭐ {anime.rating}/10</Badge>}
+                  {anime.genres?.slice(0, 6).map(g => <Badge key={g} className="bg-white/5">{g}</Badge>)}
                 </div>
               </div>
             </div>
           </Card>
         )}
 
-        {/* Comments */}
+        {/* COMMENTS */}
         {anime?.id && (
-          <Card className="p-6 border-border/50 bg-card/50 backdrop-blur-sm">
+          <Card className="p-6 bg-white/2 border border-white/5 backdrop-blur-sm">
             <Comments animeId={anime.id} />
           </Card>
         )}
 
-        {/* Recommended */}
+        {/* RECOMMENDED */}
         {recommendedAnime && recommendedAnime.length > 0 && (
-          <div className="animate-fade-in space-y-4">
+          <div className="space-y-4">
             <h2 className="text-2xl font-bold flex items-center gap-2">
-              <SkipForward className="h-6 w-6 text-primary" /> You Might Also Like
+              <SkipForward className="h-6 w-6 text-violet-400" /> You Might Also Like
             </h2>
             <AnimeSection title="" animes={recommendedAnime} layout="scroll" />
           </div>
         )}
       </div>
+
       <Footer />
     </div>
   );
