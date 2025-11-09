@@ -40,7 +40,7 @@ export const AnimeCard = ({
 
           {/* Hover overlay - Watch Now text only */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <span className="text-xs text-white font-semibold flex items-center gap-1">
+            <span className="text-xs text-purple font-semibold flex items-center gap-1">
               <Play className="h-3 w-3" />
               Watch Now
             </span>
