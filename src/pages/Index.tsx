@@ -177,19 +177,6 @@ const Index = () => {
     </section>
   )}
 
-  {/* Action */}
-  {latestMovies.length > 0 && (
-    <section className="relative">
-      <div className="absolute inset-0 bg-gradient-to-r from-red-600/15 to-transparent rounded-xl blur-2xl" />
-      <AnimeSection
-        title="⚔️ Action Series"
-        animes={latestMovies}
-        viewAllLink="/action"
-        layout="scroll"
-      />
-    </section>
-  )}
-
   {/* Fantasy */}
   {top10Anime.length > 0 && (
     <section className="relative">
