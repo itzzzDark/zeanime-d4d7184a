@@ -173,6 +173,8 @@ const AnimeDetail = () => {
           user_id: user.id, 
           anime_id: anime.id,
           status 
+        }, {
+          onConflict: 'user_id,anime_id'
         });
       if (error) throw error;
       return status;

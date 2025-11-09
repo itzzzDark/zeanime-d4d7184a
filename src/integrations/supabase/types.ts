@@ -372,7 +372,15 @@ export type Database = {
           updated_at?: string | null
           video_url?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "episodes_anime_slug_fkey"
+            columns: ["anime_slug"]
+            isOneToOne: false
+            referencedRelation: "anime"
+            referencedColumns: ["slug"]
+          },
+        ]
       }
       favorites: {
         Row: {

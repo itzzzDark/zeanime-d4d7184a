@@ -9,13 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AnimeCard } from '@/components/AnimeCard';
-import { User, Heart, Clock } from 'lucide-react';
+import { User, Heart, Clock, List } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [favorites, setFavorites] = useState<any[]>([]);
+  const [watchlist, setWatchlist] = useState<any[]>([]);
   const [watchHistory, setWatchHistory] = useState<any[]>([]);
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
@@ -28,6 +29,7 @@ export default function Profile() {
     }
     fetchProfile();
     fetchFavorites();
+    fetchWatchlist();
     fetchWatchHistory();
   }, [user, navigate]);
 
@@ -52,6 +54,16 @@ export default function Profile() {
       .eq('user_id', user?.id);
     
     if (data) setFavorites(data);
+  };
+
+  const fetchWatchlist = async () => {
+    const { data } = await supabase
+      .from('watchlist')
+      .select('*, anime(*)')
+      .eq('user_id', user?.id)
+      .order('updated_at', { ascending: false });
+    
+    if (data) setWatchlist(data);
   };
 
   const fetchWatchHistory = async () => {
@@ -95,14 +107,18 @@ export default function Profile() {
         </Card>
 
         <Tabs defaultValue="favorites" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="favorites">
               <Heart className="h-4 w-4 mr-2" />
               Favorites
             </TabsTrigger>
+            <TabsTrigger value="watchlist">
+              <List className="h-4 w-4 mr-2" />
+              Watchlist
+            </TabsTrigger>
             <TabsTrigger value="history">
               <Clock className="h-4 w-4 mr-2" />
-              Watch History
+              History
             </TabsTrigger>
             <TabsTrigger value="settings">
               <User className="h-4 w-4 mr-2" />
@@ -127,6 +143,26 @@ export default function Profile() {
             </div>
             {favorites.length === 0 && (
               <p className="text-center text-muted-foreground py-12">No favorites yet</p>
+            )}
+          </TabsContent>
+
+          <TabsContent value="watchlist" className="mt-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {watchlist.map((item) => (
+                <AnimeCard
+                  key={item.id}
+                  id={item.anime.id}
+                  title={item.anime.title}
+                  coverImage={item.anime.cover_image}
+                  rating={item.anime.rating}
+                  type={item.anime.type}
+                  status={item.anime.status}
+                  episodes={item.anime.total_episodes}
+                />
+              ))}
+            </div>
+            {watchlist.length === 0 && (
+              <p className="text-center text-muted-foreground py-12">No items in watchlist yet</p>
             )}
           </TabsContent>
 
