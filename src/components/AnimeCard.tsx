@@ -38,10 +38,10 @@ export const AnimeCard = ({
             loading="lazy"
           />
 
-          {/* Hover overlay - centered Watch Now */}
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <span className="bg-purple-600 px-4 py-2 rounded-md text-sm text-white font-semibold flex items-center gap-2 shadow-lg">
-              <Play className="h-5 w-5" />
+          {/* Hover overlay - Watch Now text only */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <span className="text-xs text-white font-semibold flex items-center gap-1">
+              <Play className="h-3 w-3" />
               Watch Now
             </span>
           </div>
