@@ -137,31 +137,98 @@ const Index = () => {
       </section>
 
       {/* Main Sections */}
-      <main className="relative z-20 container mx-auto px-4 py-12 space-y-20 backdrop-blur-[1.5px]">
-        {trendingAnime.length > 0 && (
-          <AnimeSection title="🔥 Trending Now" animes={trendingAnime} viewAllLink="/browse" layout="scroll" />
-        )}
+      <main className="relative z-20 container mx-auto px-4 py-12 space-y-24">
+  {/* Trending */}
+  {trendingAnime.length > 0 && (
+    <section className="relative">
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-700/10 to-transparent rounded-xl blur-2xl" />
+      <AnimeSection
+        title="🔥 Trending Now"
+        animes={trendingAnime}
+        viewAllLink="/browse"
+        layout="scroll"
+      />
+    </section>
+  )}
 
-        {mostWatchedAnime.length > 0 && (
-          <AnimeSection title="👑 Most Watched" animes={mostWatchedAnime} viewAllLink="/browse" layout="scroll" />
-        )}
+  {/* Most Watched */}
+  {mostWatchedAnime.length > 0 && (
+    <section className="relative">
+      <div className="absolute inset-0 bg-gradient-to-l from-indigo-700/10 to-transparent rounded-xl blur-2xl" />
+      <AnimeSection
+        title="👑 Most Watched"
+        animes={mostWatchedAnime}
+        viewAllLink="/browse"
+        layout="scroll"
+      />
+    </section>
+  )}
 
-        {latestSeries.length > 0 && (
-          <AnimeSection title="📺 Latest Series" animes={latestSeries} viewAllLink="/browse" layout="scroll" />
-        )}
+  {/* Romance */}
+  {latestSeries.length > 0 && (
+    <section className="relative">
+      <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 to-transparent rounded-xl blur-2xl" />
+      <AnimeSection
+        title="🔮 New Series"
+        animes={latestSeries}
+        viewAllLink="/romance"
+        layout="scroll"
+      />
+    </section>
+  )}
 
-        {latestMovies.length > 0 && (
-          <AnimeSection title="🎬 Latest Movies" animes={latestMovies} viewAllLink="/movies" layout="scroll" />
-        )}
+  {/* Action */}
+  {latestMovies.length > 0 && (
+    <section className="relative">
+      <div className="absolute inset-0 bg-gradient-to-r from-red-600/15 to-transparent rounded-xl blur-2xl" />
+      <AnimeSection
+        title="⚔️ Action Series"
+        animes={latestMovies}
+        viewAllLink="/action"
+        layout="scroll"
+      />
+    </section>
+  )}
 
-        {top10Anime.length > 0 && (
-          <AnimeSection title="⭐ Top Rated" animes={top10Anime} viewAllLink="/top" layout="grid" />
-        )}
+  {/* Fantasy */}
+  {top10Anime.length > 0 && (
+    <section className="relative">
+      <div className="absolute inset-0 bg-gradient-to-l from-blue-700/15 to-transparent rounded-xl blur-2xl" />
+      <AnimeSection
+        title="🌌 Top 10 Animes"
+        animes={top10Anime}
+        viewAllLink="/fantasy"
+        layout="grid"
+      />
+    </section>
+  )}
 
-        {upcomingAnime.length > 0 && (
-          <AnimeSection title="⏳ Coming Soon" animes={upcomingAnime} viewAllLink="/schedule" layout="scroll" />
-        )}
-      </main>
+  {/* Movies */}
+  {latestMovies.length > 0 && (
+    <section className="relative">
+      <div className="absolute inset-0 bg-gradient-to-r from-gray-500/10 to-transparent rounded-xl blur-2xl" />
+      <AnimeSection
+        title="🎬 Latest Movies"
+        animes={latestMovies}
+        viewAllLink="/movies"
+        layout="scroll"
+      />
+    </section>
+  )}
+
+  {/* Coming Soon */}
+  {upcomingAnime.length > 0 && (
+    <section className="relative">
+      <div className="absolute inset-0 bg-gradient-to-r from-cyan-600/10 to-transparent rounded-xl blur-2xl" />
+      <AnimeSection
+        title="⏳ Coming Soon"
+        animes={upcomingAnime}
+        viewAllLink="/schedule"
+        layout="scroll"
+      />
+    </section>
+  )}
+</main>
 
       <Footer />
     </div>
