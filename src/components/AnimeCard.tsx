@@ -9,7 +9,6 @@ interface AnimeCardProps {
   title: string;
   coverImage: string;
   rating?: number;
-  type: string;
   status?: string;
   episodes?: number;
 }
@@ -19,7 +18,6 @@ export const AnimeCard = ({
   title,
   coverImage,
   rating,
-  type,
   status,
   episodes,
 }: AnimeCardProps) => {
@@ -40,24 +38,19 @@ export const AnimeCard = ({
             loading="lazy"
           />
 
-          {/* Hover overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
-            <span className="bg-purple-600 px-3 py-1 rounded-md text-xs text-white font-semibold flex items-center gap-1">
-              <Play className="h-4 w-4" />
+          {/* Hover overlay - centered Watch Now */}
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <span className="bg-purple-600 px-4 py-2 rounded-md text-sm text-white font-semibold flex items-center gap-2 shadow-lg">
+              <Play className="h-5 w-5" />
               Watch Now
             </span>
           </div>
 
-          {/* Type badge */}
-          <Badge className="absolute top-2 right-2 bg-purple-500 text-white text-[10px] px-2 py-1 rounded-full z-10">
-            {type}
-          </Badge>
-
-          {/* Status badge */}
+          {/* Status badge (small) */}
           {status && (
             <Badge
               className={clsx(
-                "absolute top-2 left-2 text-[9px] px-1 py-0.5 rounded-full z-10",
+                "absolute top-2 left-2 text-[8px] px-2 py-0.5 rounded-full z-10",
                 status === "Ongoing"
                   ? "bg-green-500 text-white"
                   : "bg-gray-500 text-white"
