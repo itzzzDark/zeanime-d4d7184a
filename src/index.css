@@ -8,75 +8,75 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 195 70% 4%;
-    --foreground: 180 10% 98%;
+    --background: 240 10% 4%;
+    --foreground: 240 5% 98%;
 
-    --card: 195 60% 8%;
-    --card-foreground: 180 10% 98%;
+    --card: 240 10% 8%;
+    --card-foreground: 240 5% 98%;
 
-    --popover: 195 65% 6%;
-    --popover-foreground: 180 10% 98%;
+    --popover: 240 10% 6%;
+    --popover-foreground: 240 5% 98%;
 
-    --primary: 189 94% 43%;
-    --primary-foreground: 180 10% 98%;
+    --primary: 270 80% 60%;
+    --primary-foreground: 240 5% 98%;
 
-    --secondary: 180 85% 55%;
-    --secondary-foreground: 180 10% 98%;
+    --secondary: 280 70% 65%;
+    --secondary-foreground: 240 5% 98%;
 
-    --muted: 195 40% 18%;
-    --muted-foreground: 180 10% 70%;
+    --muted: 240 10% 18%;
+    --muted-foreground: 240 5% 70%;
 
-    --accent: 170 90% 50%;
-    --accent-foreground: 180 10% 98%;
+    --accent: 260 85% 55%;
+    --accent-foreground: 240 5% 98%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 180 10% 98%;
+    --destructive-foreground: 240 5% 98%;
 
-    --border: 195 40% 18%;
-    --input: 195 50% 12%;
-    --ring: 189 94% 43%;
+    --border: 240 10% 18%;
+    --input: 240 10% 12%;
+    --ring: 270 80% 60%;
 
     --radius: 0.75rem;
 
-    /* Cyan theme gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(189 94% 43%), hsl(180 85% 55%));
-    --gradient-card: linear-gradient(135deg, hsl(195 60% 8%), hsl(195 65% 6%));
-    --gradient-hero: linear-gradient(180deg, hsl(195 70% 4%) 0%, hsl(195 60% 8%) 100%);
+    /* Purple theme gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(270 80% 60%), hsl(280 70% 65%));
+    --gradient-card: linear-gradient(135deg, hsl(240 10% 8%), hsl(240 10% 6%));
+    --gradient-hero: linear-gradient(180deg, hsl(240 10% 4%) 0%, hsl(240 10% 8%) 100%);
     
     /* Glow effects */
-    --glow-cyan: 0 0 30px hsl(189 94% 43% / 0.5);
-    --glow-teal: 0 0 30px hsl(180 85% 55% / 0.5);
-    --shadow-card: 0 10px 40px hsl(189 94% 43% / 0.2);
+    --glow-purple: 0 0 30px hsl(270 80% 60% / 0.5);
+    --glow-violet: 0 0 30px hsl(280 70% 65% / 0.5);
+    --shadow-card: 0 10px 40px hsl(270 80% 60% / 0.2);
   }
 
   .dark {
-    --background: 195 70% 4%;
-    --foreground: 180 10% 98%;
+    --background: 240 10% 4%;
+    --foreground: 240 5% 98%;
 
-    --card: 195 60% 8%;
-    --card-foreground: 180 10% 98%;
+    --card: 240 10% 8%;
+    --card-foreground: 240 5% 98%;
 
-    --popover: 195 65% 6%;
-    --popover-foreground: 180 10% 98%;
+    --popover: 240 10% 6%;
+    --popover-foreground: 240 5% 98%;
 
-    --primary: 189 94% 43%;
-    --primary-foreground: 180 10% 98%;
+    --primary: 270 80% 60%;
+    --primary-foreground: 240 5% 98%;
 
-    --secondary: 180 85% 55%;
-    --secondary-foreground: 180 10% 98%;
+    --secondary: 280 70% 65%;
+    --secondary-foreground: 240 5% 98%;
 
-    --muted: 195 40% 18%;
-    --muted-foreground: 180 10% 70%;
+    --muted: 240 10% 18%;
+    --muted-foreground: 240 5% 70%;
 
-    --accent: 170 90% 50%;
-    --accent-foreground: 180 10% 98%;
+    --accent: 260 85% 55%;
+    --accent-foreground: 240 5% 98%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 180 10% 98%;
+    --destructive-foreground: 240 5% 98%;
 
-    --border: 195 40% 18%;
-    --input: 195 50% 12%;
-    --ring: 189 94% 43%;
+    --border: 240 10% 18%;
+    --input: 240 10% 12%;
+    --ring: 270 80% 60%;
   }
 }
 
@@ -110,12 +110,12 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
-  .glow-cyan {
-    box-shadow: var(--glow-cyan);
+  .glow-purple {
+    box-shadow: var(--glow-purple);
   }
   
-  .glow-teal {
-    box-shadow: var(--glow-teal);
+  .glow-violet {
+    box-shadow: var(--glow-violet);
   }
 
   .shadow-card {
@@ -168,7 +168,7 @@ All colors MUST be HSL.
 
   .hover-lift:hover {
     transform: translateY(-8px);
-    box-shadow: 0 20px 40px hsl(189 94% 43% / 0.3);
+    box-shadow: 0 20px 40px hsl(270 80% 60% / 0.3);
   }
 }
 
@@ -216,10 +216,10 @@ All colors MUST be HSL.
 
 @keyframes glow {
   0%, 100% {
-    box-shadow: 0 0 20px hsl(189 94% 43% / 0.4);
+    box-shadow: 0 0 20px hsl(270 80% 60% / 0.4);
   }
   50% {
-    box-shadow: 0 0 40px hsl(189 94% 43% / 0.6), 0 0 60px hsl(180 85% 55% / 0.4);
+    box-shadow: 0 0 40px hsl(270 80% 60% / 0.6), 0 0 60px hsl(280 70% 65% / 0.4);
   }
 }
 

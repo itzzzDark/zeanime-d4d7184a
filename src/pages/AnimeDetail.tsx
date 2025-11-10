@@ -28,18 +28,29 @@ const AnimeDetail = () => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
 
-  // Fetch anime details by ID
+  // Fetch anime details by slug or ID
   const { data: anime, isLoading: animeLoading } = useQuery({
     queryKey: ["anime", slugOrId],
     queryFn: async () => {
+      if (!slugOrId) return null;
+      // Try slug first
       const { data, error } = await supabase
+        .from("anime")
+        .select("*")
+        .eq("slug", slugOrId)
+        .maybeSingle();
+      
+      if (data) return data;
+      
+      // Fallback to ID for backwards compatibility
+      const idResult = await supabase
         .from("anime")
         .select("*")
         .eq("id", slugOrId)
         .maybeSingle();
       
-      if (error) throw error;
-      return data;
+      if (idResult.error) throw idResult.error;
+      return idResult.data;
     },
     enabled: !!slugOrId,
   });
@@ -249,7 +260,7 @@ const AnimeDetail = () => {
             {/* Action Buttons */}
             <div className="mt-6 space-y-3">
               {episodes && episodes.length > 0 && anime && (
-                <Link to={`/watch/${anime.id}/${episodes[0].id}`}>
+                <Link to={`/watch/${anime.slug || anime.id}/${episodes[0].id}`}>
                   <Button size="lg" className="w-full gap-2 hover-lift">
                     <Play className="h-5 w-5 fill-current" />
                     Watch Episode 1
@@ -435,7 +446,7 @@ const AnimeDetail = () => {
                     {seasonEpisodes.map((episode: any) => (
                       <Link
                         key={episode.id}
-                        to={`/watch/${anime.id}/${episode.id}`}
+                        to={`/watch/${anime.slug || anime.id}/${episode.id}`}
                         className="group block p-4 bg-card hover:bg-card/80 border border-border/50 rounded-xl transition-all hover-lift"
                       >
                         <div className="flex gap-4">

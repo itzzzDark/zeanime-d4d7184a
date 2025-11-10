@@ -115,11 +115,10 @@ export default function Profile() {
               {favorites.map((fav) => (
                 <AnimeCard
                   key={fav.id}
-                  id={fav.anime.id}
+                  id={fav.anime.slug || fav.anime.id}
                   title={fav.anime.title}
                   coverImage={fav.anime.cover_image}
                   rating={fav.anime.rating}
-                  type={fav.anime.type}
                   status={fav.anime.status}
                   episodes={fav.anime.total_episodes}
                 />
@@ -135,11 +134,10 @@ export default function Profile() {
               {watchHistory.map((item) => (
                 <AnimeCard
                   key={item.id}
-                  id={item.anime.id}
+                  id={item.anime.slug || item.anime.id}
                   title={item.anime.title}
                   coverImage={item.anime.cover_image}
                   rating={item.anime.rating}
-                  type={item.anime.type}
                   status={item.anime.status}
                   episodes={item.anime.total_episodes}
                 />

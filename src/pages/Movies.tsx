@@ -37,11 +37,10 @@ const Movies = () => {
               {movies?.map((movie, index) => (
                 <div key={movie.id} className="animate-scale-in" style={{ animationDelay: `${index * 0.05}s` }}>
                   <AnimeCard 
-                    id={movie.id}
+                    id={movie.slug || movie.id}
                     title={movie.title}
                     coverImage={movie.cover_image || "/placeholder.svg"}
                     rating={movie.rating || undefined}
-                    type={movie.type}
                     status={movie.status}
                     episodes={movie.total_episodes || undefined}
                   />

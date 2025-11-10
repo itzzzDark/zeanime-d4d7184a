@@ -320,6 +320,7 @@ export default function AnimeManagement({ onUpdate }: { onUpdate: () => void }) 
         <TableHeader>
           <TableRow>
             <TableHead>Title</TableHead>
+            <TableHead>Slug</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Episodes</TableHead>
@@ -331,6 +332,7 @@ export default function AnimeManagement({ onUpdate }: { onUpdate: () => void }) 
           {anime.map((item) => (
             <TableRow key={item.id}>
               <TableCell className="font-medium">{item.title}</TableCell>
+              <TableCell className="text-muted-foreground text-sm font-mono">{item.slug}</TableCell>
               <TableCell>{item.type}</TableCell>
               <TableCell>{item.status}</TableCell>
               <TableCell>{item.total_episodes}</TableCell>

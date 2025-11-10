@@ -117,11 +117,10 @@ const Browse = () => {
               {filteredAnime?.map((item, index) => (
                 <div key={item.id} className="animate-scale-in" style={{ animationDelay: `${index * 0.05}s` }}>
                   <AnimeCard 
-                    id={item.id}
+                    id={item.slug || item.id}
                     title={item.title}
                     coverImage={item.cover_image || "/placeholder.svg"}
                     rating={item.rating || undefined}
-                    type={item.type}
                     status={item.status}
                     episodes={item.total_episodes || undefined}
                   />

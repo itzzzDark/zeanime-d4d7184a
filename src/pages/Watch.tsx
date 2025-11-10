@@ -324,20 +324,20 @@ export default function Watch() {
 
   if (isLoading)
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#07070a] to-black">
-        <Loader2 className="h-10 w-10 animate-spin text-violet-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background to-black">
+        <Loader2 className="h-10 w-10 animate-spin text-primary glow-purple" />
       </div>
     );
 
   // ---- UI ----
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#030307] via-[#07070a] to-black text-gray-100">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background via-background/95 to-black text-foreground">
       <Navbar />
 
-      <div className={`container mx-auto px-4 py-8 space-y-6 ${isTheaterMode ? 'max-w-screen-xl' : ''}`}>
+      <div className={`container mx-auto px-4 py-8 space-y-6 ${isTheaterMode ? 'max-w-screen-2xl' : 'max-w-7xl'}`}>
         {/* VIDEO + PLAYER */}
-        <Card className={`overflow-hidden ${isTheaterMode ? 'bg-black/70' : 'bg-gradient-to-br from-card/80 via-card/60 to-card/80'} backdrop-blur-xl shadow-lg`}>
-          <div className={`aspect-video relative group rounded-md overflow-hidden bg-black ${isTheaterMode ? 'shadow-none' : 'shadow-lg'}`}>
+        <Card className={`overflow-hidden border-primary/20 ${isTheaterMode ? 'bg-black/90' : 'bg-card/90'} backdrop-blur-xl shadow-2xl shadow-primary/10`}>
+          <div className={`aspect-video relative group rounded-lg overflow-hidden bg-black ${isTheaterMode ? 'shadow-none' : 'shadow-2xl shadow-primary/20'}`}>
             {selectedEpisode ? (
               <>
                 {/* embed iframe */}
@@ -375,7 +375,7 @@ export default function Watch() {
           </div>
 
           {/* CONTROLS */}
-          <div className="p-6 bg-black/60 backdrop-blur-sm border-t border-white/5">
+          <div className="p-6 bg-gradient-to-br from-card/80 to-card/60 backdrop-blur-md border-t border-primary/10">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <h2 className="text-2xl font-bold truncate">{anime?.title}</h2>

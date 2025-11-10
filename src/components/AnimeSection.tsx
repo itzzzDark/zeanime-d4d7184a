@@ -5,10 +5,10 @@ import { Link } from "react-router-dom";
 
 interface Anime {
   id: string;
+  slug?: string;
   title: string;
   cover_image: string;
   rating: number;
-  type: string;
   status: string;
   total_episodes: number;
 }
@@ -51,11 +51,10 @@ export const AnimeSection = ({ title, animes, viewAllLink, layout = 'grid' }: An
         {animes.map((anime) => (
           <div key={anime.id} className={isScroll ? "flex-shrink-0 w-32 snap-start" : ""}>
             <AnimeCard
-              id={anime.id}
+              id={anime.slug || anime.id}
               title={anime.title}
               coverImage={anime.cover_image || "/placeholder.svg"}
               rating={anime.rating}
-              type={anime.type}
               status={anime.status}
               episodes={anime.total_episodes}
             />
