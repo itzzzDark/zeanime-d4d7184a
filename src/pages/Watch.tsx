@@ -460,57 +460,81 @@ export default function Watch() {
         </Card>
 
         {/* EPISODE LIST */}
-        <Card className="p-6 bg-white/3 border border-white/5 backdrop-blur-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold flex items-center gap-2"><Play className="h-5 w-5 text-purple-400" /> Episodes</h3>
+<Card className="p-6 bg-gradient-to-br from-[#0a0a12]/80 via-[#0f0f1a]/70 to-[#141421]/80 border border-white/10 rounded-xl shadow-lg backdrop-blur-md">
+  <div className="flex items-center justify-between mb-6">
+    <h3 className="text-xl font-bold flex items-center gap-2 text-white tracking-wide">
+      <Play className="h-5 w-5 text-purple-400 animate-pulse" />
+      Episodes
+    </h3>
 
-            <div className="flex items-center gap-3">
-              <Tabs value={selectedSeason.toString()} onValueChange={(v) => setSelectedSeason(parseInt(v))}>
-                <TabsList className="flex gap-2">
-                  {seasons.map(season => (
-                    <TabsTrigger key={season} value={season.toString()} className="text-sm">
-                      Season {season}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
+    <div className="flex items-center gap-3">
+      {/* Season Tabs */}
+      <Tabs value={selectedSeason.toString()} onValueChange={(v) => setSelectedSeason(parseInt(v))}>
+        <TabsList className="bg-black/40 border border-white/10 rounded-lg flex gap-2 p-1">
+          {seasons.map((season) => (
+            <TabsTrigger
+              key={season}
+              value={season.toString()}
+              className="text-sm text-gray-300 data-[state=active]:text-white data-[state=active]:bg-purple-600/80 rounded-md transition-all"
+            >
+              S{season}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
-              {totalPages > 1 && (
-                <Select value={episodeRange.toString()} onValueChange={(v) => setEpisodeRange(parseInt(v))}>
-                  <SelectTrigger className="w-[220px]">
-                    <SelectValue placeholder="Page" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: totalPages }, (_, i) => (
-                      <SelectItem key={i} value={i.toString()}>
-                        {i * episodesPerPage + 1}–{Math.min((i + 1) * episodesPerPage, seasonEpisodes.length)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-          </div>
+      {/* Episode Pagination */}
+      {totalPages > 1 && (
+        <Select value={episodeRange.toString()} onValueChange={(v) => setEpisodeRange(parseInt(v))}>
+          <SelectTrigger className="w-[200px] bg-black/40 border border-white/10 text-gray-300">
+            <SelectValue placeholder="Page" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#0f0f1a]/95 text-gray-200 border border-white/10">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <SelectItem
+                key={i}
+                value={i.toString()}
+                className="hover:bg-purple-600/20 transition-colors"
+              >
+                {i * episodesPerPage + 1}–{Math.min((i + 1) * episodesPerPage, seasonEpisodes.length)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+    </div>
+  </div>
 
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
-            {displayedEpisodes.map(ep => {
-              const isCurrent = selectedEpisode?.id === ep.id;
-              const watchedMarker = watchProgress >= 90 && isCurrent;
-              return (
-                <Button
-                  key={ep.id}
-                  variant={isCurrent ? 'default' : 'outline'}
-                  className={`h-12 relative ${isCurrent ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white' : ''}`}
-                  onClick={() => handleEpisodeSelect(ep)}
-                  title={ep.title || `Episode ${ep.episode_number}`}
-                >
-                  <span className="z-10">{ep.episode_number}</span>
-                  {watchedMarker && <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-black" />}
-                </Button>
-              );
-            })}
-          </div>
-        </Card>
+  {/* Episode Buttons */}
+  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
+    {displayedEpisodes.map((ep) => {
+      const isCurrent = selectedEpisode?.id === ep.id;
+      const watchedMarker = watchProgress >= 90 && isCurrent;
+      return (
+        <Button
+          key={ep.id}
+          variant={isCurrent ? 'default' : 'outline'}
+          className={`
+            h-12 relative text-sm font-semibold rounded-lg transition-all
+            border border-white/10 backdrop-blur-sm
+            ${isCurrent
+              ? 'bg-gradient-to-r from-purple-700 to-purple-500 text-white shadow-md shadow-purple-500/30 scale-105'
+              : 'bg-black/40 text-gray-300 hover:bg-purple-500/20 hover:text-white'}
+          `}
+          onClick={() => handleEpisodeSelect(ep)}
+          title={ep.title || `Episode ${ep.episode_number}`}
+        >
+          <span className="z-10">{ep.episode_number}</span>
+
+          {/* Watched Indicator */}
+          {watchedMarker && (
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-black shadow-md shadow-green-400/40" />
+          )}
+        </Button>
+      );
+    })}
+  </div>
+</Card>
 
         {/* ANIME INFO */}
         {anime && (
