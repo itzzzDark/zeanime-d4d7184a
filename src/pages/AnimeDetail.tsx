@@ -430,74 +430,7 @@ const AnimeDetail = () => {
           </div>
         </div>
 
-        {/* Episodes List by Season */}
-        {episodesBySeason && Object.keys(episodesBySeason).length > 0 && (
-          <div className="space-y-6 mb-12">
-            <h2 className="text-3xl font-bold flex items-center gap-3">
-              <Play className="h-8 w-8 text-primary" />
-              Episodes
-            </h2>
-            {Object.entries(episodesBySeason)
-              .sort(([a], [b]) => Number(a) - Number(b))
-              .map(([season, seasonEpisodes]) => (
-                <div key={season} className="space-y-4 animate-fade-in">
-                  <h3 className="text-2xl font-bold text-primary">Season {season}</h3>
-                  <div className="grid gap-3">
-                    {seasonEpisodes.map((episode: any) => (
-                      <Link
-                        key={episode.id}
-                        to={`/watch/${anime.slug || anime.id}/${episode.id}`}
-                        className="group block p-4 bg-card hover:bg-card/80 border border-border/50 rounded-xl transition-all hover-lift"
-                      >
-                        <div className="flex gap-4">
-                          {episode.thumbnail ? (
-                            <div className="relative w-40 h-24 rounded-lg overflow-hidden flex-shrink-0">
-                              <img
-                                src={episode.thumbnail}
-                                alt={`Episode ${episode.episode_number}`}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                              <div className="absolute bottom-2 left-2">
-                                <Badge variant="secondary" className="bg-black/80 text-white border-0">
-                                  EP {episode.episode_number}
-                                </Badge>
-                              </div>
-                              {episode.duration && (
-                                <div className="absolute bottom-2 right-2">
-                                  <Badge variant="secondary" className="bg-black/80 text-white border-0 text-xs">
-                                    {Math.floor(episode.duration / 60)}m
-                                  </Badge>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="w-40 h-24 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
-                              <span className="text-2xl font-bold text-primary">{episode.episode_number}</span>
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-lg group-hover:text-primary transition-colors truncate">
-                              Episode {episode.episode_number}
-                              {episode.title && `: ${episode.title}`}
-                            </h4>
-                            {episode.description && (
-                              <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                                {episode.description}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center">
-                            <Play className="h-8 w-8 text-primary/60 group-hover:text-primary transition-colors" />
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-          </div>
-        )}
+        
 
         {/* Recommended Anime */}
         {recommendedAnime && recommendedAnime.length > 0 && (
