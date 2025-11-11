@@ -1,8 +1,9 @@
 import { useLocation, Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const NotFound = () => {
   const location = useLocation();
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     console.error(
@@ -12,23 +13,31 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-purple-900 via-purple-800 to-purple-950 px-4 overflow-hidden relative">
-      {/* Soft colorful glow blobs */}
-      <div className="absolute top-[-50px] left-[-50px] w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse-slow"></div>
-      <div className="absolute bottom-[-80px] right-[-60px] w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-2xl opacity-40 animate-pulse-slow"></div>
-      <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-2xl opacity-30 animate-pulse-slow"></div>
+    <div className="flex min-h-screen items-center justify-center bg-black px-4">
+      <div className="max-w-md text-center p-8 bg-gray-900 rounded-3xl shadow-2xl">
+        {/* Custom image with fallback */}
+        {!imgError ? (
+          <img
+            src="https://media3.giphy.com/media/v1.Y2lkPTZjMDliOTUyMHV2aTcwYWxzd2FuZGVmMWNtYTIxZzJhN3Nlajk1MmUzYmFvYjdqZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ROF8OQvDmxytW/giphy.gif" // Replace with your image path
+            alt="Page Not Found"
+            className="mx-auto mb-6 w-48 h-48 object-contain"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="mx-auto mb-6 w-48 h-48 flex items-center justify-center text-6xl text-purple-500 font-bold">
+            404
+          </div>
+        )}
 
-      <div className="relative max-w-md text-center p-12 bg-purple-950 bg-opacity-70 rounded-3xl shadow-2xl backdrop-blur-md animate-fade-in">
-        <div className="text-8xl mb-6 text-purple-300 font-extrabold">💜</div>
-        <h1 className="mb-4 text-4xl font-bold text-purple-100 tracking-tight">
-          404
+        <h1 className="mb-4 text-4xl font-extrabold text-white tracking-tight">
+          Page Not Found
         </h1>
-        <p className="mb-8 text-lg text-purple-200">
+        <p className="mb-8 text-lg text-gray-300">
           Oops! The page you’re looking for doesn’t exist or has been moved.
         </p>
         <Link
           to="/"
-          className="inline-block px-8 py-3 text-purple-900 bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 hover:scale-105 transform transition duration-300 rounded-lg font-semibold shadow-lg"
+          className="inline-block px-8 py-3 text-white bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 hover:scale-105 transform transition duration-300 rounded-lg font-semibold shadow-lg"
         >
           Return Home
         </Link>
