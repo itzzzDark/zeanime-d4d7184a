@@ -6,7 +6,9 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { AnimeSection } from "@/components/AnimeSection";
+import { Comments } from "@/components/Comments";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -430,7 +432,95 @@ const AnimeDetail = () => {
           </div>
         </div>
 
-        
+        {/* Episodes List by Season */}
+        {episodesBySeason && Object.keys(episodesBySeason).length > 0 && (
+          <div className="space-y-6 mb-12">
+            <h2 className="text-3xl font-bold flex items-center gap-3 text-gradient">
+              <Play className="h-8 w-8" />
+              Episodes
+            </h2>
+            {Object.entries(episodesBySeason)
+              .sort(([a], [b]) => Number(a) - Number(b))
+              .map(([season, seasonEpisodes]) => (
+                <div key={season} className="space-y-4 animate-fade-in">
+                  <div className="flex items-center gap-3">
+                    <div className="h-1 w-12 bg-gradient-primary rounded-full" />
+                    <h3 className="text-2xl font-bold">Season {season}</h3>
+                    <div className="h-1 flex-1 bg-gradient-primary/30 rounded-full" />
+                  </div>
+                  <div className="grid gap-4">
+                    {seasonEpisodes.map((episode: any) => (
+                      <Link
+                        key={episode.id}
+                        to={`/watch/${anime.slug || anime.id}/${episode.id}`}
+                        className="group block"
+                      >
+                        <Card className="p-4 border-border/50 bg-card/30 backdrop-blur-sm hover:bg-card/50 hover:border-primary/50 transition-all hover-lift">
+                          <div className="flex gap-4">
+                            {episode.thumbnail ? (
+                              <div className="relative w-48 h-28 rounded-lg overflow-hidden flex-shrink-0">
+                                <img
+                                  src={episode.thumbnail}
+                                  alt={`Episode ${episode.episode_number}`}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                                <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                                  <Badge variant="secondary" className="bg-gradient-primary border-0 font-semibold">
+                                    EP {episode.episode_number}
+                                  </Badge>
+                                  {episode.duration && (
+                                    <Badge variant="secondary" className="bg-black/80 text-white border-0">
+                                      {Math.floor(episode.duration / 60)}m
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
+                                    <Play className="h-6 w-6 text-white" />
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="w-48 h-28 rounded-lg bg-gradient-to-br from-primary/30 via-primary/10 to-transparent flex items-center justify-center flex-shrink-0 border border-primary/20">
+                                <span className="text-3xl font-bold text-primary">{episode.episode_number}</span>
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                              <h4 className="font-bold text-lg group-hover:text-primary transition-colors line-clamp-1">
+                                Episode {episode.episode_number}
+                                {episode.title && `: ${episode.title}`}
+                              </h4>
+                              {episode.description && (
+                                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                                  {episode.description}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-2 mt-2">
+                                <Badge variant="outline" className="text-xs">
+                                  Season {season}
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="flex items-center">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 group-hover:bg-primary/20 flex items-center justify-center transition-colors">
+                                <Play className="h-5 w-5 text-primary" />
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+          </div>
+        )}
+
+        {/* Comments Section */}
+        <div className="mb-12">
+          <Comments animeId={anime.id} />
+        </div>
 
         {/* Recommended Anime */}
         {recommendedAnime && recommendedAnime.length > 0 && (

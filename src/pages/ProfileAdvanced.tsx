@@ -8,9 +8,24 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { AnimeCard } from '@/components/AnimeCard';
-import { User, Heart, Clock, Settings, Award, BarChart3, Image as ImageIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { 
+  User, 
+  Heart, 
+  Clock, 
+  Settings, 
+  Palette, 
+  Upload, 
+  Save,
+  Link as LinkIcon,
+  Globe,
+  Github,
+  Twitter,
+  Instagram,
+  Sparkles
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 
@@ -19,12 +34,20 @@ export default function ProfileAdvanced() {
   const [profile, setProfile] = useState<any>(null);
   const [favorites, setFavorites] = useState<any[]>([]);
   const [watchHistory, setWatchHistory] = useState<any[]>([]);
-  const [stats, setStats] = useState({ totalWatched: 0, totalTime: 0, favoriteCount: 0 });
-  
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
   const [coverImage, setCoverImage] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [socialLinks, setSocialLinks] = useState({
+    website: '',
+    github: '',
+    twitter: '',
+    instagram: '',
+  });
+  const [customTheme, setCustomTheme] = useState({
+    style: 'cyberpunk',
+    primary: 'purple',
+  });
   const [favoriteGenres, setFavoriteGenres] = useState<string[]>([]);
   const navigate = useNavigate();
 
@@ -36,7 +59,6 @@ export default function ProfileAdvanced() {
     fetchProfile();
     fetchFavorites();
     fetchWatchHistory();
-    calculateStats();
   }, [user, navigate]);
 
   const fetchProfile = async () => {
@@ -52,6 +74,8 @@ export default function ProfileAdvanced() {
       setBio(data.bio || '');
       setCoverImage(data.cover_image || '');
       setAvatarUrl(data.avatar_url || '');
+      setSocialLinks((data.social_links as any) || { website: '', github: '', twitter: '', instagram: '' });
+      setCustomTheme((data.custom_theme as any) || { style: 'cyberpunk', primary: 'purple' });
       setFavoriteGenres(data.favorite_genres || []);
     }
   };
@@ -76,49 +100,29 @@ export default function ProfileAdvanced() {
     if (data) setWatchHistory(data);
   };
 
-  const calculateStats = async () => {
-    const { data: historyData } = await supabase
-      .from('watch_history')
-      .select('*, episodes(duration)')
-      .eq('user_id', user?.id);
-
-    const { data: favData } = await supabase
-      .from('favorites')
-      .select('id')
-      .eq('user_id', user?.id);
-
-    const totalTime = historyData?.reduce((acc, item) => {
-      return acc + (item.episodes?.duration || 0);
-    }, 0) || 0;
-
-    setStats({
-      totalWatched: historyData?.length || 0,
-      totalTime: Math.floor(totalTime / 60),
-      favoriteCount: favData?.length || 0
-    });
-  };
-
   const updateProfile = async () => {
     const { error } = await supabase
       .from('profiles')
       .update({ 
         username, 
-        bio, 
+        bio,
         cover_image: coverImage,
         avatar_url: avatarUrl,
-        favorite_genres: favoriteGenres
+        social_links: socialLinks,
+        custom_theme: customTheme,
+        favorite_genres: favoriteGenres,
       })
       .eq('id', user?.id);
     
-    if (!error) {
-      fetchProfile();
-      toast({ title: "Profile updated successfully!" });
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Failed to update profile", variant: "destructive" });
+      toast({ title: "Success", description: "Profile updated successfully!" });
+      fetchProfile();
     }
   };
 
-  const GENRES = ['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-Fi', 'Slice of Life', 'Sports', 'Supernatural'];
+  const availableGenres = ['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Romance', 'Sci-Fi', 'Slice of Life', 'Sports', 'Supernatural', 'Thriller'];
 
   const toggleGenre = (genre: string) => {
     setFavoriteGenres(prev => 
@@ -129,59 +133,84 @@ export default function ProfileAdvanced() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a1419] via-[#0c1820] to-black">
+    <div className="min-h-screen bg-background">
       <Navbar />
       
       <div className="relative">
-        {/* Cover Photo */}
+        {/* Cover Image */}
         <div 
-          className="h-64 bg-gradient-primary relative overflow-hidden"
-          style={coverImage ? { backgroundImage: `url(${coverImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+          className="h-64 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 relative"
+          style={coverImage ? {
+            backgroundImage: `url(${coverImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          } : {}}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/90"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background" />
         </div>
 
         {/* Profile Header */}
         <div className="container mx-auto px-4 -mt-20 relative z-10">
-          <Card className="p-6 border-border/50 bg-card/90 backdrop-blur-xl shadow-card">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-              <div className="h-32 w-32 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-lg glow-cyan">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" className="h-full w-full rounded-2xl object-cover" />
-                ) : (
-                  <User className="h-16 w-16 text-white" />
+          <Card className="p-6 border-primary/20 bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-xl">
+            <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
+              <Avatar className="h-32 w-32 border-4 border-primary/50 shadow-xl">
+                <AvatarFallback className="bg-gradient-primary text-4xl text-white">
+                  {username?.[0]?.toUpperCase() || <User className="h-16 w-16" />}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 text-center md:text-left">
+                <h1 className="text-4xl font-bold text-gradient mb-2 flex items-center gap-2 justify-center md:justify-start">
+                  <Sparkles className="h-8 w-8 text-primary" />
+                  {profile?.username || 'User'}
+                </h1>
+                <p className="text-muted-foreground mb-3">{user?.email}</p>
+                {bio && (
+                  <p className="text-foreground/80 max-w-2xl">{bio}</p>
                 )}
-              </div>
-              <div className="flex-1">
-                <h1 className="text-4xl font-bold text-gradient mb-2">{profile?.username || 'User'}</h1>
-                <p className="text-muted-foreground mb-4">{user?.email}</p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {favoriteGenres.map(genre => (
-                    <Badge key={genre} variant="secondary">{genre}</Badge>
+                <div className="flex flex-wrap gap-2 mt-3 justify-center md:justify-start">
+                  {favoriteGenres.map((genre) => (
+                    <Badge key={genre} variant="secondary" className="bg-primary/20">
+                      {genre}
+                    </Badge>
                   ))}
                 </div>
-                <div className="flex flex-wrap gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-accent" />
-                    <span>{stats.totalWatched} watched</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Heart className="h-4 w-4 text-destructive" />
-                    <span>{stats.favoriteCount} favorites</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4 text-secondary" />
-                    <span>{stats.totalTime}h total</span>
-                  </div>
-                </div>
               </div>
-              <Button variant="outline" onClick={signOut} className="hover-lift">
+              <Button variant="outline" onClick={signOut} className="shrink-0">
                 Sign Out
               </Button>
             </div>
-            {bio && (
-              <div className="mt-6 pt-6 border-t border-border/50">
-                <p className="text-foreground/80">{bio}</p>
+
+            {/* Social Links */}
+            {(socialLinks.website || socialLinks.github || socialLinks.twitter || socialLinks.instagram) && (
+              <div className="flex items-center justify-center md:justify-start gap-3 mt-6 pt-6 border-t border-border/50">
+                {socialLinks.website && (
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={socialLinks.website} target="_blank" rel="noopener noreferrer">
+                      <Globe className="h-4 w-4" />
+                    </a>
+                  </Button>
+                )}
+                {socialLinks.github && (
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={`https://github.com/${socialLinks.github}`} target="_blank" rel="noopener noreferrer">
+                      <Github className="h-4 w-4" />
+                    </a>
+                  </Button>
+                )}
+                {socialLinks.twitter && (
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={`https://twitter.com/${socialLinks.twitter}`} target="_blank" rel="noopener noreferrer">
+                      <Twitter className="h-4 w-4" />
+                    </a>
+                  </Button>
+                )}
+                {socialLinks.instagram && (
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={`https://instagram.com/${socialLinks.instagram}`} target="_blank" rel="noopener noreferrer">
+                      <Instagram className="h-4 w-4" />
+                    </a>
+                  </Button>
+                )}
               </div>
             )}
           </Card>
@@ -190,26 +219,26 @@ export default function ProfileAdvanced() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="favorites" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
-            <TabsTrigger value="favorites">
+          <TabsList className="grid w-full grid-cols-3 bg-card/50 backdrop-blur-sm border border-primary/20">
+            <TabsTrigger value="favorites" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white">
               <Heart className="h-4 w-4 mr-2" />
               Favorites
             </TabsTrigger>
-            <TabsTrigger value="history">
+            <TabsTrigger value="history" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white">
               <Clock className="h-4 w-4 mr-2" />
               History
             </TabsTrigger>
-            <TabsTrigger value="stats">
-              <Award className="h-4 w-4 mr-2" />
-              Stats
-            </TabsTrigger>
-            <TabsTrigger value="settings">
+            <TabsTrigger value="settings" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white">
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="favorites" className="mt-6">
+            <Card className="p-6 border-primary/20 bg-card/50 backdrop-blur-sm mb-4">
+              <h3 className="text-lg font-semibold mb-2">Your Favorite Anime</h3>
+              <p className="text-sm text-muted-foreground">{favorites.length} anime in your favorites</p>
+            </Card>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {favorites.map((fav) => (
                 <AnimeCard
@@ -224,14 +253,19 @@ export default function ProfileAdvanced() {
               ))}
             </div>
             {favorites.length === 0 && (
-              <Card className="p-12 text-center border-border/50 bg-card/50">
-                <Heart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">No favorites yet</p>
+              <Card className="p-12 text-center border-primary/20 bg-card/50 backdrop-blur-sm">
+                <Heart className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                <h4 className="text-lg font-semibold mb-2">No favorites yet</h4>
+                <p className="text-muted-foreground">Start adding your favorite anime to see them here</p>
               </Card>
             )}
           </TabsContent>
 
           <TabsContent value="history" className="mt-6">
+            <Card className="p-6 border-primary/20 bg-card/50 backdrop-blur-sm mb-4">
+              <h3 className="text-lg font-semibold mb-2">Watch History</h3>
+              <p className="text-sm text-muted-foreground">{watchHistory.length} recently watched</p>
+            </Card>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {watchHistory.map((item) => (
                 <AnimeCard
@@ -246,131 +280,159 @@ export default function ProfileAdvanced() {
               ))}
             </div>
             {watchHistory.length === 0 && (
-              <Card className="p-12 text-center border-border/50 bg-card/50">
-                <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">No watch history yet</p>
+              <Card className="p-12 text-center border-primary/20 bg-card/50 backdrop-blur-sm">
+                <Clock className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                <h4 className="text-lg font-semibold mb-2">No watch history</h4>
+                <p className="text-muted-foreground">Your viewing history will appear here</p>
               </Card>
             )}
           </TabsContent>
 
-          <TabsContent value="stats" className="mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="p-6 border-border/50 bg-card/50 backdrop-blur-sm hover:shadow-card transition-all">
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-xl bg-gradient-primary flex items-center justify-center">
-                    <Clock className="h-8 w-8 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-3xl font-bold text-foreground">{stats.totalWatched}</p>
-                    <p className="text-muted-foreground">Episodes Watched</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6 border-border/50 bg-card/50 backdrop-blur-sm hover:shadow-card transition-all">
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-xl bg-gradient-primary flex items-center justify-center">
-                    <Heart className="h-8 w-8 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-3xl font-bold text-foreground">{stats.favoriteCount}</p>
-                    <p className="text-muted-foreground">Favorites</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6 border-border/50 bg-card/50 backdrop-blur-sm hover:shadow-card transition-all">
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-xl bg-gradient-primary flex items-center justify-center">
-                    <BarChart3 className="h-8 w-8 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-3xl font-bold text-foreground">{stats.totalTime}h</p>
-                    <p className="text-muted-foreground">Watch Time</p>
-                  </div>
-                </div>
-              </Card>
-            </div>
-          </TabsContent>
-
           <TabsContent value="settings" className="mt-6">
-            <Card className="p-8 max-w-3xl mx-auto border-border/50 bg-card/50 backdrop-blur-sm">
-              <h3 className="text-2xl font-bold text-gradient mb-6">Customize Profile</h3>
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="h-12"
-                  />
+            <div className="grid gap-6 max-w-4xl mx-auto">
+              {/* Basic Info */}
+              <Card className="p-6 border-primary/20 bg-card/50 backdrop-blur-sm">
+                <div className="flex items-center gap-3 mb-6">
+                  <User className="h-6 w-6 text-primary" />
+                  <h3 className="text-xl font-bold">Basic Information</h3>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea
-                    id="bio"
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    rows={4}
-                    placeholder="Tell us about yourself..."
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="avatar">
-                    <div className="flex items-center gap-2">
-                      <ImageIcon className="h-4 w-4" />
-                      Avatar URL
-                    </div>
-                  </Label>
-                  <Input
-                    id="avatar"
-                    value={avatarUrl}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    placeholder="https://example.com/avatar.jpg"
-                    className="h-12"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cover">
-                    <div className="flex items-center gap-2">
-                      <ImageIcon className="h-4 w-4" />
-                      Cover Image URL
-                    </div>
-                  </Label>
-                  <Input
-                    id="cover"
-                    value={coverImage}
-                    onChange={(e) => setCoverImage(e.target.value)}
-                    placeholder="https://example.com/cover.jpg"
-                    className="h-12"
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <Label>Favorite Genres</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {GENRES.map(genre => (
-                      <Badge
-                        key={genre}
-                        variant={favoriteGenres.includes(genre) ? "default" : "outline"}
-                        className="cursor-pointer hover-lift"
-                        onClick={() => toggleGenre(genre)}
-                      >
-                        {genre}
-                      </Badge>
-                    ))}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Your username"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bio">Bio</Label>
+                    <Textarea
+                      id="bio"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      rows={4}
+                      placeholder="Tell us about yourself..."
+                    />
                   </div>
                 </div>
+              </Card>
 
-                <Button onClick={updateProfile} className="w-full h-12 text-lg hover-lift">
-                  Save Changes
-                </Button>
-              </div>
-            </Card>
+              {/* Appearance */}
+              <Card className="p-6 border-primary/20 bg-card/50 backdrop-blur-sm">
+                <div className="flex items-center gap-3 mb-6">
+                  <Palette className="h-6 w-6 text-primary" />
+                  <h3 className="text-xl font-bold">Appearance</h3>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="avatar">Avatar URL</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="avatar"
+                        value={avatarUrl}
+                        onChange={(e) => setAvatarUrl(e.target.value)}
+                        placeholder="https://..."
+                      />
+                      <Button variant="outline" size="icon">
+                        <Upload className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cover">Cover Image URL</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="cover"
+                        value={coverImage}
+                        onChange={(e) => setCoverImage(e.target.value)}
+                        placeholder="https://..."
+                      />
+                      <Button variant="outline" size="icon">
+                        <Upload className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Social Links */}
+              <Card className="p-6 border-primary/20 bg-card/50 backdrop-blur-sm">
+                <div className="flex items-center gap-3 mb-6">
+                  <LinkIcon className="h-6 w-6 text-primary" />
+                  <h3 className="text-xl font-bold">Social Links</h3>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      value={socialLinks.website}
+                      onChange={(e) => setSocialLinks({...socialLinks, website: e.target.value})}
+                      placeholder="https://yourwebsite.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="github">GitHub</Label>
+                    <Input
+                      id="github"
+                      value={socialLinks.github}
+                      onChange={(e) => setSocialLinks({...socialLinks, github: e.target.value})}
+                      placeholder="username"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="twitter">Twitter</Label>
+                    <Input
+                      id="twitter"
+                      value={socialLinks.twitter}
+                      onChange={(e) => setSocialLinks({...socialLinks, twitter: e.target.value})}
+                      placeholder="@username"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="instagram">Instagram</Label>
+                    <Input
+                      id="instagram"
+                      value={socialLinks.instagram}
+                      onChange={(e) => setSocialLinks({...socialLinks, instagram: e.target.value})}
+                      placeholder="username"
+                    />
+                  </div>
+                </div>
+              </Card>
+
+              {/* Favorite Genres */}
+              <Card className="p-6 border-primary/20 bg-card/50 backdrop-blur-sm">
+                <div className="flex items-center gap-3 mb-6">
+                  <Heart className="h-6 w-6 text-primary" />
+                  <h3 className="text-xl font-bold">Favorite Genres</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {availableGenres.map((genre) => (
+                    <Badge
+                      key={genre}
+                      variant={favoriteGenres.includes(genre) ? "default" : "outline"}
+                      className="cursor-pointer hover:scale-105 transition-transform"
+                      onClick={() => toggleGenre(genre)}
+                    >
+                      {genre}
+                    </Badge>
+                  ))}
+                </div>
+              </Card>
+
+              {/* Save Button */}
+              <Button 
+                onClick={updateProfile} 
+                className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
+                size="lg"
+              >
+                <Save className="h-5 w-5 mr-2" />
+                Save All Changes
+              </Button>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

@@ -6,9 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Plus, Pencil, Trash2, Image as ImageIcon, ArrowUp, ArrowDown } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Image as ImageIcon, ArrowUp, ArrowDown, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Banner {
   id: string;
@@ -198,12 +200,52 @@ export default function BannerManagement() {
     );
   }
 
+  const stats = {
+    total: banners.length,
+    active: banners.filter(b => b.is_active).length,
+    inactive: banners.filter(b => !b.is_active).length,
+  };
+
   return (
     <div className="space-y-6">
-      <Card className="p-6 border-border/50 bg-card/50 backdrop-blur-sm">
-        <h3 className="text-xl font-bold mb-4">
-          {editingBanner ? 'Edit Banner' : 'Create New Banner'}
-        </h3>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-6 border-primary/20 bg-gradient-to-br from-primary/10 to-transparent backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Banners</p>
+              <h3 className="text-3xl font-bold text-gradient">{stats.total}</h3>
+            </div>
+            <ImageIcon className="h-12 w-12 text-primary/50" />
+          </div>
+        </Card>
+        <Card className="p-6 border-green-500/20 bg-gradient-to-br from-green-500/10 to-transparent backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Active</p>
+              <h3 className="text-3xl font-bold text-green-400">{stats.active}</h3>
+            </div>
+            <Eye className="h-12 w-12 text-green-500/50" />
+          </div>
+        </Card>
+        <Card className="p-6 border-red-500/20 bg-gradient-to-br from-red-500/10 to-transparent backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Inactive</p>
+              <h3 className="text-3xl font-bold text-red-400">{stats.inactive}</h3>
+            </div>
+            <EyeOff className="h-12 w-12 text-red-500/50" />
+          </div>
+        </Card>
+      </div>
+
+      <Card className="p-6 border-primary/20 bg-gradient-to-br from-card/80 to-card/50 backdrop-blur-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <Sparkles className="h-6 w-6 text-primary" />
+          <h3 className="text-xl font-bold text-gradient">
+            {editingBanner ? 'Edit Banner' : 'Create New Banner'}
+          </h3>
+        </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -316,74 +358,155 @@ export default function BannerManagement() {
         </form>
       </Card>
 
-      <div className="space-y-4">
-        <h3 className="text-xl font-bold">Existing Banners</h3>
-        {banners.length === 0 ? (
-          <Card className="p-8 text-center border-border/50 bg-card/50 backdrop-blur-sm">
-            <ImageIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">No banners yet. Create your first banner above.</p>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {banners.map((banner) => (
-              <Card key={banner.id} className="p-4 border-border/50 bg-card/50 backdrop-blur-sm">
-                <div className="flex items-center gap-4">
-                  <img
-                    src={banner.image_url}
-                    alt={banner.title}
-                    className="w-32 h-20 object-cover rounded"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-semibold">{banner.title}</h4>
-                    {banner.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-1">{banner.description}</p>
-                    )}
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-xs text-muted-foreground">Order: {banner.order_index}</span>
-                      {banner.is_active ? (
-                        <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-500 rounded">Active</span>
-                      ) : (
-                        <span className="text-xs px-2 py-0.5 bg-red-500/20 text-red-500 rounded">Inactive</span>
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="all">All Banners</TabsTrigger>
+          <TabsTrigger value="active">Active ({stats.active})</TabsTrigger>
+          <TabsTrigger value="inactive">Inactive ({stats.inactive})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="all" className="space-y-4 mt-6">
+          {banners.length === 0 ? (
+            <Card className="p-12 text-center border-primary/20 bg-gradient-to-br from-card/50 to-transparent backdrop-blur-sm">
+              <ImageIcon className="h-16 w-16 mx-auto mb-4 text-primary/50" />
+              <h4 className="text-lg font-semibold mb-2">No banners yet</h4>
+              <p className="text-muted-foreground">Create your first banner to get started.</p>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {banners.map((banner, index) => (
+                <Card key={banner.id} className="group overflow-hidden border-primary/20 bg-gradient-to-br from-card/80 to-card/50 backdrop-blur-sm hover:border-primary/40 transition-all">
+                  <div className="flex items-center gap-4 p-4">
+                    <div className="relative w-40 h-24 rounded-lg overflow-hidden flex-shrink-0">
+                      <img
+                        src={banner.image_url}
+                        alt={banner.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <Badge className="absolute bottom-2 left-2 bg-black/80">
+                        #{index + 1}
+                      </Badge>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="font-bold text-lg line-clamp-1">{banner.title}</h4>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={banner.is_active ? "default" : "secondary"} className="shrink-0">
+                            {banner.is_active ? <Eye className="h-3 w-3 mr-1" /> : <EyeOff className="h-3 w-3 mr-1" />}
+                            {banner.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </div>
+                      </div>
+                      {banner.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{banner.description}</p>
                       )}
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <ArrowUp className="h-3 w-3" />
+                          Order: {banner.order_index}
+                        </span>
+                        {banner.anime_id && (
+                          <Badge variant="outline" className="text-xs">
+                            Linked to Anime
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => moveOrder(banner, 'up')}
+                          disabled={banner.order_index === 0}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => moveOrder(banner, 'down')}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(banner)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDelete(banner.id)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      onClick={() => moveOrder(banner, 'up')}
-                      disabled={banner.order_index === 0}
-                    >
-                      <ArrowUp className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      onClick={() => moveOrder(banner, 'down')}
-                    >
-                      <ArrowDown className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      onClick={() => handleEdit(banner)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="destructive"
-                      onClick={() => handleDelete(banner.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="active" className="space-y-4 mt-6">
+          <div className="grid gap-4">
+            {banners.filter(b => b.is_active).map((banner, index) => (
+              <Card key={banner.id} className="group overflow-hidden border-green-500/20 bg-gradient-to-br from-green-500/5 to-transparent backdrop-blur-sm hover:border-green-500/40 transition-all">
+                <div className="flex items-center gap-4 p-4">
+                  <div className="relative w-40 h-24 rounded-lg overflow-hidden">
+                    <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover" />
+                    <Badge className="absolute bottom-2 left-2 bg-green-500">
+                      Active #{index + 1}
+                    </Badge>
                   </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold">{banner.title}</h4>
+                    <p className="text-sm text-muted-foreground line-clamp-1">{banner.description}</p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => handleEdit(banner)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
                 </div>
               </Card>
             ))}
           </div>
-        )}
-      </div>
+        </TabsContent>
+
+        <TabsContent value="inactive" className="space-y-4 mt-6">
+          <div className="grid gap-4">
+            {banners.filter(b => !b.is_active).map((banner) => (
+              <Card key={banner.id} className="group overflow-hidden border-red-500/20 bg-gradient-to-br from-red-500/5 to-transparent backdrop-blur-sm opacity-60">
+                <div className="flex items-center gap-4 p-4">
+                  <div className="relative w-40 h-24 rounded-lg overflow-hidden">
+                    <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover grayscale" />
+                    <Badge className="absolute bottom-2 left-2 bg-red-500">
+                      Inactive
+                    </Badge>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold">{banner.title}</h4>
+                    <p className="text-sm text-muted-foreground">{banner.description}</p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => handleEdit(banner)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import AnimeDetail from "./pages/AnimeDetail";
 import Auth from "./pages/Auth";
-import Profile from "./pages/Profile";
+import ProfileAdvanced from "./pages/ProfileAdvanced";
 import Browse from "./pages/Browse";
 import Movies from "./pages/Movies";
 import Schedule from "./pages/Schedule";
@@ -33,7 +33,7 @@ const App = () => (
             <Route path="/schedule" element={<Schedule />} />
             <Route path="/watch/:animeId/:episodeId?" element={<Watch />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile" element={<ProfileAdvanced />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

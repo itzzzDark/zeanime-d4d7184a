@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Comments } from '@/components/Comments';
 import {
   Loader2,
   Play,
@@ -20,7 +21,6 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { AnimeSection } from '@/components/AnimeSection';
-import { Comments } from '@/components/Comments';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
@@ -556,7 +556,11 @@ export default function Watch() {
 
         {/* COMMENTS */}
         {anime?.id && (
-          <Card className="p-6 bg-white/2 border border-white/5 backdrop-blur-sm">
+          <Card className="p-6 border-primary/20 bg-gradient-to-br from-card/80 to-card/60 backdrop-blur-md">
+            <div className="flex items-center gap-3 mb-6">
+              <MessageSquare className="h-6 w-6 text-primary" />
+              <h2 className="text-2xl font-bold text-gradient">Comments & Discussion</h2>
+            </div>
             <Comments animeId={anime.id} />
           </Card>
         )}
