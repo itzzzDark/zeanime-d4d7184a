@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import AnimeManagement from '@/components/admin/AnimeManagement';
 import EpisodeManagement from '@/components/admin/EpisodeManagement';
 import UserManagement from '@/components/admin/UserManagement';
-import BannerManagement from '@/components/admin/BannerManagement';
+import ScheduleManagement from '@/components/admin/ScheduleManagement';
 
 import ServerManagement from '@/components/admin/ServerManagement';
 
@@ -214,9 +214,9 @@ export default function AdminDashboard() {
               <Activity className="h-4 w-4" />
               Servers
             </TabsTrigger>
-            <TabsTrigger value="banners" className="gap-2">
+            <TabsTrigger value="schedule" className="gap-2">
               <Film className="h-4 w-4" />
-              Banners
+              Schedule
             </TabsTrigger>
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />
@@ -236,8 +236,8 @@ export default function AdminDashboard() {
             <ServerManagement />
           </TabsContent>
 
-          <TabsContent value="banners" className="mt-6">
-            <BannerManagement />
+          <TabsContent value="schedule" className="mt-6">
+            <ScheduleManagement />
           </TabsContent>
 
           <TabsContent value="users" className="mt-6">
