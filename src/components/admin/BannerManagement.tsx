@@ -8,8 +8,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Plus, Pencil, Trash2, Image as ImageIcon, ArrowUp, ArrowDown, Eye, EyeOff, Sparkles } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Loader2, Plus, Pencil, Trash2, Image as ImageIcon,
+  ArrowUp, ArrowDown, Eye, EyeOff, Sparkles
+} from 'lucide-react';
+import {
+  Select, SelectContent, SelectItem,
+  SelectTrigger, SelectValue
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Banner {
@@ -31,6 +37,7 @@ export default function BannerManagement() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [animeList, setAnimeList] = useState<Anime[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -41,111 +48,91 @@ export default function BannerManagement() {
     order_index: 0,
   });
 
+  // Fetch banners and anime list once
   useEffect(() => {
-    fetchBanners();
-    fetchAnimeList();
+    (async () => {
+      await Promise.all([fetchBanners(), fetchAnimeList()]);
+    })();
   }, []);
 
   const fetchBanners = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('banners')
-      .select('*')
-      .order('order_index');
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('banners')
+        .select('*')
+        .order('order_index', { ascending: true });
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch banners",
-        variant: "destructive",
-      });
-    } else {
+      if (error) throw error;
       setBanners(data || []);
+    } catch (error) {
+      console.error('Error fetching banners:', error);
+      toast({ title: 'Error', description: 'Failed to fetch banners', variant: 'destructive' });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const fetchAnimeList = async () => {
-    const { data } = await supabase
-      .from('anime')
-      .select('id, title')
-      .order('title');
-    
-    if (data) {
-      setAnimeList(data);
+    try {
+      const { data, error } = await supabase
+        .from('anime')
+        .select('id, title')
+        .order('title', { ascending: true });
+
+      if (error) throw error;
+      setAnimeList(data || []);
+    } catch (error) {
+      console.error('Error fetching anime list:', error);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving) return;
 
-    const bannerData = {
-      ...formData,
-      anime_id: formData.anime_id || null,
-    };
+    try {
+      setSaving(true);
+      const bannerData = {
+        ...formData,
+        anime_id: formData.anime_id || null,
+      };
 
-    if (editingBanner) {
-      const { error } = await supabase
-        .from('banners')
-        .update(bannerData)
-        .eq('id', editingBanner.id);
+      if (editingBanner) {
+        const { error } = await supabase
+          .from('banners')
+          .update(bannerData)
+          .eq('id', editingBanner.id);
+        if (error) throw error;
 
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to update banner",
-          variant: "destructive",
-        });
+        toast({ title: 'Updated', description: 'Banner updated successfully' });
       } else {
-        toast({
-          title: "Success",
-          description: "Banner updated successfully",
-        });
-        resetForm();
-        fetchBanners();
-      }
-    } else {
-      const { error } = await supabase
-        .from('banners')
-        .insert([bannerData]);
+        const { error } = await supabase.from('banners').insert([bannerData]);
+        if (error) throw error;
 
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to create banner",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: "Banner created successfully",
-        });
-        resetForm();
-        fetchBanners();
+        toast({ title: 'Created', description: 'Banner created successfully' });
       }
+
+      resetForm();
+      await fetchBanners();
+    } catch (error) {
+      console.error('Save error:', error);
+      toast({ title: 'Error', description: 'Failed to save banner', variant: 'destructive' });
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this banner?')) return;
 
-    const { error } = await supabase
-      .from('banners')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete banner",
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Banner deleted successfully",
-      });
-      fetchBanners();
+    try {
+      const { error } = await supabase.from('banners').delete().eq('id', id);
+      if (error) throw error;
+      toast({ title: 'Deleted', description: 'Banner deleted successfully' });
+      await fetchBanners();
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to delete banner', variant: 'destructive' });
     }
   };
 
@@ -164,20 +151,25 @@ export default function BannerManagement() {
   const moveOrder = async (banner: Banner, direction: 'up' | 'down') => {
     const currentIndex = banner.order_index;
     const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-    
-    // Find the banner at target position
     const targetBanner = banners.find(b => b.order_index === targetIndex);
-    
-    if (targetBanner) {
-      // Swap orders
-      await supabase.from('banners').update({ order_index: targetIndex }).eq('id', banner.id);
-      await supabase.from('banners').update({ order_index: currentIndex }).eq('id', targetBanner.id);
-    } else {
-      // Just move
-      await supabase.from('banners').update({ order_index: targetIndex }).eq('id', banner.id);
+    if (!targetBanner) return;
+
+    try {
+      await supabase.from('banners').upsert([
+        { id: banner.id, order_index: targetIndex },
+        { id: targetBanner.id, order_index: currentIndex },
+      ]);
+
+      toast({
+        title: 'Order Updated',
+        description: `Moved ${banner.title} ${direction === 'up' ? 'up' : 'down'}`,
+      });
+
+      await fetchBanners();
+    } catch (error) {
+      console.error('Order update error:', error);
+      toast({ title: 'Error', description: 'Failed to update order', variant: 'destructive' });
     }
-    
-    fetchBanners();
   };
 
   const resetForm = () => {
@@ -192,6 +184,12 @@ export default function BannerManagement() {
     });
   };
 
+  const stats = {
+    total: banners.length,
+    active: banners.filter(b => b.is_active).length,
+    inactive: banners.filter(b => !b.is_active).length,
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center p-8">
@@ -200,79 +198,61 @@ export default function BannerManagement() {
     );
   }
 
-  const stats = {
-    total: banners.length,
-    active: banners.filter(b => b.is_active).length,
-    inactive: banners.filter(b => !b.is_active).length,
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
+    <div className="space-y-6 animate-fadeIn">
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-6 border-primary/20 bg-gradient-to-br from-primary/10 to-transparent backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Total Banners</p>
-              <h3 className="text-3xl font-bold text-gradient">{stats.total}</h3>
+        {[
+          { label: 'Total Banners', value: stats.total, icon: ImageIcon, color: 'primary' },
+          { label: 'Active', value: stats.active, icon: Eye, color: 'green' },
+          { label: 'Inactive', value: stats.inactive, icon: EyeOff, color: 'red' },
+        ].map(({ label, value, icon: Icon, color }, i) => (
+          <Card key={i} className={`p-6 border-${color}-500/20 bg-gradient-to-br from-${color}-500/10`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">{label}</p>
+                <h3 className="text-3xl font-bold">{value}</h3>
+              </div>
+              <Icon className={`h-10 w-10 text-${color}-400`} />
             </div>
-            <ImageIcon className="h-12 w-12 text-primary/50" />
-          </div>
-        </Card>
-        <Card className="p-6 border-green-500/20 bg-gradient-to-br from-green-500/10 to-transparent backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Active</p>
-              <h3 className="text-3xl font-bold text-green-400">{stats.active}</h3>
-            </div>
-            <Eye className="h-12 w-12 text-green-500/50" />
-          </div>
-        </Card>
-        <Card className="p-6 border-red-500/20 bg-gradient-to-br from-red-500/10 to-transparent backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Inactive</p>
-              <h3 className="text-3xl font-bold text-red-400">{stats.inactive}</h3>
-            </div>
-            <EyeOff className="h-12 w-12 text-red-500/50" />
-          </div>
-        </Card>
+          </Card>
+        ))}
       </div>
 
-      <Card className="p-6 border-primary/20 bg-gradient-to-br from-card/80 to-card/50 backdrop-blur-sm">
+      {/* Form */}
+      <Card className="p-6">
         <div className="flex items-center gap-3 mb-4">
           <Sparkles className="h-6 w-6 text-primary" />
-          <h3 className="text-xl font-bold text-gradient">
+          <h3 className="text-xl font-bold">
             {editingBanner ? 'Edit Banner' : 'Create New Banner'}
           </h3>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
+            <div>
+              <Label>Title</Label>
               <Input
-                id="title"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={e => setFormData({ ...formData, title: e.target.value })}
                 required
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="anime">Linked Anime (Optional)</Label>
+            <div>
+              <Label>Linked Anime</Label>
               <Select
                 value={formData.anime_id}
-                onValueChange={(value) => setFormData({ ...formData, anime_id: value })}
+                onValueChange={value => setFormData({ ...formData, anime_id: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select anime" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">None</SelectItem>
-                  {animeList.map((anime) => (
-                    <SelectItem key={anime.id} value={anime.id}>
-                      {anime.title}
+                  {animeList.map(a => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.title}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -280,75 +260,70 @@ export default function BannerManagement() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+          <div>
+            <Label>Description</Label>
             <Textarea
-              id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
               rows={3}
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="image_url">Image URL</Label>
+          <div>
+            <Label>Image URL</Label>
             <Input
-              id="image_url"
               type="url"
               value={formData.image_url}
-              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+              onChange={e => setFormData({ ...formData, image_url: e.target.value })}
               required
             />
             {formData.image_url && (
-              <div className="mt-2 border border-border/50 rounded-lg overflow-hidden">
-                <img 
-                  src={formData.image_url} 
-                  alt="Preview" 
-                  className="w-full h-40 object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = '/placeholder.svg';
-                  }}
-                />
-              </div>
+              <img
+                src={formData.image_url}
+                alt="Banner Preview"
+                className="mt-2 w-full h-40 object-cover rounded-lg border"
+                onError={e => (e.currentTarget.src = '/placeholder.svg')}
+              />
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="order_index">Order Index</Label>
+          <div className="grid grid-cols-2 gap-4 items-center">
+            <div>
+              <Label>Order Index</Label>
               <Input
-                id="order_index"
                 type="number"
                 value={formData.order_index}
-                onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) })}
-                required
+                onChange={e =>
+                  setFormData({ ...formData, order_index: parseInt(e.target.value) || 0 })
+                }
               />
             </div>
-
-            <div className="flex items-center space-x-2 pt-8">
+            <div className="flex items-center gap-2 mt-6">
               <Switch
-                id="is_active"
                 checked={formData.is_active}
-                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                onCheckedChange={checked => setFormData({ ...formData, is_active: checked })}
               />
-              <Label htmlFor="is_active">Active</Label>
+              <Label>Active</Label>
             </div>
           </div>
 
           <div className="flex gap-2">
-            <Button type="submit" className="gap-2">
-              {editingBanner ? (
+            <Button type="submit" disabled={saving} className="gap-2">
+              {saving ? (
                 <>
-                  <Pencil className="h-4 w-4" />
-                  Update Banner
+                  <Loader2 className="h-4 w-4 animate-spin" /> Saving...
+                </>
+              ) : editingBanner ? (
+                <>
+                  <Pencil className="h-4 w-4" /> Update
                 </>
               ) : (
                 <>
-                  <Plus className="h-4 w-4" />
-                  Create Banner
+                  <Plus className="h-4 w-4" /> Create
                 </>
               )}
             </Button>
+
             {editingBanner && (
               <Button type="button" variant="outline" onClick={resetForm}>
                 Cancel
@@ -358,69 +333,56 @@ export default function BannerManagement() {
         </form>
       </Card>
 
+      {/* Banner List */}
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="all">All Banners</TabsTrigger>
+        <TabsList className="grid grid-cols-3 w-full">
+          <TabsTrigger value="all">All ({stats.total})</TabsTrigger>
           <TabsTrigger value="active">Active ({stats.active})</TabsTrigger>
           <TabsTrigger value="inactive">Inactive ({stats.inactive})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all" className="space-y-4 mt-6">
-          {banners.length === 0 ? (
-            <Card className="p-12 text-center border-primary/20 bg-gradient-to-br from-card/50 to-transparent backdrop-blur-sm">
-              <ImageIcon className="h-16 w-16 mx-auto mb-4 text-primary/50" />
-              <h4 className="text-lg font-semibold mb-2">No banners yet</h4>
-              <p className="text-muted-foreground">Create your first banner to get started.</p>
-            </Card>
-          ) : (
-            <div className="grid gap-4">
-              {banners.map((banner, index) => (
-                <Card key={banner.id} className="group overflow-hidden border-primary/20 bg-gradient-to-br from-card/80 to-card/50 backdrop-blur-sm hover:border-primary/40 transition-all">
-                  <div className="flex items-center gap-4 p-4">
-                    <div className="relative w-40 h-24 rounded-lg overflow-hidden flex-shrink-0">
-                      <img
-                        src={banner.image_url}
-                        alt={banner.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                      <Badge className="absolute bottom-2 left-2 bg-black/80">
-                        #{index + 1}
-                      </Badge>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-bold text-lg line-clamp-1">{banner.title}</h4>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={banner.is_active ? "default" : "secondary"} className="shrink-0">
-                            {banner.is_active ? <Eye className="h-3 w-3 mr-1" /> : <EyeOff className="h-3 w-3 mr-1" />}
-                            {banner.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
+        {['all', 'active', 'inactive'].map((tab) => {
+          const filtered =
+            tab === 'active'
+              ? banners.filter(b => b.is_active)
+              : tab === 'inactive'
+              ? banners.filter(b => !b.is_active)
+              : banners;
+
+          return (
+            <TabsContent key={tab} value={tab} className="space-y-4 mt-6">
+              {filtered.length === 0 ? (
+                <Card className="p-12 text-center">
+                  <ImageIcon className="h-16 w-16 mx-auto mb-4 text-muted" />
+                  <h4 className="text-lg font-semibold mb-2">No {tab} banners</h4>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {filtered.map((banner) => (
+                    <Card
+                      key={banner.id}
+                      className="flex items-center justify-between p-4 border hover:border-primary/40 transition"
+                    >
+                      <div className="flex items-center gap-4">
+                        <img
+                          src={banner.image_url}
+                          alt={banner.title}
+                          className="w-24 h-16 rounded object-cover"
+                        />
+                        <div>
+                          <h4 className="font-semibold">{banner.title}</h4>
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {banner.description}
+                          </p>
                         </div>
                       </div>
-                      {banner.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{banner.description}</p>
-                      )}
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <ArrowUp className="h-3 w-3" />
-                          Order: {banner.order_index}
-                        </span>
-                        {banner.anime_id && (
-                          <Badge variant="outline" className="text-xs">
-                            Linked to Anime
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex gap-2">
+
+                      <div className="flex items-center gap-2">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => moveOrder(banner, 'up')}
                           disabled={banner.order_index === 0}
-                          className="h-8 w-8 p-0"
                         >
                           <ArrowUp className="h-4 w-4" />
                         </Button>
@@ -428,84 +390,27 @@ export default function BannerManagement() {
                           size="sm"
                           variant="outline"
                           onClick={() => moveOrder(banner, 'down')}
-                          className="h-8 w-8 p-0"
                         >
                           <ArrowDown className="h-4 w-4" />
                         </Button>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(banner)}
-                          className="h-8 w-8 p-0"
-                        >
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(banner)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => handleDelete(banner.id)}
-                          className="h-8 w-8 p-0"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="active" className="space-y-4 mt-6">
-          <div className="grid gap-4">
-            {banners.filter(b => b.is_active).map((banner, index) => (
-              <Card key={banner.id} className="group overflow-hidden border-green-500/20 bg-gradient-to-br from-green-500/5 to-transparent backdrop-blur-sm hover:border-green-500/40 transition-all">
-                <div className="flex items-center gap-4 p-4">
-                  <div className="relative w-40 h-24 rounded-lg overflow-hidden">
-                    <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover" />
-                    <Badge className="absolute bottom-2 left-2 bg-green-500">
-                      Active #{index + 1}
-                    </Badge>
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-bold">{banner.title}</h4>
-                    <p className="text-sm text-muted-foreground line-clamp-1">{banner.description}</p>
-                  </div>
-                  <Button size="sm" variant="outline" onClick={() => handleEdit(banner)}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
+                    </Card>
+                  ))}
                 </div>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="inactive" className="space-y-4 mt-6">
-          <div className="grid gap-4">
-            {banners.filter(b => !b.is_active).map((banner) => (
-              <Card key={banner.id} className="group overflow-hidden border-red-500/20 bg-gradient-to-br from-red-500/5 to-transparent backdrop-blur-sm opacity-60">
-                <div className="flex items-center gap-4 p-4">
-                  <div className="relative w-40 h-24 rounded-lg overflow-hidden">
-                    <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover grayscale" />
-                    <Badge className="absolute bottom-2 left-2 bg-red-500">
-                      Inactive
-                    </Badge>
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-bold">{banner.title}</h4>
-                    <p className="text-sm text-muted-foreground">{banner.description}</p>
-                  </div>
-                  <Button size="sm" variant="outline" onClick={() => handleEdit(banner)}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
+              )}
+            </TabsContent>
+          );
+        })}
       </Tabs>
     </div>
   );
