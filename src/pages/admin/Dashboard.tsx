@@ -21,12 +21,23 @@ import UserManagement from "@/components/admin/UserManagement";
 import ScheduleManagement from "@/components/admin/ScheduleManagement";
 import ServerManagement from "@/components/admin/ServerManagement";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from "recharts";
 
 export default function AdminDashboard() {
   const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
 
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,55 +54,29 @@ export default function AdminDashboard() {
       setLoading(true);
       const [
         animeCount,
-        seriesCount,
-        moviesCount,
         episodeCount,
-        seasonsData,
         userCount,
         trendingCount,
-        commentsCount,
-        favoritesCount,
         watchHistoryCount,
       ] = await Promise.all([
         supabase.from("anime").select("*", { count: "exact", head: true }),
-        supabase
-          .from("anime")
-          .select("*", { count: "exact", head: true })
-          .eq("type", "series"),
-        supabase
-          .from("anime")
-          .select("*", { count: "exact", head: true })
-          .eq("type", "movie"),
         supabase.from("episodes").select("*", { count: "exact", head: true }),
-        supabase.from("episodes").select("season_number"),
         supabase.from("profiles").select("*", { count: "exact", head: true }),
         supabase
           .from("anime")
           .select("*", { count: "exact", head: true })
           .eq("is_trending", true),
-        supabase.from("comments").select("*", { count: "exact", head: true }),
-        supabase.from("favorites").select("*", { count: "exact", head: true }),
         supabase
           .from("watch_history")
           .select("*", { count: "exact", head: true }),
       ]);
 
-      // Handle possible null responses gracefully
-      const uniqueSeasons = new Set(
-        seasonsData.data?.map((ep) => ep.season_number).filter(Boolean) || []
-      );
-
       setStats({
         totalAnime: animeCount?.count || 0,
-        totalSeries: seriesCount?.count || 0,
-        totalMovies: moviesCount?.count || 0,
         totalEpisodes: episodeCount?.count || 0,
-        totalSeasons: uniqueSeasons.size,
         totalUsers: userCount?.count || 0,
         trending: trendingCount?.count || 0,
-        totalComments: commentsCount?.count || 0,
-        totalFavorites: favoritesCount?.count || 0,
-        totalWatchHistory: watchHistoryCount?.count || 0,
+        totalViews: watchHistoryCount?.count || 0,
       });
     } catch (err) {
       console.error("Failed to fetch stats:", err);
@@ -102,66 +87,91 @@ export default function AdminDashboard() {
 
   if (!isAdmin) return null;
 
-  const StatCard = ({ title, value, icon: Icon, subtitle, color = "primary" }) => (
-    <Card className="p-6 border-border/50 bg-gradient-card backdrop-blur-sm hover-lift animate-scale-in">
+  const StatCard = ({ title, value, icon: Icon, color }: any) => (
+    <Card
+      className={`p-5 border border-border/40 bg-card/70 backdrop-blur-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]`}
+    >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">{title}</p>
           {loading ? (
-            <Skeleton className="h-8 w-16 mt-1" />
+            <Skeleton className="h-8 w-16 mt-2" />
           ) : (
-            <h3 className="text-3xl font-bold text-primary">{value}</h3>
+            <h3 className="text-3xl font-bold text-foreground">{value}</h3>
           )}
-          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
         </div>
-        <div className={`flex h-14 w-14 items-center justify-center rounded-lg bg-${color}/20`}>
-          <Icon className={`h-7 w-7 text-${color}`} />
+        <div
+          className={`p-3 rounded-xl bg-${color}/20 text-${color} flex items-center justify-center`}
+        >
+          <Icon className="h-6 w-6" />
         </div>
       </div>
     </Card>
   );
 
+  // Chart mock data (can be made dynamic)
+  const chartData = [
+    { name: "Anime", count: stats?.totalAnime || 0 },
+    { name: "Episodes", count: stats?.totalEpisodes || 0 },
+    { name: "Users", count: stats?.totalUsers || 0 },
+    { name: "Trending", count: stats?.trending || 0 },
+    { name: "Views", count: stats?.totalViews || 0 },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/90 to-background/70">
       <Navbar />
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 animate-fade-in">
-          <h1 className="text-4xl font-bold text-gradient mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">
-            Manage your anime database, users, servers, and more.
+      <div className="container mx-auto px-4 py-10 animate-fade-in">
+        <div className="mb-10 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-cyan-400">
+            Admin Dashboard
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Manage, analyze, and monitor your anime database with ease.
           </p>
         </div>
 
-        {/* --- Stats Grid --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard title="Total Anime" value={stats?.totalAnime} icon={Film} subtitle="All titles" />
-          <StatCard title="Series" value={stats?.totalSeries} icon={Play} subtitle="TV Shows" />
-          <StatCard title="Movies" value={stats?.totalMovies} icon={Film} subtitle="Films" color="accent" />
-          <StatCard title="Episodes" value={stats?.totalEpisodes} icon={Play} subtitle="All episodes" />
-          <StatCard title="Seasons" value={stats?.totalSeasons} icon={Calendar} subtitle="Unique seasons" color="secondary" />
-          <StatCard title="Users" value={stats?.totalUsers} icon={Users} subtitle="Registered" color="secondary" />
-          <StatCard title="Trending" value={stats?.trending} icon={TrendingUp} subtitle="Hot titles" color="accent" />
-          <StatCard title="Watch History" value={stats?.totalWatchHistory} icon={Eye} subtitle="Total views" />
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
+          <StatCard title="Anime" value={stats?.totalAnime} icon={Film} color="purple-500" />
+          <StatCard title="Episodes" value={stats?.totalEpisodes} icon={Play} color="cyan-500" />
+          <StatCard title="Users" value={stats?.totalUsers} icon={Users} color="green-500" />
+          <StatCard title="Trending" value={stats?.trending} icon={TrendingUp} color="pink-500" />
+          <StatCard title="Views" value={stats?.totalViews} icon={Eye} color="orange-500" />
         </div>
 
-        {/* --- Tabs Section --- */}
-        <Tabs defaultValue="anime" className="w-full animate-fade-in">
+        {/* Analytics Chart */}
+        <Card className="p-6 border border-border/40 bg-card/70 backdrop-blur-md mb-10">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-purple-500" /> Analytics Overview
+          </h2>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
+                <YAxis stroke="hsl(var(--muted-foreground))" />
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                  }}
+                />
+                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        {/* Management Tabs */}
+        <Tabs defaultValue="anime" className="w-full">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="anime" className="gap-2">
-              <BarChart3 className="h-4 w-4" /> Anime
-            </TabsTrigger>
-            <TabsTrigger value="episodes" className="gap-2">
-              <Play className="h-4 w-4" /> Episodes
-            </TabsTrigger>
-            <TabsTrigger value="servers" className="gap-2">
-              <Activity className="h-4 w-4" /> Servers
-            </TabsTrigger>
-            <TabsTrigger value="schedule" className="gap-2">
-              <Film className="h-4 w-4" /> Schedule
-            </TabsTrigger>
-            <TabsTrigger value="users" className="gap-2">
-              <Users className="h-4 w-4" /> Users
-            </TabsTrigger>
+            <TabsTrigger value="anime">Anime</TabsTrigger>
+            <TabsTrigger value="episodes">Episodes</TabsTrigger>
+            <TabsTrigger value="servers">Servers</TabsTrigger>
+            <TabsTrigger value="schedule">Schedule</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
 
           <TabsContent value="anime" className="mt-6">
