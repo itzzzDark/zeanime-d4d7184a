@@ -4,7 +4,23 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { BannerCarousel } from "@/components/BannerCarousel";
 import { AnimeSection } from "@/components/AnimeSection";
-import { Loader2, Calendar, Clock, Star, TrendingUp, Users, Sparkles } from "lucide-react";
+import { 
+  Loader2, 
+  Calendar, 
+  Clock, 
+  Star, 
+  TrendingUp, 
+  Users, 
+  Sparkles, 
+  Heart,
+  Swords,
+  Castle,
+  Laugh,
+  Film,
+  Clock4,
+  Crown,
+  Zap
+} from "lucide-react";
 
 const Index = () => {
   // ---- Queries ----
@@ -100,7 +116,7 @@ const Index = () => {
         .select("*")
         .contains("genres", ["Romance"])
         .order("rating", { ascending: false })
-        .limit(10);
+        .limit(8);
       if (error) throw error;
       return data || [];
     },
@@ -114,7 +130,7 @@ const Index = () => {
         .select("*")
         .contains("genres", ["Action"])
         .order("view_count", { ascending: false })
-        .limit(10);
+        .limit(8);
       if (error) throw error;
       return data || [];
     },
@@ -128,7 +144,7 @@ const Index = () => {
         .select("*")
         .contains("genres", ["Fantasy"])
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(8);
       if (error) throw error;
       return data || [];
     },
@@ -142,7 +158,7 @@ const Index = () => {
         .select("*")
         .contains("genres", ["Comedy"])
         .order("rating", { ascending: false })
-        .limit(10);
+        .limit(8);
       if (error) throw error;
       return data || [];
     },
@@ -173,167 +189,172 @@ const Index = () => {
     latestMoviesLoading || top10Loading || upcomingLoading ||
     romanceLoading || actionLoading || fantasyLoading || comedyLoading || thisWeekLoading;
 
+  // Section styling configurations
+  const sectionStyles = {
+    trending: {
+      gradient: "from-rose-500/10 to-rose-600/5",
+      border: "border-rose-500/20",
+      icon: <TrendingUp className="h-4 w-4" />,
+      textColor: "text-rose-400",
+      layout: "featured-scroll" as const
+    },
+    mostWatched: {
+      gradient: "from-amber-500/10 to-amber-600/5",
+      border: "border-amber-500/20",
+      icon: <Users className="h-4 w-4" />,
+      textColor: "text-amber-400",
+      layout: "scroll" as const
+    },
+    newSeries: {
+      gradient: "from-violet-500/10 to-violet-600/5",
+      border: "border-violet-500/20",
+      icon: <Sparkles className="h-4 w-4" />,
+      textColor: "text-violet-400",
+      layout: "grid" as const
+    },
+    top10: {
+      gradient: "from-blue-500/10 to-blue-600/5",
+      border: "border-blue-500/20",
+      icon: <Star className="h-4 w-4" />,
+      textColor: "text-blue-400",
+      layout: "numbered-grid" as const
+    },
+    movies: {
+      gradient: "from-emerald-500/10 to-emerald-600/5",
+      border: "border-emerald-500/20",
+      icon: <Film className="h-4 w-4" />,
+      textColor: "text-emerald-400",
+      layout: "poster-scroll" as const
+    },
+    comingSoon: {
+      gradient: "from-indigo-500/10 to-indigo-600/5",
+      border: "border-indigo-500/20",
+      icon: <Calendar className="h-4 w-4" />,
+      textColor: "text-indigo-400",
+      layout: "compact" as const
+    },
+    romance: {
+      gradient: "from-pink-500/10 to-pink-600/5",
+      border: "border-pink-500/20",
+      icon: <Heart className="h-4 w-4" />,
+      textColor: "text-pink-400",
+      layout: "compact-grid" as const
+    },
+    action: {
+      gradient: "from-red-500/10 to-red-600/5",
+      border: "border-red-500/20",
+      icon: <Swords className="h-4 w-4" />,
+      textColor: "text-red-400",
+      layout: "compact-grid" as const
+    },
+    fantasy: {
+      gradient: "from-purple-500/10 to-purple-600/5",
+      border: "border-purple-500/20",
+      icon: <Castle className="h-4 w-4" />,
+      textColor: "text-purple-400",
+      layout: "compact-grid" as const
+    },
+    comedy: {
+      gradient: "from-yellow-500/10 to-yellow-600/5",
+      border: "border-yellow-500/20",
+      icon: <Laugh className="h-4 w-4" />,
+      textColor: "text-yellow-400",
+      layout: "compact-grid" as const
+    },
+    thisWeek: {
+      gradient: "from-cyan-500/10 to-cyan-600/5",
+      border: "border-cyan-500/20",
+      icon: <Clock4 className="h-4 w-4" />,
+      textColor: "text-cyan-400",
+      layout: "schedule" as const
+    }
+  };
+
+  // Enhanced title component
+  const SectionTitle = ({ title, style }: { title: string; style: any }) => (
+    <div className="flex items-center gap-3 mb-6">
+      <div className={`p-2 rounded-lg bg-white/5 border ${style.border} backdrop-blur-sm`}>
+        {style.icon}
+      </div>
+      <h2 className={`text-lg font-semibold uppercase tracking-wider ${style.textColor}`}>
+        {title}
+      </h2>
+      <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent ml-4" />
+    </div>
+  );
+
   // ---- Loading State ----
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#0c0c0f] via-[#0a0a0d] to-black">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a]">
         <div className="text-center">
-          <Loader2 className="h-16 w-16 animate-spin text-violet-400 drop-shadow-[0_0_20px_rgba(168,85,247,0.8)] mx-auto mb-4" />
-          <p className="text-violet-200 text-lg font-light animate-pulse">Loading amazing content...</p>
+          <Loader2 className="h-12 w-12 animate-spin text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-400 text-sm font-light uppercase tracking-wider">Loading Content</p>
         </div>
       </div>
     );
   }
 
-  // Section styling configurations
-  const sectionStyles = {
-    trending: {
-      gradient: "from-rose-600/20 via-pink-600/15 to-transparent",
-      glow: "from-rose-500/20",
-      icon: <TrendingUp className="h-5 w-5" />,
-      textGradient: "bg-gradient-to-r from-rose-400 to-pink-400"
-    },
-    mostWatched: {
-      gradient: "from-amber-600/20 via-orange-600/15 to-transparent",
-      glow: "from-amber-500/20",
-      icon: <Users className="h-5 w-5" />,
-      textGradient: "bg-gradient-to-r from-amber-400 to-orange-400"
-    },
-    newSeries: {
-      gradient: "from-violet-600/20 via-purple-600/15 to-transparent",
-      glow: "from-violet-500/20",
-      icon: <Sparkles className="h-5 w-5" />,
-      textGradient: "bg-gradient-to-r from-violet-400 to-purple-400"
-    },
-    top10: {
-      gradient: "from-blue-600/20 via-cyan-600/15 to-transparent",
-      glow: "from-blue-500/20",
-      icon: <Star className="h-5 w-5" />,
-      textGradient: "bg-gradient-to-r from-blue-400 to-cyan-400"
-    },
-    movies: {
-      gradient: "from-emerald-600/20 via-teal-600/15 to-transparent",
-      glow: "from-emerald-500/20",
-      icon: <Clock className="h-5 w-5" />,
-      textGradient: "bg-gradient-to-r from-emerald-400 to-teal-400"
-    },
-    comingSoon: {
-      gradient: "from-indigo-600/20 via-blue-600/15 to-transparent",
-      glow: "from-indigo-500/20",
-      icon: <Calendar className="h-5 w-5" />,
-      textGradient: "bg-gradient-to-r from-indigo-400 to-blue-400"
-    },
-    romance: {
-      gradient: "from-pink-600/20 via-rose-600/15 to-transparent",
-      glow: "from-pink-500/20",
-      icon: "❤️",
-      textGradient: "bg-gradient-to-r from-pink-400 to-rose-400"
-    },
-    action: {
-      gradient: "from-red-600/20 via-orange-600/15 to-transparent",
-      glow: "from-red-500/20",
-      icon: "⚡",
-      textGradient: "bg-gradient-to-r from-red-400 to-orange-400"
-    },
-    fantasy: {
-      gradient: "from-purple-600/20 via-violet-600/15 to-transparent",
-      glow: "from-purple-500/20",
-      icon: "🔮",
-      textGradient: "bg-gradient-to-r from-purple-400 to-violet-400"
-    },
-    comedy: {
-      gradient: "from-yellow-600/20 via-amber-600/15 to-transparent",
-      glow: "from-yellow-500/20",
-      icon: "😂",
-      textGradient: "bg-gradient-to-r from-yellow-400 to-amber-400"
-    },
-    thisWeek: {
-      gradient: "from-cyan-600/20 via-sky-600/15 to-transparent",
-      glow: "from-cyan-500/20",
-      icon: "📅",
-      textGradient: "bg-gradient-to-r from-cyan-400 to-sky-400"
-    }
-  };
-
-  // Enhanced title component
-  const SectionTitle = ({ title, style, icon }: { title: string; style: any; icon: any }) => (
-    <div className="flex items-center gap-3 mb-6">
-      <div className={`p-2 rounded-lg bg-gradient-to-br ${style.gradient} border border-white/10 backdrop-blur-sm`}>
-        {typeof icon === 'string' ? (
-          <span className="text-lg">{icon}</span>
-        ) : (
-          icon
-        )}
-      </div>
-      <h2 className={`text-3xl font-bold bg-clip-text text-transparent ${style.textGradient} drop-shadow-lg`}>
-        {title}
-      </h2>
-      <div className="flex-1 h-px bg-gradient-to-r from-white/20 to-transparent ml-4" />
-    </div>
-  );
-
   return (
-    <div className="relative min-h-screen flex flex-col overflow-hidden text-gray-100 bg-gradient-to-br from-[#050505] via-[#090910] to-[#0a0a1a]">
-      {/* Enhanced Ambient glow layers */}
+    <div className="relative min-h-screen flex flex-col overflow-hidden text-gray-100 bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a]">
+      {/* Subtle Ambient glow layers */}
       <div className="absolute inset-0 -z-10 pointer-events-none">
-        <div className="absolute top-24 left-1/4 w-[40rem] h-[40rem] bg-violet-700/25 blur-[200px] rounded-full animate-pulse" />
-        <div className="absolute bottom-10 right-1/3 w-[35rem] h-[35rem] bg-indigo-600/30 blur-[220px] rounded-full" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-[70rem] h-[70rem] bg-purple-900/15 blur-[250px] rounded-full" />
-        <div className="absolute top-3/4 left-1/3 w-[30rem] h-[30rem] bg-rose-600/20 blur-[180px] rounded-full animate-pulse delay-1000" />
+        <div className="absolute top-24 left-1/4 w-[40rem] h-[40rem] bg-gray-800/10 blur-[120px] rounded-full" />
+        <div className="absolute bottom-10 right-1/3 w-[35rem] h-[35rem] bg-gray-700/10 blur-[100px] rounded-full" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-[60rem] h-[60rem] bg-gray-900/5 blur-[150px] rounded-full" />
       </div>
 
-      {/* Enhanced Overlay gradient pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(120,119,198,0.15),transparent_70%),radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.1),transparent_50%)] pointer-events-none" />
+      {/* Soft Overlay gradient pattern */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.03),transparent_70%)] pointer-events-none" />
 
       <Navbar />
 
       {/* Banner */}
       <section className="relative z-10">
         <BannerCarousel />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent" />
       </section>
 
       {/* Main Sections */}
-      <main className="relative z-20 container mx-auto px-4 py-12 space-y-24">
-        {/* Trending */}
+      <main className="relative z-20 container mx-auto px-4 py-12 space-y-16">
+        {/* Trending - Featured Scroll */}
         {trendingAnime.length > 0 && (
-          <section className="relative group">
-            <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.trending.gradient} rounded-2xl blur-3xl opacity-60 group-hover:opacity-80 transition-opacity duration-500`} />
-            <div className="relative">
-              <SectionTitle title="🔥 Trending Now" style={sectionStyles.trending} icon={sectionStyles.trending.icon} />
+          <section className="relative">
+            <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.trending.gradient} rounded-xl border ${sectionStyles.trending.border} backdrop-blur-sm`} />
+            <div className="relative p-6">
+              <SectionTitle title="Trending Now" style={sectionStyles.trending} />
               <AnimeSection
                 title=""
                 animes={trendingAnime}
                 viewAllLink="/trending"
-                layout="scroll"
+                layout="featured-scroll"
               />
             </div>
           </section>
         )}
 
-        {/* This Week */}
+        {/* This Week - Schedule Layout */}
         {thisWeekAnime.length > 0 && (
-          <section className="relative group">
-            <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.thisWeek.gradient} rounded-2xl blur-3xl opacity-60 group-hover:opacity-80 transition-opacity duration-500`} />
-            <div className="relative">
-              <SectionTitle title="📅 Coming This Week" style={sectionStyles.thisWeek} icon={sectionStyles.thisWeek.icon} />
+          <section className="relative">
+            <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.thisWeek.gradient} rounded-xl border ${sectionStyles.thisWeek.border} backdrop-blur-sm`} />
+            <div className="relative p-6">
+              <SectionTitle title="This Week" style={sectionStyles.thisWeek} />
               <AnimeSection
                 title=""
                 animes={thisWeekAnime}
                 viewAllLink="/schedule"
-                layout="scroll"
-                showCountdown={true}
+                layout="schedule"
               />
             </div>
           </section>
         )}
 
-        {/* Most Watched */}
+        {/* Most Watched - Standard Scroll */}
         {mostWatchedAnime.length > 0 && (
-          <section className="relative group">
-            <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.mostWatched.gradient} rounded-2xl blur-3xl opacity-60 group-hover:opacity-80 transition-opacity duration-500`} />
-            <div className="relative">
-              <SectionTitle title="👑 Most Watched" style={sectionStyles.mostWatched} icon={sectionStyles.mostWatched.icon} />
+          <section className="relative">
+            <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.mostWatched.gradient} rounded-xl border ${sectionStyles.mostWatched.border} backdrop-blur-sm`} />
+            <div className="relative p-6">
+              <SectionTitle title="Most Watched" style={sectionStyles.mostWatched} />
               <AnimeSection
                 title=""
                 animes={mostWatchedAnime}
@@ -344,134 +365,132 @@ const Index = () => {
           </section>
         )}
 
-        {/* Top 10 */}
+        {/* Top 10 - Numbered Grid */}
         {top10Anime.length > 0 && (
-          <section className="relative group">
-            <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.top10.gradient} rounded-2xl blur-3xl opacity-60 group-hover:opacity-80 transition-opacity duration-500`} />
-            <div className="relative">
-              <SectionTitle title="⭐ Top 10 Anime" style={sectionStyles.top10} icon={sectionStyles.top10.icon} />
+          <section className="relative">
+            <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.top10.gradient} rounded-xl border ${sectionStyles.top10.border} backdrop-blur-sm`} />
+            <div className="relative p-6">
+              <SectionTitle title="Top Rated" style={sectionStyles.top10} />
               <AnimeSection
                 title=""
                 animes={top10Anime}
                 viewAllLink="/top"
-                layout="grid"
-                showRanking={true}
-              />
-            </div>
-          </section>
-        )}
-
-        {/* New Series */}
-        {latestSeries.length > 0 && (
-          <section className="relative group">
-            <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.newSeries.gradient} rounded-2xl blur-3xl opacity-60 group-hover:opacity-80 transition-opacity duration-500`} />
-            <div className="relative">
-              <SectionTitle title="✨ New Series" style={sectionStyles.newSeries} icon={sectionStyles.newSeries.icon} />
-              <AnimeSection
-                title=""
-                animes={latestSeries}
-                viewAllLink="/series"
-                layout="scroll"
+                layout="numbered-grid"
               />
             </div>
           </section>
         )}
 
         {/* Genre Sections Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-24">
-          {/* Romance */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Romance - Compact Grid */}
           {romanceAnime.length > 0 && (
-            <section className="relative group">
-              <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.romance.gradient} rounded-2xl blur-3xl opacity-50 group-hover:opacity-70 transition-opacity duration-500`} />
-              <div className="relative">
-                <SectionTitle title="💖 Romance" style={sectionStyles.romance} icon={sectionStyles.romance.icon} />
+            <section className="relative">
+              <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.romance.gradient} rounded-xl border ${sectionStyles.romance.border} backdrop-blur-sm`} />
+              <div className="relative p-6">
+                <SectionTitle title="Romance" style={sectionStyles.romance} />
                 <AnimeSection
                   title=""
                   animes={romanceAnime}
                   viewAllLink="/genre/romance"
-                  layout="compact"
+                  layout="compact-grid"
                 />
               </div>
             </section>
           )}
 
-          {/* Action */}
+          {/* Action - Compact Grid */}
           {actionAnime.length > 0 && (
-            <section className="relative group">
-              <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.action.gradient} rounded-2xl blur-3xl opacity-50 group-hover:opacity-70 transition-opacity duration-500`} />
-              <div className="relative">
-                <SectionTitle title="⚡ Action" style={sectionStyles.action} icon={sectionStyles.action.icon} />
+            <section className="relative">
+              <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.action.gradient} rounded-xl border ${sectionStyles.action.border} backdrop-blur-sm`} />
+              <div className="relative p-6">
+                <SectionTitle title="Action" style={sectionStyles.action} />
                 <AnimeSection
                   title=""
                   animes={actionAnime}
                   viewAllLink="/genre/action"
-                  layout="compact"
+                  layout="compact-grid"
                 />
               </div>
             </section>
           )}
 
-          {/* Fantasy */}
+          {/* Fantasy - Compact Grid */}
           {fantasyAnime.length > 0 && (
-            <section className="relative group">
-              <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.fantasy.gradient} rounded-2xl blur-3xl opacity-50 group-hover:opacity-70 transition-opacity duration-500`} />
-              <div className="relative">
-                <SectionTitle title="🔮 Fantasy" style={sectionStyles.fantasy} icon={sectionStyles.fantasy.icon} />
+            <section className="relative">
+              <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.fantasy.gradient} rounded-xl border ${sectionStyles.fantasy.border} backdrop-blur-sm`} />
+              <div className="relative p-6">
+                <SectionTitle title="Fantasy" style={sectionStyles.fantasy} />
                 <AnimeSection
                   title=""
                   animes={fantasyAnime}
                   viewAllLink="/genre/fantasy"
-                  layout="compact"
+                  layout="compact-grid"
                 />
               </div>
             </section>
           )}
 
-          {/* Comedy */}
+          {/* Comedy - Compact Grid */}
           {comedyAnime.length > 0 && (
-            <section className="relative group">
-              <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.comedy.gradient} rounded-2xl blur-3xl opacity-50 group-hover:opacity-70 transition-opacity duration-500`} />
-              <div className="relative">
-                <SectionTitle title="😂 Comedy" style={sectionStyles.comedy} icon={sectionStyles.comedy.icon} />
+            <section className="relative">
+              <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.comedy.gradient} rounded-xl border ${sectionStyles.comedy.border} backdrop-blur-sm`} />
+              <div className="relative p-6">
+                <SectionTitle title="Comedy" style={sectionStyles.comedy} />
                 <AnimeSection
                   title=""
                   animes={comedyAnime}
                   viewAllLink="/genre/comedy"
-                  layout="compact"
+                  layout="compact-grid"
                 />
               </div>
             </section>
           )}
         </div>
 
-        {/* Movies */}
-        {latestMovies.length > 0 && (
-          <section className="relative group">
-            <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.movies.gradient} rounded-2xl blur-3xl opacity-60 group-hover:opacity-80 transition-opacity duration-500`} />
-            <div className="relative">
-              <SectionTitle title="🎬 Latest Movies" style={sectionStyles.movies} icon={sectionStyles.movies.icon} />
+        {/* New Series - Grid Layout */}
+        {latestSeries.length > 0 && (
+          <section className="relative">
+            <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.newSeries.gradient} rounded-xl border ${sectionStyles.newSeries.border} backdrop-blur-sm`} />
+            <div className="relative p-6">
+              <SectionTitle title="New Series" style={sectionStyles.newSeries} />
               <AnimeSection
                 title=""
-                animes={latestMovies}
-                viewAllLink="/movies"
-                layout="scroll"
+                animes={latestSeries}
+                viewAllLink="/series"
+                layout="grid"
               />
             </div>
           </section>
         )}
 
-        {/* Coming Soon */}
+        {/* Movies - Poster Scroll */}
+        {latestMovies.length > 0 && (
+          <section className="relative">
+            <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.movies.gradient} rounded-xl border ${sectionStyles.movies.border} backdrop-blur-sm`} />
+            <div className="relative p-6">
+              <SectionTitle title="Latest Movies" style={sectionStyles.movies} />
+              <AnimeSection
+                title=""
+                animes={latestMovies}
+                viewAllLink="/movies"
+                layout="poster-scroll"
+              />
+            </div>
+          </section>
+        )}
+
+        {/* Coming Soon - Compact Layout */}
         {upcomingAnime.length > 0 && (
-          <section className="relative group">
-            <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.comingSoon.gradient} rounded-2xl blur-3xl opacity-60 group-hover:opacity-80 transition-opacity duration-500`} />
-            <div className="relative">
-              <SectionTitle title="⏳ Coming Soon" style={sectionStyles.comingSoon} icon={sectionStyles.comingSoon.icon} />
+          <section className="relative">
+            <div className={`absolute inset-0 bg-gradient-to-r ${sectionStyles.comingSoon.gradient} rounded-xl border ${sectionStyles.comingSoon.border} backdrop-blur-sm`} />
+            <div className="relative p-6">
+              <SectionTitle title="Coming Soon" style={sectionStyles.comingSoon} />
               <AnimeSection
                 title=""
                 animes={upcomingAnime}
                 viewAllLink="/upcoming"
-                layout="scroll"
-                showCountdown={true}
+                layout="compact"
               />
             </div>
           </section>
