@@ -24,13 +24,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
 import { 
   Loader2, 
@@ -40,15 +33,10 @@ import {
   Server, 
   ArrowUp, 
   ArrowDown, 
-  MoreVertical,
   Copy,
   ExternalLink,
-  TestTube,
-  Eye,
-  EyeOff,
   CheckCircle,
   XCircle,
-  Settings,
   RefreshCw
 } from 'lucide-react';
 
@@ -74,7 +62,6 @@ export default function ServerManagement() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingServer, setEditingServer] = useState<EmbedServer | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [testUrl, setTestUrl] = useState('');
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [testing, setTesting] = useState(false);
 
@@ -126,10 +113,12 @@ export default function ServerManagement() {
         return;
       }
 
+      const payload = { ...formData };
+
       if (editingServer) {
         const { error } = await supabase
           .from('embed_servers')
-          .update(formData)
+          .update(payload)
           .eq('id', editingServer.id);
 
         if (error) throw error;
@@ -141,7 +130,7 @@ export default function ServerManagement() {
       } else {
         const { error } = await supabase
           .from('embed_servers')
-          .insert([formData]);
+          .insert([payload]);
 
         if (error) throw error;
         
@@ -207,13 +196,18 @@ export default function ServerManagement() {
     
     const targetServer = servers.find(s => s.order_index === targetIndex);
     
+    if (!targetServer && direction === 'down') {
+      // If moving down and no target, it's already at the bottom
+      return;
+    }
+
     try {
       if (targetServer) {
         // Swap positions
         await supabase.from('embed_servers').update({ order_index: targetIndex }).eq('id', server.id);
         await supabase.from('embed_servers').update({ order_index: currentIndex }).eq('id', targetServer.id);
       } else {
-        // Move to end or beginning
+        // Move to new position
         await supabase.from('embed_servers').update({ order_index: targetIndex }).eq('id', server.id);
       }
       
@@ -237,84 +231,88 @@ export default function ServerManagement() {
       order_index: servers.length > 0 ? Math.max(...servers.map(s => s.order_index)) + 1 : 0,
     });
     setTestResult(null);
-    setTestUrl('');
   };
 
-  const testEmbedUrl = async (server: EmbedServer, testSlug: string = 'demo') => {
-    if (!testSlug.trim()) {
-      toast({
-        title: "Test Slug Required",
-        description: "Please enter a test slug to test the embed URL",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const testEmbedUrl = async (server: EmbedServer) => {
     setTesting(true);
     setTestResult(null);
 
     try {
-      const testEmbedUrl = `${server.embed_url}${testSlug}`;
+      // Create a test iframe to check if the embed URL works
+      const testUrl = `${server.embed_url}test`;
       
-      // Test with a HEAD request to check if the URL is accessible
-      const response = await fetch(testEmbedUrl, { 
-        method: 'HEAD',
-        mode: 'no-cors'
-      });
+      // This is a basic test - in production you might want more sophisticated testing
+      const iframe = document.createElement('iframe');
+      iframe.src = testUrl;
+      iframe.style.display = 'none';
+      
+      iframe.onload = () => {
+        setTestResult({
+          success: true,
+          message: "Embed URL loaded successfully"
+        });
+        document.body.removeChild(iframe);
+        setTesting(false);
+      };
+      
+      iframe.onerror = () => {
+        setTestResult({
+          success: false,
+          message: "Failed to load embed URL"
+        });
+        document.body.removeChild(iframe);
+        setTesting(false);
+      };
+      
+      document.body.appendChild(iframe);
 
-      // Since we're using no-cors, we can't read the response status
-      // But if we reach here, the request was made successfully
-      setTestResult({
-        success: true,
-        message: `Embed URL is accessible. Full URL: ${testEmbedUrl}`
-      });
-
-      toast({
-        title: "Test Successful",
-        description: "Embed URL is working correctly",
-      });
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+          setTestResult({
+            success: false,
+            message: "Test timed out - URL might be slow or invalid"
+          });
+          setTesting(false);
+        }
+      }, 5000);
 
     } catch (error) {
       setTestResult({
         success: false,
-        message: "Failed to access embed URL. Please check the URL format."
+        message: "Error testing URL"
       });
-      
-      toast({
-        title: "Test Failed",
-        description: "Could not access the embed URL",
-        variant: "destructive",
-      });
-    } finally {
       setTesting(false);
     }
   };
 
-  const copyToClipboard = (text: string, message: string) => {
+  const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
       title: "Copied!",
-      description: message,
+      description: "Server URL copied to clipboard",
     });
   };
 
   const getNextOrderIndex = () => {
-    return servers.length > 0 ? Math.max(...servers.map(s => s.order_index)) + 1 : 0;
+    if (servers.length === 0) return 0;
+    return Math.max(...servers.map(s => s.order_index)) + 1;
   };
 
   const LoadingSkeleton = () => (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {[...Array(3)].map((_, i) => (
-        <Card key={i} className="p-4 border-border/50">
+        <Card key={i} className="p-4 border border-gray-200">
           <div className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10 rounded-lg" />
+            <Skeleton className="h-12 w-12 rounded-lg bg-gray-200" />
             <div className="space-y-2 flex-1">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-3 w-48" />
+              <Skeleton className="h-4 w-32 bg-gray-200" />
+              <Skeleton className="h-3 w-48 bg-gray-200" />
             </div>
-            <Skeleton className="h-9 w-9 rounded-md" />
-            <Skeleton className="h-9 w-9 rounded-md" />
-            <Skeleton className="h-9 w-9 rounded-md" />
+            <Skeleton className="h-9 w-9 rounded-md bg-gray-200" />
+            <Skeleton className="h-9 w-9 rounded-md bg-gray-200" />
+            <Skeleton className="h-9 w-9 rounded-md bg-gray-200" />
           </div>
         </Card>
       ))}
@@ -326,10 +324,8 @@ export default function ServerManagement() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Server Management
-          </h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold text-gray-900">Server Management</h1>
+          <p className="text-gray-600 mt-1">
             Manage embed servers for video playback ({servers.length} servers)
           </p>
         </div>
@@ -344,142 +340,75 @@ export default function ServerManagement() {
         </Button>
       </div>
 
-      {/* Server Form Card */}
-      <Card className="p-6 border-border/50 bg-card/50 backdrop-blur-sm border-l-4 border-l-primary">
+      {/* Server Form */}
+      <Card className="p-6 border border-gray-200">
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Settings className="h-6 w-6 text-primary" />
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <Server className="h-6 w-6 text-blue-600" />
           </div>
           <div>
-            <h3 className="text-xl font-bold">
+            <h3 className="text-xl font-bold text-gray-900">
               {editingServer ? 'Edit Server' : 'Add New Server'}
             </h3>
-            <p className="text-sm text-muted-foreground">
-              {editingServer ? 'Update existing server configuration' : 'Create a new embed server for video playback'}
+            <p className="text-sm text-gray-600">
+              {editingServer ? 'Update server configuration' : 'Create a new embed server'}
             </p>
           </div>
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="flex items-center gap-2">
-                  Server Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g., FileMoon, StreamTape, DoodStream"
-                  className="focus-visible:ring-primary"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="order_index" className="flex items-center gap-2">
-                  Order Index
-                </Label>
-                <Input
-                  id="order_index"
-                  type="number"
-                  min="0"
-                  value={formData.order_index}
-                  onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) || 0 })}
-                  className="focus-visible:ring-primary"
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Lower numbers appear first in the server list
-                </p>
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Server Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="e.g., FileMoon, StreamTape"
+                required
+              />
             </div>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="embed_url" className="flex items-center gap-2">
-                  Embed URL Base <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="embed_url"
-                  value={formData.embed_url}
-                  onChange={(e) => setFormData({ ...formData, embed_url: e.target.value })}
-                  placeholder="https://filemoon.sx/e/"
-                  className="font-mono text-sm focus-visible:ring-primary"
-                  required
-                />
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <p>• Must end with a trailing slash (/)</p>
-                  <p>• Episode slug will be appended automatically</p>
-                  <p className="font-mono bg-muted p-1 rounded">Example: https://filemoon.sx/e/[slug]</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/20">
-                <Label htmlFor="is_active" className="flex items-center gap-2 cursor-pointer flex-1">
-                  {formData.is_active ? (
-                    <Eye className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <EyeOff className="h-4 w-4 text-muted-foreground" />
-                  )}
-                  <span>Active Server</span>
-                </Label>
-                <Switch
-                  id="is_active"
-                  checked={formData.is_active}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="order_index">Order Index</Label>
+              <Input
+                id="order_index"
+                type="number"
+                min="0"
+                value={formData.order_index}
+                onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) || 0 })}
+                required
+              />
             </div>
           </div>
 
-          {/* Test Section */}
-          {formData.embed_url && (
-            <div className="p-4 border rounded-lg bg-blue-50/50 dark:bg-blue-950/20">
-              <Label className="flex items-center gap-2 text-sm font-medium mb-3">
-                <TestTube className="h-4 w-4" />
-                Test Embed URL
-              </Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Enter test slug (e.g., abc123)"
-                  value={testUrl}
-                  onChange={(e) => setTestUrl(e.target.value)}
-                  className="flex-1 font-mono text-sm"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => testEmbedUrl(formData as any, testUrl)}
-                  disabled={testing || !formData.embed_url || !testUrl}
-                >
-                  {testing ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <TestTube className="h-4 w-4" />
-                  )}
-                  Test
-                </Button>
-              </div>
-              {testResult && (
-                <div className={`mt-2 p-2 rounded text-sm ${
-                  testResult.success 
-                    ? 'bg-green-500/20 text-green-700 dark:text-green-400' 
-                    : 'bg-red-500/20 text-red-700 dark:text-red-400'
-                }`}>
-                  {testResult.success ? (
-                    <CheckCircle className="h-4 w-4 inline mr-1" />
-                  ) : (
-                    <XCircle className="h-4 w-4 inline mr-1" />
-                  )}
-                  {testResult.message}
-                </div>
-              )}
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="embed_url">Embed URL Base *</Label>
+            <Input
+              id="embed_url"
+              value={formData.embed_url}
+              onChange={(e) => setFormData({ ...formData, embed_url: e.target.value })}
+              placeholder="https://filemoon.sx/e/"
+              className="font-mono text-sm"
+              required
+            />
+            <p className="text-xs text-gray-500">
+              Must end with a trailing slash. Example: https://filemoon.sx/e/[slug]
+            </p>
+          </div>
 
-          <div className="flex gap-3 pt-4 border-t">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="is_active"
+              checked={formData.is_active}
+              onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+            />
+            <Label htmlFor="is_active" className="cursor-pointer">
+              Active Server
+            </Label>
+          </div>
+
+          <div className="flex gap-3 pt-4">
             <Button 
               type="submit" 
               className="gap-2"
@@ -504,7 +433,6 @@ export default function ServerManagement() {
                 Cancel
               </Button>
             )}
-            <div className="flex-1" />
             <Button
               type="button"
               variant="ghost"
@@ -520,11 +448,8 @@ export default function ServerManagement() {
       {/* Servers List */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold flex items-center gap-2">
-            <Server className="h-5 w-5 text-primary" />
-            Managed Servers
-          </h3>
-          <Badge variant="outline" className="text-sm">
+          <h3 className="text-lg font-bold text-gray-900">Managed Servers</h3>
+          <Badge variant="secondary" className="text-sm">
             {servers.filter(s => s.is_active).length} Active
           </Badge>
         </div>
@@ -532,10 +457,10 @@ export default function ServerManagement() {
         {loading ? (
           <LoadingSkeleton />
         ) : servers.length === 0 ? (
-          <Card className="p-8 text-center border-border/50 bg-card/50 backdrop-blur-sm">
-            <Server className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <h4 className="text-lg font-semibold mb-2">No Servers Configured</h4>
-            <p className="text-muted-foreground mb-4">
+          <Card className="p-8 text-center border border-gray-200">
+            <Server className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <h4 className="text-lg font-semibold mb-2 text-gray-900">No Servers Configured</h4>
+            <p className="text-gray-600 mb-4">
               Get started by adding your first embed server above.
             </p>
             <Button onClick={resetForm}>
@@ -544,26 +469,26 @@ export default function ServerManagement() {
             </Button>
           </Card>
         ) : (
-          <div className="grid gap-4">
+          <div className="space-y-4">
             {servers.map((server) => (
               <Card 
                 key={server.id} 
-                className={`p-4 border-border/50 backdrop-blur-sm transition-all hover:shadow-md ${
+                className={`p-4 border transition-all ${
                   server.is_active 
-                    ? 'border-l-4 border-l-green-500 bg-card/50' 
-                    : 'border-l-4 border-l-muted-foreground/30 bg-muted/20 opacity-70'
+                    ? 'border-green-200 bg-green-50' 
+                    : 'border-gray-200 bg-gray-50'
                 }`}
               >
                 <div className="flex items-center gap-4">
-                  <div className={`p-2 rounded-lg ${
-                    server.is_active ? 'bg-green-500/10 text-green-600' : 'bg-muted text-muted-foreground'
+                  <div className={`p-3 rounded-lg ${
+                    server.is_active ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
                   }`}>
                     <Server className="h-6 w-6" />
                   </div>
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
-                      <h4 className="font-semibold text-lg truncate">{server.name}</h4>
+                      <h4 className="font-semibold text-gray-900">{server.name}</h4>
                       <div className="flex gap-1">
                         <Badge 
                           variant={server.is_active ? "default" : "secondary"} 
@@ -578,25 +503,29 @@ export default function ServerManagement() {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <code className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded font-mono truncate flex-1">
+                      <code className="text-sm text-gray-600 bg-white px-2 py-1 rounded border font-mono truncate flex-1">
                         {server.embed_url}[slug]
                       </code>
                       <Button
                         size="icon"
                         variant="ghost"
                         className="h-8 w-8"
-                        onClick={() => copyToClipboard(server.embed_url, 'Embed URL copied!')}
+                        onClick={() => copyToClipboard(server.embed_url)}
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
-                    </div>
-                    
-                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                      <span>Created: {new Date(server.created_at).toLocaleDateString()}</span>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        onClick={() => window.open(server.embed_url, '_blank')}
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
 
-                  <div className="flex gap-1">
+                  <div className="flex gap-2">
                     <Button
                       size="icon"
                       variant="outline"
@@ -615,42 +544,51 @@ export default function ServerManagement() {
                     >
                       <ArrowDown className="h-4 w-4" />
                     </Button>
-                    
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button size="icon" variant="outline">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(server)}>
-                          <Pencil className="h-4 w-4 mr-2" />
-                          Edit Server
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => testEmbedUrl(server, 'test')}
-                        >
-                          <TestTube className="h-4 w-4 mr-2" />
-                          Test URL
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => window.open(server.embed_url, '_blank')}
-                        >
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Open Base URL
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          onClick={() => setDeleteConfirm(server.id)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Server
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => testEmbedUrl(server)}
+                      disabled={testing}
+                      title="Test URL"
+                    >
+                      {testing && editingServer?.id === server.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => handleEdit(server)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      onClick={() => setDeleteConfirm(server.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
+
+                {/* Test Result */}
+                {testResult && editingServer?.id === server.id && (
+                  <div className={`mt-3 p-2 rounded text-sm ${
+                    testResult.success 
+                      ? 'bg-green-100 text-green-700 border border-green-200' 
+                      : 'bg-red-100 text-red-700 border border-red-200'
+                  }`}>
+                    {testResult.success ? (
+                      <CheckCircle className="h-4 w-4 inline mr-1" />
+                    ) : (
+                      <XCircle className="h-4 w-4 inline mr-1" />
+                    )}
+                    {testResult.message}
+                  </div>
+                )}
               </Card>
             ))}
           </div>
@@ -661,7 +599,7 @@ export default function ServerManagement() {
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
               <Trash2 className="h-5 w-5" />
               Delete Server
             </AlertDialogTitle>
@@ -674,7 +612,7 @@ export default function ServerManagement() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-red-600 text-white hover:bg-red-700"
             >
               Delete Server
             </AlertDialogAction>
