@@ -205,13 +205,13 @@ const Index = () => {
       gradient: "bg-gradient-to-r from-violet-500/10 to-violet-600/5",
       icon: <Sparkles className="h-4 w-4" />,
       textColor: "text-violet-400",
-      layout: "compact-grid" as const
+      layout: "grid" as const
     },
     top10: {
       gradient: "bg-gradient-to-r from-blue-500/10 to-blue-600/5",
       icon: <Star className="h-4 w-4" />,
       textColor: "text-blue-400",
-      layout: "compact-grid" as const
+      layout: "grid" as const
     },
     movies: {
       gradient: "bg-gradient-to-r from-emerald-500/10 to-emerald-600/5",
@@ -223,37 +223,37 @@ const Index = () => {
       gradient: "bg-gradient-to-r from-indigo-500/10 to-indigo-600/5",
       icon: <Calendar className="h-4 w-4" />,
       textColor: "text-indigo-400",
-      layout: "compact" as const
+      layout: "scroll" as const
     },
     romance: {
       gradient: "bg-gradient-to-r from-pink-500/10 to-pink-600/5",
       icon: <Heart className="h-4 w-4" />,
       textColor: "text-pink-400",
-      layout: "compact-grid" as const
+      layout: "grid" as const
     },
     action: {
       gradient: "bg-gradient-to-r from-red-500/10 to-red-600/5",
       icon: <Swords className="h-4 w-4" />,
       textColor: "text-red-400",
-      layout: "compact-grid" as const
+      layout: "grid" as const
     },
     fantasy: {
       gradient: "bg-gradient-to-r from-purple-500/10 to-purple-600/5",
       icon: <Castle className="h-4 w-4" />,
       textColor: "text-purple-400",
-      layout: "compact-grid" as const
+      layout: "grid" as const
     },
     comedy: {
       gradient: "bg-gradient-to-r from-yellow-500/10 to-yellow-600/5",
       icon: <Laugh className="h-4 w-4" />,
       textColor: "text-yellow-400",
-      layout: "compact-grid" as const
+      layout: "grid" as const
     },
     thisWeek: {
       gradient: "bg-gradient-to-r from-cyan-500/10 to-cyan-600/5",
       icon: <Clock4 className="h-4 w-4" />,
       textColor: "text-cyan-400",
-      layout: "compact" as const
+      layout: "scroll" as const
     }
   };
 
@@ -316,7 +316,7 @@ const Index = () => {
               title=""
               animes={thisWeekAnime}
               viewAllLink="/schedule"
-              layout="compact"
+              layout="scroll"
               cardGap="gap-2"
             />
           </section>
@@ -344,7 +344,7 @@ const Index = () => {
               title=""
               animes={top10Anime}
               viewAllLink="/top"
-              layout="compact-grid"
+              layout="grid"
               cardGap="gap-2"
             />
           </section>
@@ -360,8 +360,8 @@ const Index = () => {
                 title=""
                 animes={romanceAnime}
                 viewAllLink="/genre/romance"
-                layout="compact-grid"
-                cardGap="gap-1"
+                layout="grid"
+                cardGap="gap-2"
               />
             </section>
           )}
@@ -374,8 +374,8 @@ const Index = () => {
                 title=""
                 animes={actionAnime}
                 viewAllLink="/genre/action"
-                layout="compact-grid"
-                cardGap="gap-1"
+                layout="grid"
+                cardGap="gap-2"
               />
             </section>
           )}
@@ -388,8 +388,8 @@ const Index = () => {
                 title=""
                 animes={fantasyAnime}
                 viewAllLink="/genre/fantasy"
-                layout="compact-grid"
-                cardGap="gap-1"
+                layout="grid"
+                cardGap="gap-2"
               />
             </section>
           )}
@@ -402,8 +402,8 @@ const Index = () => {
                 title=""
                 animes={comedyAnime}
                 viewAllLink="/genre/comedy"
-                layout="compact-grid"
-                cardGap="gap-1"
+                layout="grid"
+                cardGap="gap-2"
               />
             </section>
           )}
@@ -417,7 +417,7 @@ const Index = () => {
               title=""
               animes={latestSeries}
               viewAllLink="/series"
-              layout="compact-grid"
+              layout="grid"
               cardGap="gap-2"
             />
           </section>
@@ -445,7 +445,7 @@ const Index = () => {
               title=""
               animes={upcomingAnime}
               viewAllLink="/upcoming"
-              layout="compact"
+              layout="scroll"
               cardGap="gap-2"
             />
           </section>
