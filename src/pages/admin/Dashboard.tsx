@@ -15,6 +15,9 @@ import {
   Calendar,
   UserPlus,
   Clock,
+  Sparkles,
+  Database,
+  Server,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AnimeManagement from "@/components/admin/AnimeManagement";
@@ -23,6 +26,7 @@ import UserManagement from "@/components/admin/UserManagement";
 import ScheduleManagement from "@/components/admin/ScheduleManagement";
 import ServerManagement from "@/components/admin/ServerManagement";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import {
   ResponsiveContainer,
   LineChart,
@@ -106,7 +110,7 @@ export default function AdminDashboard() {
       { id: 1, action: "New user registered", time: "2 mins ago", type: "user" },
       { id: 2, action: "Episode added: One Piece 1085", time: "15 mins ago", type: "episode" },
       { id: 3, action: "Anime updated: Jujutsu Kaisen", time: "1 hour ago", type: "anime" },
-      { id: 4, action: "Server status changed", time: "2 hours ago", type: "server" },
+      { id: 4, action: "Server configuration updated", time: "2 hours ago", type: "server" },
     ];
     setRecentActivity(activity);
   };
@@ -114,35 +118,39 @@ export default function AdminDashboard() {
   if (!isAdmin) return null;
 
   const StatCard = ({ title, value, icon: Icon, color, trend, subtitle }: any) => (
-    <Card className="group relative overflow-hidden border border-border/40 bg-card/50 backdrop-blur-xl hover:bg-card/70 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl">
+    <Card className="group relative overflow-hidden border border-gray-200/60 bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-all duration-300 hover:shadow-lg rounded-2xl">
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <p className="text-sm font-medium text-gray-600">{title}</p>
             {loading ? (
-              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-8 w-20 bg-gray-200" />
             ) : (
               <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                  {value}
+                <h3 className="text-3xl font-bold text-gray-900">
+                  {value?.toLocaleString()}
                 </h3>
                 {trend && (
-                  <span className={`text-sm ${trend > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}%
+                  <span className={`text-sm px-1.5 py-0.5 rounded-full ${
+                    trend > 0 
+                      ? 'bg-green-100 text-green-700' 
+                      : 'bg-red-100 text-red-700'
+                  }`}>
+                    {trend > 0 ? '↗' : '↘'} {Math.abs(trend)}%
                   </span>
                 )}
               </div>
             )}
             {subtitle && (
-              <p className="text-xs text-muted-foreground">{subtitle}</p>
+              <p className="text-xs text-gray-500">{subtitle}</p>
             )}
           </div>
-          <div className={`p-3 rounded-2xl bg-gradient-to-br ${color} group-hover:scale-110 transition-transform duration-300`}>
+          <div className={`p-3 rounded-xl bg-gradient-to-br ${color} group-hover:scale-105 transition-transform duration-300 shadow-sm`}>
             <Icon className="h-6 w-6 text-white" />
           </div>
         </div>
       </CardContent>
-      <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-current to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-current to-transparent opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
     </Card>
   );
 
@@ -166,32 +174,58 @@ export default function AdminDashboard() {
   ];
 
   const pieData = [
-    { name: "Active", value: 75 },
-    { name: "Inactive", value: 15 },
-    { name: "New", value: 10 },
+    { name: "Active Users", value: 75 },
+    { name: "New Users", value: 15 },
+    { name: "Returning", value: 10 },
   ];
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
+  const COLORS = ['#8B5CF6', '#10B981', '#F59E0B'];
+
+  const ActivityIcon = ({ type }: { type: string }) => {
+    const icons = {
+      user: <UserPlus className="h-4 w-4" />,
+      episode: <Play className="h-4 w-4" />,
+      anime: <Film className="h-4 w-4" />,
+      server: <Server className="h-4 w-4" />,
+    };
+    
+    const colors = {
+      user: "bg-emerald-100 text-emerald-600",
+      episode: "bg-blue-100 text-blue-600",
+      anime: "bg-purple-100 text-purple-600",
+      server: "bg-amber-100 text-amber-600",
+    };
+
+    return (
+      <div className={`p-2 rounded-lg ${colors[type as keyof typeof colors]}`}>
+        {icons[type as keyof typeof icons]}
+      </div>
+    );
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background/90">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30">
       <Navbar />
-      <div className="container mx-auto px-4 py-8 animate-fade-in">
+      <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8 text-center">
-          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-cyan-500/10 border border-border/40 backdrop-blur-sm">
-            <Activity className="h-6 w-6 text-purple-500" />
-            <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-cyan-400">
-              Admin Dashboard
-            </h1>
+          <div className="inline-flex items-center gap-3 px-6 py-4 rounded-2xl bg-white/80 backdrop-blur-sm border border-gray-200/60 shadow-sm mb-4">
+            <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg">
+              <Sparkles className="h-6 w-6 text-white" />
+            </div>
+            <div className="text-left">
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+                Admin Dashboard
+              </h1>
+              <p className="text-gray-600 mt-1 text-sm">
+                Manage your anime platform with ease
+              </p>
+            </div>
           </div>
-          <p className="text-muted-foreground mt-3 text-lg">
-            Comprehensive analytics and management for your anime platform
-          </p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
           <StatCard 
             title="Total Anime" 
             value={stats?.totalAnime} 
@@ -204,7 +238,7 @@ export default function AdminDashboard() {
             title="Episodes" 
             value={stats?.totalEpisodes} 
             icon={Play} 
-            color="from-cyan-500 to-cyan-600"
+            color="from-blue-500 to-cyan-500"
             trend={8}
             subtitle="+23 this week"
           />
@@ -212,7 +246,7 @@ export default function AdminDashboard() {
             title="Active Users" 
             value={stats?.totalUsers} 
             icon={Users} 
-            color="from-green-500 to-green-600"
+            color="from-emerald-500 to-green-500"
             trend={15}
             subtitle="+42 this week"
           />
@@ -220,7 +254,7 @@ export default function AdminDashboard() {
             title="Total Views" 
             value={stats?.totalViews} 
             icon={Eye} 
-            color="from-orange-500 to-orange-600"
+            color="from-amber-500 to-orange-500"
             trend={22}
             subtitle="All time"
           />
@@ -229,40 +263,66 @@ export default function AdminDashboard() {
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Activity Chart */}
-          <Card className="border border-border/40 bg-card/50 backdrop-blur-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
+          <Card className="border border-gray-200/60 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
                 <TrendingUp className="h-5 w-5 text-purple-500" />
                 Weekly Activity
+                <Badge variant="outline" className="ml-2 bg-purple-50 text-purple-700 border-purple-200">
+                  Live
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-80">
+              <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={lineChartData}>
                     <defs>
                       <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.1}/>
                       </linearGradient>
                       <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#10B981" stopOpacity={0.1}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
-                    <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis stroke="hsl(var(--muted-foreground))" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.6} />
+                    <XAxis 
+                      dataKey="day" 
+                      stroke="#6B7280" 
+                      fontSize={12}
+                    />
+                    <YAxis 
+                      stroke="#6B7280" 
+                      fontSize={12}
+                    />
                     <Tooltip
                       contentStyle={{
-                        background: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
+                        background: "rgba(255, 255, 255, 0.95)",
+                        border: "1px solid #E5E7EB",
                         borderRadius: "8px",
                         backdropFilter: "blur(16px)",
+                        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                        fontSize: "12px"
                       }}
                     />
-                    <Area type="monotone" dataKey="views" stroke="#8884d8" fillOpacity={1} fill="url(#colorViews)" />
-                    <Area type="monotone" dataKey="users" stroke="#82ca9d" fillOpacity={1} fill="url(#colorUsers)" />
+                    <Area 
+                      type="monotone" 
+                      dataKey="views" 
+                      stroke="#8B5CF6" 
+                      strokeWidth={2}
+                      fillOpacity={1} 
+                      fill="url(#colorViews)" 
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="users" 
+                      stroke="#10B981" 
+                      strokeWidth={2}
+                      fillOpacity={1} 
+                      fill="url(#colorUsers)" 
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -270,15 +330,15 @@ export default function AdminDashboard() {
           </Card>
 
           {/* Distribution Chart */}
-          <Card className="border border-border/40 bg-card/50 backdrop-blur-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
+          <Card className="border border-gray-200/60 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
                 <Users className="h-5 w-5 text-cyan-500" />
                 User Distribution
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-80">
+              <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -288,6 +348,7 @@ export default function AdminDashboard() {
                       labelLine={false}
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       outerRadius={80}
+                      innerRadius={40}
                       fill="#8884d8"
                       dataKey="value"
                     >
@@ -297,10 +358,11 @@ export default function AdminDashboard() {
                     </Pie>
                     <Tooltip
                       contentStyle={{
-                        background: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
+                        background: "rgba(255, 255, 255, 0.95)",
+                        border: "1px solid #E5E7EB",
                         borderRadius: "8px",
                         backdropFilter: "blur(16px)",
+                        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                       }}
                     />
                   </PieChart>
@@ -313,30 +375,28 @@ export default function AdminDashboard() {
         {/* Bottom Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Recent Activity */}
-          <Card className="lg:col-span-1 border border-border/40 bg-card/50 backdrop-blur-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Clock className="h-5 w-5 text-orange-500" />
+          <Card className="border border-gray-200/60 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
+                <Clock className="h-5 w-5 text-amber-500" />
                 Recent Activity
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg bg-background/50 hover:bg-background/70 transition-colors duration-300">
-                    <div className={`p-2 rounded-full ${
-                      activity.type === 'user' ? 'bg-green-500/20 text-green-500' :
-                      activity.type === 'episode' ? 'bg-blue-500/20 text-blue-500' :
-                      activity.type === 'anime' ? 'bg-purple-500/20 text-purple-500' :
-                      'bg-orange-500/20 text-orange-500'
-                    }`}>
-                      {activity.type === 'user' && <UserPlus className="h-4 w-4" />}
-                      {activity.type === 'episode' && <Play className="h-4 w-4" />}
-                      {activity.type === 'anime' && <Film className="h-4 w-4" />}
-                    </div>
+                  <div 
+                    key={activity.id} 
+                    className="flex items-start gap-3 p-3 rounded-xl bg-gray-50/50 hover:bg-gray-50 transition-colors duration-200 border border-gray-100"
+                  >
+                    <ActivityIcon type={activity.type} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{activity.action}</p>
-                      <p className="text-xs text-muted-foreground">{activity.time}</p>
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {activity.action}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {activity.time}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -345,32 +405,43 @@ export default function AdminDashboard() {
           </Card>
 
           {/* Main Chart */}
-          <Card className="lg:col-span-2 border border-border/40 bg-card/50 backdrop-blur-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <BarChart3 className="h-5 w-5 text-green-500" />
+          <Card className="lg:col-span-2 border border-gray-200/60 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg font-semibold text-gray-900">
+                <BarChart3 className="h-5 w-5 text-emerald-500" />
                 Platform Overview
+                <Badge variant="outline" className="ml-2 bg-emerald-50 text-emerald-700 border-emerald-200">
+                  Summary
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-80">
+              <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={barChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
-                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis stroke="hsl(var(--muted-foreground))" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" opacity={0.6} />
+                    <XAxis 
+                      dataKey="name" 
+                      stroke="#6B7280" 
+                      fontSize={12}
+                    />
+                    <YAxis 
+                      stroke="#6B7280" 
+                      fontSize={12}
+                    />
                     <Tooltip
                       contentStyle={{
-                        background: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
+                        background: "rgba(255, 255, 255, 0.95)",
+                        border: "1px solid #E5E7EB",
                         borderRadius: "8px",
                         backdropFilter: "blur(16px)",
+                        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                       }}
                     />
                     <Bar 
                       dataKey="count" 
-                      radius={[6, 6, 0, 0]}
-                      className="fill-primary hover:fill-primary/80 transition-colors duration-300"
+                      radius={[4, 4, 0, 0]}
+                      className="fill-purple-500 hover:fill-purple-600 transition-colors duration-200"
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -380,42 +451,45 @@ export default function AdminDashboard() {
         </div>
 
         {/* Management Tabs */}
-        <Card className="border border-border/40 bg-card/50 backdrop-blur-xl">
+        <Card className="border border-gray-200/60 bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm">
           <CardContent className="p-6">
             <Tabs defaultValue="anime" className="w-full">
-              <TabsList className="grid w-full grid-cols-5 bg-background/50 p-1 rounded-xl">
-                <TabsTrigger value="anime" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300">
-                  Anime
-                </TabsTrigger>
-                <TabsTrigger value="episodes" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300">
-                  Episodes
-                </TabsTrigger>
-                <TabsTrigger value="servers" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300">
-                  Servers
-                </TabsTrigger>
-                <TabsTrigger value="schedule" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300">
-                  Schedule
-                </TabsTrigger>
-                <TabsTrigger value="users" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all duration-300">
-                  Users
-                </TabsTrigger>
+              <TabsList className="grid w-full grid-cols-5 bg-gray-100/50 p-1 rounded-xl gap-1">
+                {[
+                  { value: "anime", label: "Anime", icon: Film },
+                  { value: "episodes", label: "Episodes", icon: Play },
+                  { value: "servers", label: "Servers", icon: Database },
+                  { value: "schedule", label: "Schedule", icon: Calendar },
+                  { value: "users", label: "Users", icon: Users },
+                ].map((tab) => (
+                  <TabsTrigger 
+                    key={tab.value}
+                    value={tab.value} 
+                    className="flex items-center gap-2 rounded-lg data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm transition-all duration-200 text-gray-600"
+                  >
+                    <tab.icon className="h-4 w-4" />
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
               </TabsList>
 
-              <TabsContent value="anime" className="mt-6 animate-fade-in">
-                <AnimeManagement onUpdate={fetchStats} />
-              </TabsContent>
-              <TabsContent value="episodes" className="mt-6 animate-fade-in">
-                <EpisodeManagement />
-              </TabsContent>
-              <TabsContent value="servers" className="mt-6 animate-fade-in">
-                <ServerManagement />
-              </TabsContent>
-              <TabsContent value="schedule" className="mt-6 animate-fade-in">
-                <ScheduleManagement />
-              </TabsContent>
-              <TabsContent value="users" className="mt-6 animate-fade-in">
-                <UserManagement />
-              </TabsContent>
+              <div className="mt-6">
+                <TabsContent value="anime" className="m-0 animate-fade-in">
+                  <AnimeManagement onUpdate={fetchStats} />
+                </TabsContent>
+                <TabsContent value="episodes" className="m-0 animate-fade-in">
+                  <EpisodeManagement />
+                </TabsContent>
+                <TabsContent value="servers" className="m-0 animate-fade-in">
+                  <ServerManagement />
+                </TabsContent>
+                <TabsContent value="schedule" className="m-0 animate-fade-in">
+                  <ScheduleManagement />
+                </TabsContent>
+                <TabsContent value="users" className="m-0 animate-fade-in">
+                  <UserManagement />
+                </TabsContent>
+              </div>
             </Tabs>
           </CardContent>
         </Card>
