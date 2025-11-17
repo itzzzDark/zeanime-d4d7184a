@@ -8,9 +8,6 @@ import {
   Loader2, 
   Search, 
   Filter, 
-  Grid3X3, 
-  List, 
-  SlidersHorizontal,
   X,
   Star,
   Calendar
@@ -24,31 +21,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type SortOption = "newest" | "oldest" | "rating" | "title";
-type ViewMode = "grid" | "list";
 type StatusFilter = "all" | "released" | "upcoming";
 
 const Movies = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [genreFilters, setGenreFilters] = useState<string[]>([]);
   const [yearFilter, setYearFilter] = useState<string>("all");
   const [ratingFilter, setRatingFilter] = useState<number>(0);
+  const [showFilters, setShowFilters] = useState(false);
 
   const { data: movies, isLoading } = useQuery({
     queryKey: ["movies"],
@@ -85,32 +71,26 @@ const Movies = () => {
     if (!movies) return [];
 
     let filtered = movies.filter(movie => {
-      // Search filter
       const matchesSearch = movie.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            movie.description?.toLowerCase().includes(searchQuery.toLowerCase());
       
-      // Status filter
       const matchesStatus = statusFilter === "all" || 
                            (statusFilter === "released" && movie.status === "finished") ||
                            (statusFilter === "upcoming" && movie.status === "upcoming");
       
-      // Genre filter
       const matchesGenre = genreFilters.length === 0 || 
                           (movie.genres && genreFilters.some(genre => 
                             JSON.parse(movie.genres).includes(genre)
                           ));
       
-      // Year filter
       const movieYear = new Date(movie.release_date || movie.created_at).getFullYear().toString();
       const matchesYear = yearFilter === "all" || movieYear === yearFilter;
       
-      // Rating filter
       const matchesRating = !ratingFilter || (movie.rating && movie.rating >= ratingFilter);
 
       return matchesSearch && matchesStatus && matchesGenre && matchesYear && matchesRating;
     });
 
-    // Sort
     filtered.sort((a, b) => {
       switch (sortBy) {
         case "newest":
@@ -153,8 +133,8 @@ const Movies = () => {
         <Navbar />
         <div className="flex-1 container px-4 py-8">
           <Skeleton className="h-12 w-64 mb-8" />
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {Array.from({ length: 10 }).map((_, i) => (
+          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {Array.from({ length: 12 }).map((_, i) => (
               <Skeleton key={i} className="aspect-[3/4] rounded-lg" />
             ))}
           </div>
@@ -176,7 +156,7 @@ const Movies = () => {
               <h1 className="text-4xl font-bold text-gradient bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
                 Anime Movies
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Discover {filteredAndSortedMovies.length} amazing anime movies
               </p>
             </div>
@@ -189,189 +169,183 @@ const Movies = () => {
                   placeholder="Search movies..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 w-full lg:w-80"
+                  className="pl-10 pr-4 w-full lg:w-64 h-10 text-sm"
                 />
               </div>
 
-              {/* View Toggle */}
-              <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
-                <TabsList className="grid w-20 grid-cols-2">
-                  <TabsTrigger value="grid" size="sm">
-                    <Grid3X3 className="h-4 w-4" />
-                  </TabsTrigger>
-                  <TabsTrigger value="list" size="sm">
-                    <List className="h-4 w-4" />
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-
-              {/* Filter Sheet */}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm" className="relative">
-                    <SlidersHorizontal className="h-4 w-4 mr-2" />
-                    Filters
-                    {activeFilterCount > 0 && (
-                      <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
-                        {activeFilterCount}
-                      </Badge>
-                    )}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent className="sm:max-w-md">
-                  <SheetHeader>
-                    <SheetTitle>Filter Movies</SheetTitle>
-                  </SheetHeader>
-                  
-                  <ScrollArea className="h-full py-6">
-                    <div className="space-y-6">
-                      {/* Status Filter */}
-                      <div>
-                        <h4 className="font-medium mb-3">Status</h4>
-                        <div className="space-y-2">
-                          {["all", "released", "upcoming"].map((status) => (
-                            <Button
-                              key={status}
-                              variant={statusFilter === status ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setStatusFilter(status as StatusFilter)}
-                              className="w-full justify-start capitalize"
-                            >
-                              {status}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Rating Filter */}
-                      <div>
-                        <h4 className="font-medium mb-3">Minimum Rating</h4>
-                        <div className="space-y-2">
-                          {[0, 7, 8, 9].map((rating) => (
-                            <Button
-                              key={rating}
-                              variant={ratingFilter === rating ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setRatingFilter(rating)}
-                              className="w-full justify-start"
-                            >
-                              <Star className="h-4 w-4 mr-2 fill-current" />
-                              {rating === 0 ? "Any rating" : `${rating}+`}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Year Filter */}
-                      <div>
-                        <h4 className="font-medium mb-3">Release Year</h4>
-                        <div className="max-h-40 overflow-y-auto">
-                          <Button
-                            variant={yearFilter === "all" ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setYearFilter("all")}
-                            className="w-full justify-start mb-2"
-                          >
-                            All years
-                          </Button>
-                          {availableYears.map((year) => (
-                            <Button
-                              key={year}
-                              variant={yearFilter === year.toString() ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setYearFilter(year.toString())}
-                              className="w-full justify-start mb-1"
-                            >
-                              <Calendar className="h-4 w-4 mr-2" />
-                              {year}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Genre Filter */}
-                      {genres && genres.length > 0 && (
-                        <div>
-                          <h4 className="font-medium mb-3">Genres</h4>
-                          <div className="max-h-60 overflow-y-auto space-y-1">
-                            {genres.map((genre) => (
-                              <div key={genre} className="flex items-center space-x-2">
-                                <input
-                                  type="checkbox"
-                                  id={`genre-${genre}`}
-                                  checked={genreFilters.includes(genre)}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setGenreFilters([...genreFilters, genre]);
-                                    } else {
-                                      setGenreFilters(genreFilters.filter(g => g !== genre));
-                                    }
-                                  }}
-                                  className="rounded border-gray-300"
-                                />
-                                <label htmlFor={`genre-${genre}`} className="text-sm capitalize">
-                                  {genre}
-                                </label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                  
-                  <div className="absolute bottom-6 left-6 right-6">
-                    <Button onClick={clearAllFilters} variant="outline" className="w-full">
-                      Clear All Filters
-                    </Button>
-                  </div>
-                </SheetContent>
-              </Sheet>
+              {/* Filter Button */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowFilters(!showFilters)}
+                className="relative h-10"
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
+                    {activeFilterCount}
+                  </Badge>
+                )}
+              </Button>
 
               {/* Sort Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Filter className="h-4 w-4 mr-2" />
+                  <Button variant="outline" size="sm" className="h-10">
                     Sort
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuCheckboxItem
-                    checked={sortBy === "newest"}
-                    onCheckedChange={() => setSortBy("newest")}
-                  >
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => setSortBy("newest")}>
                     Newest First
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={sortBy === "oldest"}
-                    onCheckedChange={() => setSortBy("oldest")}
-                  >
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("oldest")}>
                     Oldest First
-                  </DropdownMenuCheckboxItem>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuCheckboxItem
-                    checked={sortBy === "rating"}
-                    onCheckedChange={() => setSortBy("rating")}
-                  >
+                  <DropdownMenuItem onClick={() => setSortBy("rating")}>
                     Highest Rated
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem
-                    checked={sortBy === "title"}
-                    onCheckedChange={() => setSortBy("title")}
-                  >
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("title")}>
                     Title A-Z
-                  </DropdownMenuCheckboxItem>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
 
+          {/* Floating Filters Panel */}
+          {showFilters && (
+            <div className="relative mb-6">
+              <div className="absolute top-0 left-0 right-0 bg-background/95 backdrop-blur-lg border rounded-lg shadow-lg z-10 p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold">Filters</h3>
+                  <div className="flex items-center gap-2">
+                    {activeFilterCount > 0 && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={clearAllFilters}
+                        className="h-8 text-xs"
+                      >
+                        Clear All
+                      </Button>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setShowFilters(false)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Status Filter */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Status</label>
+                    <div className="space-y-1">
+                      {["all", "released", "upcoming"].map((status) => (
+                        <Button
+                          key={status}
+                          variant={statusFilter === status ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setStatusFilter(status as StatusFilter)}
+                          className="w-full justify-start text-xs h-8 capitalize"
+                        >
+                          {status}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Rating Filter */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Min Rating</label>
+                    <div className="space-y-1">
+                      {[0, 7, 8, 9].map((rating) => (
+                        <Button
+                          key={rating}
+                          variant={ratingFilter === rating ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setRatingFilter(rating)}
+                          className="w-full justify-start text-xs h-8"
+                        >
+                          <Star className="h-3 w-3 mr-2 fill-current" />
+                          {rating === 0 ? "Any" : `${rating}+`}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Year Filter */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Release Year</label>
+                    <div className="max-h-32 overflow-y-auto space-y-1">
+                      <Button
+                        variant={yearFilter === "all" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setYearFilter("all")}
+                        className="w-full justify-start text-xs h-8 mb-1"
+                      >
+                        All years
+                      </Button>
+                      {availableYears.map((year) => (
+                        <Button
+                          key={year}
+                          variant={yearFilter === year.toString() ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setYearFilter(year.toString())}
+                          className="w-full justify-start text-xs h-8 mb-1"
+                        >
+                          <Calendar className="h-3 w-3 mr-2" />
+                          {year}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Genre Filter */}
+                  {genres && genres.length > 0 && (
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Genres</label>
+                      <div className="max-h-32 overflow-y-auto space-y-1">
+                        {genres.slice(0, 8).map((genre) => (
+                          <div key={genre} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={`genre-${genre}`}
+                              checked={genreFilters.includes(genre)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setGenreFilters([...genreFilters, genre]);
+                                } else {
+                                  setGenreFilters(genreFilters.filter(g => g !== genre));
+                                }
+                              }}
+                              className="rounded border-gray-300 h-3 w-3"
+                            />
+                            <label htmlFor={`genre-${genre}`} className="text-xs capitalize">
+                              {genre}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Active Filters */}
           {activeFilterCount > 0 && (
             <div className="flex flex-wrap gap-2 mb-6">
               {genreFilters.map(genre => (
-                <Badge key={genre} variant="secondary" className="flex items-center gap-1">
+                <Badge key={genre} variant="secondary" className="flex items-center gap-1 text-xs py-1">
                   {genre}
                   <X 
                     className="h-3 w-3 cursor-pointer" 
@@ -380,7 +354,7 @@ const Movies = () => {
                 </Badge>
               ))}
               {yearFilter !== "all" && (
-                <Badge variant="secondary" className="flex items-center gap-1">
+                <Badge variant="secondary" className="flex items-center gap-1 text-xs py-1">
                   Year: {yearFilter}
                   <X 
                     className="h-3 w-3 cursor-pointer" 
@@ -389,7 +363,7 @@ const Movies = () => {
                 </Badge>
               )}
               {ratingFilter > 0 && (
-                <Badge variant="secondary" className="flex items-center gap-1">
+                <Badge variant="secondary" className="flex items-center gap-1 text-xs py-1">
                   Rating: {ratingFilter}+
                   <X 
                     className="h-3 w-3 cursor-pointer" 
@@ -397,29 +371,17 @@ const Movies = () => {
                   />
                 </Badge>
               )}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={clearAllFilters}
-                className="h-6 px-2 text-xs"
-              >
-                Clear All
-              </Button>
             </div>
           )}
 
-          {/* Movies Grid/List */}
+          {/* Movies Grid */}
           {filteredAndSortedMovies.length > 0 ? (
-            <div className={
-              viewMode === "grid" 
-                ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
-                : "space-y-4 max-w-4xl"
-            }>
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {filteredAndSortedMovies.map((movie, index) => (
                 <div 
                   key={movie.id} 
                   className="animate-scale-in"
-                  style={{ animationDelay: `${index * 0.05}s` }}
+                  style={{ animationDelay: `${index * 0.03}s` }}
                 >
                   <AnimeCard 
                     id={movie.slug || movie.id}
@@ -428,22 +390,21 @@ const Movies = () => {
                     rating={movie.rating || undefined}
                     status={movie.status}
                     episodes={movie.total_episodes || undefined}
-                    description={viewMode === "list" ? movie.description : undefined}
-                    variant={viewMode === "list" ? "list" : "default"}
+                    size="small"
                   />
                 </div>
               ))}
             </div>
           ) : (
             <div className="text-center py-20 space-y-4">
-              <div className="w-24 h-24 mx-auto bg-muted rounded-full flex items-center justify-center">
-                <Search className="h-10 w-10 text-muted-foreground" />
+              <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center">
+                <Search className="h-6 w-6 text-muted-foreground" />
               </div>
-              <h3 className="text-xl font-semibold">No movies found</h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
+              <h3 className="text-lg font-semibold">No movies found</h3>
+              <p className="text-muted-foreground text-sm max-w-md mx-auto">
                 Try adjusting your search or filters to find what you're looking for.
               </p>
-              <Button onClick={clearAllFilters} variant="outline">
+              <Button onClick={clearAllFilters} variant="outline" size="sm">
                 Clear all filters
               </Button>
             </div>
