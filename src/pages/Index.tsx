@@ -237,7 +237,7 @@ const Index = () => {
   };
 
   // Enhanced title component with View All on same line
-  const SectionHeader = ({ title, style, viewAllLink }: { title: string; style: any; viewAllLink: string }) => (
+  const SectionHeader = ({ title, style, viewAllLink, hideViewAll = false }: { title: string; style: any; viewAllLink: string; hideViewAll?: boolean }) => (
     <div className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
@@ -248,13 +248,15 @@ const Index = () => {
         </h2>
       </div>
       
-      <a 
-        href={viewAllLink}
-        className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors group"
-      >
-        View All
-        <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-      </a>
+      {!hideViewAll && (
+        <a 
+          href={viewAllLink}
+          className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors group"
+        >
+          View All
+          <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+        </a>
+      )}
     </div>
   );
 
@@ -367,13 +369,14 @@ const Index = () => {
           </section>
         )}
 
-        {/* Most Watched */}
+        {/* Most Watched - Updated to match the image with no View All button */}
         {mostWatchedAnime.length > 0 && (
           <section>
             <SectionHeader 
               title="Most Watched" 
               style={sectionStyles.mostWatched} 
               viewAllLink="/most-watched" 
+              hideViewAll={true}
             />
             <AnimeSection
               title=""
