@@ -247,36 +247,6 @@ const Index = () => {
     }
   };
 
-  // Enhanced title component with description
-  const SectionTitle = ({ title, style, viewAllLink }: { title: string; style: any; viewAllLink: string }) => (
-    <div className="mb-6">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
-            {style.icon}
-          </div>
-          <h2 className={`text-xl font-bold uppercase tracking-wider ${style.textColor}`}>
-            {title}
-          </h2>
-        </div>
-        
-        {/* View All link with icon in one line */}
-        <a 
-          href={viewAllLink}
-          className="flex items-center gap-1 px-3 py-1 text-sm text-gray-400 hover:text-white transition-colors duration-200 hover:bg-white/5 rounded-lg border border-transparent hover:border-white/10"
-        >
-          View All
-          <ChevronRight className="h-3 w-3" />
-        </a>
-      </div>
-      
-      {/* One-line description */}
-      <p className="text-sm text-gray-400 ml-11">
-        {style.description}
-      </p>
-    </div>
-  );
-
   // Skeleton loading components
   const ScrollSkeleton = () => (
     <div className="flex gap-4 overflow-hidden">
@@ -379,203 +349,159 @@ const Index = () => {
       <main className="relative z-20 container mx-auto px-4 py-8 space-y-12">
         {/* Trending */}
         {trendingAnime.length > 0 && (
-          <section>
-            <SectionTitle 
-              title="Trending Now" 
-              style={sectionStyles.trending} 
-              viewAllLink="/trending" 
-            />
-            <AnimeSection
-              title=""
-              animes={trendingAnime}
-              viewAllLink="/trending"
-              layout="scroll"
-              cardGap="gap-4"
-            />
-          </section>
+          <AnimeSection
+            title="Trending Now"
+            animes={trendingAnime}
+            viewAllLink="/trending"
+            layout="scroll"
+            cardGap="gap-4"
+            icon={sectionStyles.trending.icon}
+            textColor={sectionStyles.trending.textColor}
+            description={sectionStyles.trending.description}
+          />
         )}
 
         {/* This Week */}
         {thisWeekAnime.length > 0 && (
-          <section>
-            <SectionTitle 
-              title="This Week" 
-              style={sectionStyles.thisWeek} 
-              viewAllLink="/schedule" 
-            />
-            <AnimeSection
-              title=""
-              animes={thisWeekAnime}
-              viewAllLink="/schedule"
-              layout="scroll"
-              cardGap="gap-4"
-            />
-          </section>
+          <AnimeSection
+            title="This Week"
+            animes={thisWeekAnime}
+            viewAllLink="/schedule"
+            layout="scroll"
+            cardGap="gap-4"
+            icon={sectionStyles.thisWeek.icon}
+            textColor={sectionStyles.thisWeek.textColor}
+            description={sectionStyles.thisWeek.description}
+          />
         )}
 
         {/* Most Watched */}
         {mostWatchedAnime.length > 0 && (
-          <section>
-            <SectionTitle 
-              title="Most Watched" 
-              style={sectionStyles.mostWatched} 
-              viewAllLink="/most-watched" 
-            />
-            <AnimeSection
-              title=""
-              animes={mostWatchedAnime}
-              viewAllLink="/most-watched"
-              layout="scroll"
-              cardGap="gap-4"
-            />
-          </section>
+          <AnimeSection
+            title="Most Watched"
+            animes={mostWatchedAnime}
+            viewAllLink="/most-watched"
+            layout="scroll"
+            cardGap="gap-4"
+            icon={sectionStyles.mostWatched.icon}
+            textColor={sectionStyles.mostWatched.textColor}
+            description={sectionStyles.mostWatched.description}
+          />
         )}
 
         {/* Top 10 */}
         {top10Anime.length > 0 && (
-          <section>
-            <SectionTitle 
-              title="Top Rated" 
-              style={sectionStyles.top10} 
-              viewAllLink="/top" 
-            />
-            <AnimeSection
-              title=""
-              animes={top10Anime}
-              viewAllLink="/top"
-              layout="scroll"
-              cardGap="gap-4"
-            />
-          </section>
+          <AnimeSection
+            title="Top Rated"
+            animes={top10Anime}
+            viewAllLink="/top"
+            layout="scroll"
+            cardGap="gap-4"
+            icon={sectionStyles.top10.icon}
+            textColor={sectionStyles.top10.textColor}
+            description={sectionStyles.top10.description}
+          />
         )}
 
         {/* Genre Sections Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Romance */}
           {romanceAnime.length > 0 && (
-            <section>
-              <SectionTitle 
-                title="Romance" 
-                style={sectionStyles.romance} 
-                viewAllLink="/genre/romance" 
-              />
-              <AnimeSection
-                title=""
-                animes={romanceAnime}
-                viewAllLink="/genre/romance"
-                layout="scroll"
-                cardGap="gap-4"
-              />
-            </section>
+            <AnimeSection
+              title="Romance"
+              animes={romanceAnime}
+              viewAllLink="/genre/romance"
+              layout="scroll"
+              cardGap="gap-4"
+              icon={sectionStyles.romance.icon}
+              textColor={sectionStyles.romance.textColor}
+              description={sectionStyles.romance.description}
+            />
           )}
 
           {/* Action */}
           {actionAnime.length > 0 && (
-            <section>
-              <SectionTitle 
-                title="Action" 
-                style={sectionStyles.action} 
-                viewAllLink="/genre/action" 
-              />
-              <AnimeSection
-                title=""
-                animes={actionAnime}
-                viewAllLink="/genre/action"
-                layout="scroll"
-                cardGap="gap-4"
-              />
-            </section>
+            <AnimeSection
+              title="Action"
+              animes={actionAnime}
+              viewAllLink="/genre/action"
+              layout="scroll"
+              cardGap="gap-4"
+              icon={sectionStyles.action.icon}
+              textColor={sectionStyles.action.textColor}
+              description={sectionStyles.action.description}
+            />
           )}
 
           {/* Fantasy */}
           {fantasyAnime.length > 0 && (
-            <section>
-              <SectionTitle 
-                title="Fantasy" 
-                style={sectionStyles.fantasy} 
-                viewAllLink="/genre/fantasy" 
-              />
-              <AnimeSection
-                title=""
-                animes={fantasyAnime}
-                viewAllLink="/genre/fantasy"
-                layout="scroll"
-                cardGap="gap-4"
-              />
-            </section>
+            <AnimeSection
+              title="Fantasy"
+              animes={fantasyAnime}
+              viewAllLink="/genre/fantasy"
+              layout="scroll"
+              cardGap="gap-4"
+              icon={sectionStyles.fantasy.icon}
+              textColor={sectionStyles.fantasy.textColor}
+              description={sectionStyles.fantasy.description}
+            />
           )}
 
           {/* Comedy */}
           {comedyAnime.length > 0 && (
-            <section>
-              <SectionTitle 
-                title="Comedy" 
-                style={sectionStyles.comedy} 
-                viewAllLink="/genre/comedy" 
-              />
-              <AnimeSection
-                title=""
-                animes={comedyAnime}
-                viewAllLink="/genre/comedy"
-                layout="scroll"
-                cardGap="gap-4"
-              />
-            </section>
+            <AnimeSection
+              title="Comedy"
+              animes={comedyAnime}
+              viewAllLink="/genre/comedy"
+              layout="scroll"
+              cardGap="gap-4"
+              icon={sectionStyles.comedy.icon}
+              textColor={sectionStyles.comedy.textColor}
+              description={sectionStyles.comedy.description}
+            />
           )}
         </div>
 
         {/* New Series */}
         {latestSeries.length > 0 && (
-          <section>
-            <SectionTitle 
-              title="New Series" 
-              style={sectionStyles.newSeries} 
-              viewAllLink="/series" 
-            />
-            <AnimeSection
-              title=""
-              animes={latestSeries}
-              viewAllLink="/series"
-              layout="scroll"
-              cardGap="gap-4"
-            />
-          </section>
+          <AnimeSection
+            title="New Series"
+            animes={latestSeries}
+            viewAllLink="/series"
+            layout="scroll"
+            cardGap="gap-4"
+            icon={sectionStyles.newSeries.icon}
+            textColor={sectionStyles.newSeries.textColor}
+            description={sectionStyles.newSeries.description}
+          />
         )}
 
         {/* Movies */}
         {latestMovies.length > 0 && (
-          <section>
-            <SectionTitle 
-              title="Latest Movies" 
-              style={sectionStyles.movies} 
-              viewAllLink="/movies" 
-            />
-            <AnimeSection
-              title=""
-              animes={latestMovies}
-              viewAllLink="/movies"
-              layout="scroll"
-              cardGap="gap-4"
-            />
-          </section>
+          <AnimeSection
+            title="Latest Movies"
+            animes={latestMovies}
+            viewAllLink="/movies"
+            layout="scroll"
+            cardGap="gap-4"
+            icon={sectionStyles.movies.icon}
+            textColor={sectionStyles.movies.textColor}
+            description={sectionStyles.movies.description}
+          />
         )}
 
         {/* Coming Soon */}
         {upcomingAnime.length > 0 && (
-          <section>
-            <SectionTitle 
-              title="Coming Soon" 
-              style={sectionStyles.comingSoon} 
-              viewAllLink="/upcoming" 
-            />
-            <AnimeSection
-              title=""
-              animes={upcomingAnime}
-              viewAllLink="/upcoming"
-              layout="scroll"
-              cardGap="gap-4"
-            />
-          </section>
+          <AnimeSection
+            title="Coming Soon"
+            animes={upcomingAnime}
+            viewAllLink="/upcoming"
+            layout="scroll"
+            cardGap="gap-4"
+            icon={sectionStyles.comingSoon.icon}
+            textColor={sectionStyles.comingSoon.textColor}
+            description={sectionStyles.comingSoon.description}
+          />
         )}
       </main>
 
