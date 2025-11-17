@@ -75,7 +75,7 @@ const Movies = () => {
                            movie.description?.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesStatus = statusFilter === "all" || 
-                           (statusFilter === "released" && movie.status === "finished") ||
+                           (statusFilter === "released" && movie.status === "complete") ||
                            (statusFilter === "upcoming" && movie.status === "upcoming");
       
       const matchesGenre = genreFilters.length === 0 || 
