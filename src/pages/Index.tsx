@@ -188,83 +188,61 @@ const Index = () => {
     latestMoviesLoading || top10Loading || upcomingLoading ||
     romanceLoading || actionLoading || fantasyLoading || comedyLoading || thisWeekLoading;
 
-  // Section styling configurations with soft colors and descriptions
+  // Section styling configurations with descriptions
   const sectionStyles = {
     trending: {
-      icon: TrendingUp,
-      textColor: "text-rose-300",
-      bgColor: "bg-rose-500/10",
-      borderColor: "border-rose-500/20",
+      icon: <TrendingUp className="h-4 w-4" />,
+      textColor: "text-rose-400",
       description: "Most popular anime trending right now"
     },
     mostWatched: {
-      icon: Users,
-      textColor: "text-amber-300",
-      bgColor: "bg-amber-500/10",
-      borderColor: "border-amber-500/20",
+      icon: <Users className="h-4 w-4" />,
+      textColor: "text-amber-400",
       description: "Highest view count anime of all time"
     },
     newSeries: {
-      icon: Sparkles,
-      textColor: "text-violet-300",
-      bgColor: "bg-violet-500/10",
-      borderColor: "border-violet-500/20",
+      icon: <Sparkles className="h-4 w-4" />,
+      textColor: "text-violet-400",
       description: "Latest anime series just added"
     },
     top10: {
-      icon: Star,
-      textColor: "text-blue-300",
-      bgColor: "bg-blue-500/10",
-      borderColor: "border-blue-500/20",
+      icon: <Star className="h-4 w-4" />,
+      textColor: "text-blue-400",
       description: "Top rated anime by community"
     },
     movies: {
-      icon: Film,
-      textColor: "text-emerald-300",
-      bgColor: "bg-emerald-500/10",
-      borderColor: "border-emerald-500/20",
+      icon: <Film className="h-4 w-4" />,
+      textColor: "text-emerald-400",
       description: "Newest anime movie releases"
     },
     comingSoon: {
-      icon: Calendar,
-      textColor: "text-indigo-300",
-      bgColor: "bg-indigo-500/10",
-      borderColor: "border-indigo-500/20",
+      icon: <Calendar className="h-4 w-4" />,
+      textColor: "text-indigo-400",
       description: "Upcoming anime to watch out for"
     },
     romance: {
-      icon: Heart,
-      textColor: "text-pink-300",
-      bgColor: "bg-pink-500/10",
-      borderColor: "border-pink-500/20",
+      icon: <Heart className="h-4 w-4" />,
+      textColor: "text-pink-400",
       description: "Heartwarming love stories and relationships"
     },
     action: {
-      icon: Swords,
-      textColor: "text-red-300",
-      bgColor: "bg-red-500/10",
-      borderColor: "border-red-500/20",
+      icon: <Swords className="h-4 w-4" />,
+      textColor: "text-red-400",
       description: "High-octane battles and adventures"
     },
     fantasy: {
-      icon: Castle,
-      textColor: "text-purple-300",
-      bgColor: "bg-purple-500/10",
-      borderColor: "border-purple-500/20",
+      icon: <Castle className="h-4 w-4" />,
+      textColor: "text-purple-400",
       description: "Magical worlds and epic quests"
     },
     comedy: {
-      icon: Laugh,
-      textColor: "text-yellow-300",
-      bgColor: "bg-yellow-500/10",
-      borderColor: "border-yellow-500/20",
+      icon: <Laugh className="h-4 w-4" />,
+      textColor: "text-yellow-400",
       description: "Hilarious moments and funny stories"
     },
     thisWeek: {
-      icon: Clock4,
-      textColor: "text-cyan-300",
-      bgColor: "bg-cyan-500/10",
-      borderColor: "border-cyan-500/20",
+      icon: <Clock4 className="h-4 w-4" />,
+      textColor: "text-cyan-400",
       description: "New episodes releasing this week"
     }
   };
@@ -379,8 +357,6 @@ const Index = () => {
             cardGap="gap-4"
             icon={sectionStyles.trending.icon}
             textColor={sectionStyles.trending.textColor}
-            bgColor={sectionStyles.trending.bgColor}
-            borderColor={sectionStyles.trending.borderColor}
             description={sectionStyles.trending.description}
           />
         )}
@@ -395,8 +371,6 @@ const Index = () => {
             cardGap="gap-4"
             icon={sectionStyles.thisWeek.icon}
             textColor={sectionStyles.thisWeek.textColor}
-            bgColor={sectionStyles.thisWeek.bgColor}
-            borderColor={sectionStyles.thisWeek.borderColor}
             description={sectionStyles.thisWeek.description}
           />
         )}
@@ -406,13 +380,11 @@ const Index = () => {
           <AnimeSection
             title="Most Watched"
             animes={mostWatchedAnime}
-            viewAllLink="/most-watched"
+            viewAllLink="/trending"
             layout="scroll"
             cardGap="gap-4"
             icon={sectionStyles.mostWatched.icon}
             textColor={sectionStyles.mostWatched.textColor}
-            bgColor={sectionStyles.mostWatched.bgColor}
-            borderColor={sectionStyles.mostWatched.borderColor}
             description={sectionStyles.mostWatched.description}
           />
         )}
@@ -422,13 +394,11 @@ const Index = () => {
           <AnimeSection
             title="Top Rated"
             animes={top10Anime}
-            viewAllLink="/top"
+            viewAllLink="/trending"
             layout="scroll"
             cardGap="gap-4"
             icon={sectionStyles.top10.icon}
             textColor={sectionStyles.top10.textColor}
-            bgColor={sectionStyles.top10.bgColor}
-            borderColor={sectionStyles.top10.borderColor}
             description={sectionStyles.top10.description}
           />
         )}
@@ -445,8 +415,6 @@ const Index = () => {
               cardGap="gap-4"
               icon={sectionStyles.romance.icon}
               textColor={sectionStyles.romance.textColor}
-              bgColor={sectionStyles.romance.bgColor}
-              borderColor={sectionStyles.romance.borderColor}
               description={sectionStyles.romance.description}
             />
           )}
@@ -461,8 +429,6 @@ const Index = () => {
               cardGap="gap-4"
               icon={sectionStyles.action.icon}
               textColor={sectionStyles.action.textColor}
-              bgColor={sectionStyles.action.bgColor}
-              borderColor={sectionStyles.action.borderColor}
               description={sectionStyles.action.description}
             />
           )}
@@ -477,8 +443,6 @@ const Index = () => {
               cardGap="gap-4"
               icon={sectionStyles.fantasy.icon}
               textColor={sectionStyles.fantasy.textColor}
-              bgColor={sectionStyles.fantasy.bgColor}
-              borderColor={sectionStyles.fantasy.borderColor}
               description={sectionStyles.fantasy.description}
             />
           )}
@@ -493,8 +457,6 @@ const Index = () => {
               cardGap="gap-4"
               icon={sectionStyles.comedy.icon}
               textColor={sectionStyles.comedy.textColor}
-              bgColor={sectionStyles.comedy.bgColor}
-              borderColor={sectionStyles.comedy.borderColor}
               description={sectionStyles.comedy.description}
             />
           )}
@@ -505,13 +467,11 @@ const Index = () => {
           <AnimeSection
             title="New Series"
             animes={latestSeries}
-            viewAllLink="/series"
+            viewAllLink="/browse"
             layout="scroll"
             cardGap="gap-4"
             icon={sectionStyles.newSeries.icon}
             textColor={sectionStyles.newSeries.textColor}
-            bgColor={sectionStyles.newSeries.bgColor}
-            borderColor={sectionStyles.newSeries.borderColor}
             description={sectionStyles.newSeries.description}
           />
         )}
@@ -526,8 +486,6 @@ const Index = () => {
             cardGap="gap-4"
             icon={sectionStyles.movies.icon}
             textColor={sectionStyles.movies.textColor}
-            bgColor={sectionStyles.movies.bgColor}
-            borderColor={sectionStyles.movies.borderColor}
             description={sectionStyles.movies.description}
           />
         )}
@@ -537,13 +495,11 @@ const Index = () => {
           <AnimeSection
             title="Coming Soon"
             animes={upcomingAnime}
-            viewAllLink="/upcoming"
+            viewAllLink="/schedule"
             layout="scroll"
             cardGap="gap-4"
             icon={sectionStyles.comingSoon.icon}
             textColor={sectionStyles.comingSoon.textColor}
-            bgColor={sectionStyles.comingSoon.bgColor}
-            borderColor={sectionStyles.comingSoon.borderColor}
             description={sectionStyles.comingSoon.description}
           />
         )}
