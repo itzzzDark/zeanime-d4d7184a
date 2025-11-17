@@ -4,10 +4,10 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { BannerCarousel } from "@/components/BannerCarousel";
 import { AnimeSection } from "@/components/AnimeSection";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Loader2, 
   Calendar, 
-  Clock, 
   Star, 
   TrendingUp, 
   Users, 
@@ -190,94 +190,133 @@ const Index = () => {
   // Section styling configurations
   const sectionStyles = {
     trending: {
-      gradient: "bg-gradient-to-r from-rose-500/10 to-rose-600/5",
       icon: <TrendingUp className="h-4 w-4" />,
       textColor: "text-rose-400",
-      layout: "scroll" as const
     },
     mostWatched: {
-      gradient: "bg-gradient-to-r from-amber-500/10 to-amber-600/5",
       icon: <Users className="h-4 w-4" />,
       textColor: "text-amber-400",
-      layout: "scroll" as const
     },
     newSeries: {
-      gradient: "bg-gradient-to-r from-violet-500/10 to-violet-600/5",
       icon: <Sparkles className="h-4 w-4" />,
       textColor: "text-violet-400",
-      layout: "grid" as const
     },
     top10: {
-      gradient: "bg-gradient-to-r from-blue-500/10 to-blue-600/5",
       icon: <Star className="h-4 w-4" />,
       textColor: "text-blue-400",
-      layout: "grid" as const
     },
     movies: {
-      gradient: "bg-gradient-to-r from-emerald-500/10 to-emerald-600/5",
       icon: <Film className="h-4 w-4" />,
       textColor: "text-emerald-400",
-      layout: "scroll" as const
     },
     comingSoon: {
-      gradient: "bg-gradient-to-r from-indigo-500/10 to-indigo-600/5",
       icon: <Calendar className="h-4 w-4" />,
       textColor: "text-indigo-400",
-      layout: "scroll" as const
     },
     romance: {
-      gradient: "bg-gradient-to-r from-pink-500/10 to-pink-600/5",
       icon: <Heart className="h-4 w-4" />,
       textColor: "text-pink-400",
-      layout: "grid" as const
     },
     action: {
-      gradient: "bg-gradient-to-r from-red-500/10 to-red-600/5",
       icon: <Swords className="h-4 w-4" />,
       textColor: "text-red-400",
-      layout: "grid" as const
     },
     fantasy: {
-      gradient: "bg-gradient-to-r from-purple-500/10 to-purple-600/5",
       icon: <Castle className="h-4 w-4" />,
       textColor: "text-purple-400",
-      layout: "grid" as const
     },
     comedy: {
-      gradient: "bg-gradient-to-r from-yellow-500/10 to-yellow-600/5",
       icon: <Laugh className="h-4 w-4" />,
       textColor: "text-yellow-400",
-      layout: "grid" as const
     },
     thisWeek: {
-      gradient: "bg-gradient-to-r from-cyan-500/10 to-cyan-600/5",
       icon: <Clock4 className="h-4 w-4" />,
       textColor: "text-cyan-400",
-      layout: "scroll" as const
     }
   };
 
   // Enhanced title component
   const SectionTitle = ({ title, style }: { title: string; style: any }) => (
-    <div className="flex items-center gap-3 mb-4">
-      <div className="p-2 rounded-lg bg-white/5 backdrop-blur-sm">
+    <div className="flex items-center gap-3 mb-6">
+      <div className="p-2 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
         {style.icon}
       </div>
-      <h2 className={`text-lg font-semibold uppercase tracking-wider ${style.textColor}`}>
+      <h2 className={`text-xl font-bold uppercase tracking-wider ${style.textColor}`}>
         {title}
       </h2>
       <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent ml-4" />
     </div>
   );
 
+  // Skeleton loading components
+  const ScrollSkeleton = () => (
+    <div className="flex gap-4 overflow-hidden">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index} className="flex-shrink-0 w-48">
+          <Skeleton className="w-full h-64 rounded-lg bg-white/10" />
+          <Skeleton className="w-3/4 h-4 mt-2 bg-white/10" />
+          <Skeleton className="w-1/2 h-3 mt-1 bg-white/10" />
+        </div>
+      ))}
+    </div>
+  );
+
+  const GridSkeleton = () => (
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index}>
+          <Skeleton className="w-full h-48 rounded-lg bg-white/10" />
+          <Skeleton className="w-3/4 h-4 mt-2 bg-white/10" />
+          <Skeleton className="w-1/2 h-3 mt-1 bg-white/10" />
+        </div>
+      ))}
+    </div>
+  );
+
   // ---- Loading State ----
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a]">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-400 text-sm font-light uppercase tracking-wider">Loading Content</p>
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a]">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8 space-y-12">
+          {/* Banner Skeleton */}
+          <Skeleton className="w-full h-80 rounded-lg bg-white/10" />
+          
+          {/* Trending Skeleton */}
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <Skeleton className="w-8 h-8 rounded-lg bg-white/10" />
+              <Skeleton className="w-32 h-6 bg-white/10" />
+              <Skeleton className="flex-1 h-px bg-white/10 ml-4" />
+            </div>
+            <ScrollSkeleton />
+          </div>
+
+          {/* This Week Skeleton */}
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <Skeleton className="w-8 h-8 rounded-lg bg-white/10" />
+              <Skeleton className="w-32 h-6 bg-white/10" />
+              <Skeleton className="flex-1 h-px bg-white/10 ml-4" />
+            </div>
+            <ScrollSkeleton />
+          </div>
+
+          {/* Genre Grid Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index}>
+                <div className="flex items-center gap-3 mb-6">
+                  <Skeleton className="w-8 h-8 rounded-lg bg-white/10" />
+                  <Skeleton className="w-24 h-6 bg-white/10" />
+                  <Skeleton className="flex-1 h-px bg-white/10 ml-4" />
+                </div>
+                <GridSkeleton />
+              </div>
+            ))}
+          </div>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -293,117 +332,117 @@ const Index = () => {
       </section>
 
       {/* Main Sections */}
-      <main className="relative z-20 container mx-auto px-4 py-8 space-y-8">
+      <main className="relative z-20 container mx-auto px-4 py-8 space-y-12">
         {/* Trending */}
         {trendingAnime.length > 0 && (
-          <section className={`rounded-lg p-4 ${sectionStyles.trending.gradient}`}>
+          <section>
             <SectionTitle title="Trending Now" style={sectionStyles.trending} />
             <AnimeSection
               title=""
               animes={trendingAnime}
               viewAllLink="/trending"
               layout="scroll"
-              cardGap="gap-2"
+              cardGap="gap-4"
             />
           </section>
         )}
 
         {/* This Week */}
         {thisWeekAnime.length > 0 && (
-          <section className={`rounded-lg p-4 ${sectionStyles.thisWeek.gradient}`}>
+          <section>
             <SectionTitle title="This Week" style={sectionStyles.thisWeek} />
             <AnimeSection
               title=""
               animes={thisWeekAnime}
               viewAllLink="/schedule"
               layout="scroll"
-              cardGap="gap-2"
+              cardGap="gap-4"
             />
           </section>
         )}
 
         {/* Most Watched */}
         {mostWatchedAnime.length > 0 && (
-          <section className={`rounded-lg p-4 ${sectionStyles.mostWatched.gradient}`}>
+          <section>
             <SectionTitle title="Most Watched" style={sectionStyles.mostWatched} />
             <AnimeSection
               title=""
               animes={mostWatchedAnime}
               viewAllLink="/most-watched"
               layout="scroll"
-              cardGap="gap-2"
+              cardGap="gap-4"
             />
           </section>
         )}
 
         {/* Top 10 */}
         {top10Anime.length > 0 && (
-          <section className={`rounded-lg p-4 ${sectionStyles.top10.gradient}`}>
+          <section>
             <SectionTitle title="Top Rated" style={sectionStyles.top10} />
             <AnimeSection
               title=""
               animes={top10Anime}
               viewAllLink="/top"
-              layout="grid"
-              cardGap="gap-2"
+              layout="scroll"
+              cardGap="gap-4"
             />
           </section>
         )}
 
         {/* Genre Sections Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Romance */}
           {romanceAnime.length > 0 && (
-            <section className={`rounded-lg p-4 ${sectionStyles.romance.gradient}`}>
+            <section>
               <SectionTitle title="Romance" style={sectionStyles.romance} />
               <AnimeSection
                 title=""
                 animes={romanceAnime}
                 viewAllLink="/genre/romance"
-                layout="grid"
-                cardGap="gap-2"
+                layout="scroll"
+                cardGap="gap-4"
               />
             </section>
           )}
 
           {/* Action */}
           {actionAnime.length > 0 && (
-            <section className={`rounded-lg p-4 ${sectionStyles.action.gradient}`}>
+            <section>
               <SectionTitle title="Action" style={sectionStyles.action} />
               <AnimeSection
                 title=""
                 animes={actionAnime}
                 viewAllLink="/genre/action"
-                layout="grid"
-                cardGap="gap-2"
+                layout="scroll"
+                cardGap="gap-4"
               />
             </section>
           )}
 
           {/* Fantasy */}
           {fantasyAnime.length > 0 && (
-            <section className={`rounded-lg p-4 ${sectionStyles.fantasy.gradient}`}>
+            <section>
               <SectionTitle title="Fantasy" style={sectionStyles.fantasy} />
               <AnimeSection
                 title=""
                 animes={fantasyAnime}
                 viewAllLink="/genre/fantasy"
-                layout="grid"
-                cardGap="gap-2"
+                layout="scroll"
+                cardGap="gap-4"
               />
             </section>
           )}
 
           {/* Comedy */}
           {comedyAnime.length > 0 && (
-            <section className={`rounded-lg p-4 ${sectionStyles.comedy.gradient}`}>
+            <section>
               <SectionTitle title="Comedy" style={sectionStyles.comedy} />
               <AnimeSection
                 title=""
                 animes={comedyAnime}
                 viewAllLink="/genre/comedy"
-                layout="grid"
-                cardGap="gap-2"
+                layout="scroll"
+                cardGap="gap-4"
               />
             </section>
           )}
@@ -411,42 +450,42 @@ const Index = () => {
 
         {/* New Series */}
         {latestSeries.length > 0 && (
-          <section className={`rounded-lg p-4 ${sectionStyles.newSeries.gradient}`}>
+          <section>
             <SectionTitle title="New Series" style={sectionStyles.newSeries} />
             <AnimeSection
               title=""
               animes={latestSeries}
               viewAllLink="/series"
-              layout="grid"
-              cardGap="gap-2"
+              layout="scroll"
+              cardGap="gap-4"
             />
           </section>
         )}
 
         {/* Movies */}
         {latestMovies.length > 0 && (
-          <section className={`rounded-lg p-4 ${sectionStyles.movies.gradient}`}>
+          <section>
             <SectionTitle title="Latest Movies" style={sectionStyles.movies} />
             <AnimeSection
               title=""
               animes={latestMovies}
               viewAllLink="/movies"
               layout="scroll"
-              cardGap="gap-2"
+              cardGap="gap-4"
             />
           </section>
         )}
 
         {/* Coming Soon */}
         {upcomingAnime.length > 0 && (
-          <section className={`rounded-lg p-4 ${sectionStyles.comingSoon.gradient}`}>
+          <section>
             <SectionTitle title="Coming Soon" style={sectionStyles.comingSoon} />
             <AnimeSection
               title=""
               animes={upcomingAnime}
               viewAllLink="/upcoming"
               layout="scroll"
-              cardGap="gap-2"
+              cardGap="gap-4"
             />
           </section>
         )}
