@@ -235,15 +235,43 @@ const Index = () => {
     }
   };
 
-  // Updated title component - centered with icon above text, no View All
+  // Updated title component - moved to bottom of section container
   const SectionHeader = ({ title, style }: { title: string; style: any }) => (
-    <div className="flex flex-col items-center justify-center mb-6">
-      <div className="p-2 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 mb-2">
-        {style.icon}
+    <div className="flex flex-col items-center justify-center mt-6 pt-4 border-t border-white/10">
+      <div className="flex items-center gap-2">
+        <div className="p-1.5 rounded-md bg-white/5 backdrop-blur-sm border border-white/10">
+          {style.icon}
+        </div>
+        <h2 className={`text-lg font-semibold uppercase tracking-wide ${style.textColor}`}>
+          {title}
+        </h2>
       </div>
-      <h2 className={`text-xl font-bold uppercase tracking-wider ${style.textColor}`}>
-        {title}
-      </h2>
+    </div>
+  );
+
+  // Alternative: Category badge at top-right of section container
+  const SectionHeaderTopRight = ({ title, style }: { title: string; style: any }) => (
+    <div className="flex justify-end mb-4">
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 backdrop-blur-sm border border-white/10">
+        {style.icon}
+        <span className={`text-sm font-medium ${style.textColor}`}>
+          {title}
+        </span>
+      </div>
+    </div>
+  );
+
+  // Alternative: Side category label
+  const SectionHeaderSide = ({ title, style }: { title: string; style: any }) => (
+    <div className="flex items-center mb-4">
+      <div className="flex items-center gap-2 pr-4 border-r border-white/10">
+        <div className="p-1.5 rounded-md bg-white/5 backdrop-blur-sm border border-white/10">
+          {style.icon}
+        </div>
+        <h2 className={`text-lg font-semibold uppercase tracking-wide ${style.textColor} whitespace-nowrap`}>
+          {title}
+        </h2>
+      </div>
     </div>
   );
 
@@ -317,8 +345,8 @@ const Index = () => {
       <main className="relative z-20 container mx-auto px-4 py-8 space-y-8">
         {/* Trending */}
         {trendingAnime.length > 0 && (
-          <section>
-            <SectionHeader 
+          <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
+            <SectionHeaderTopRight 
               title="Trending Now" 
               style={sectionStyles.trending} 
             />
@@ -335,8 +363,8 @@ const Index = () => {
 
         {/* This Week */}
         {thisWeekAnime.length > 0 && (
-          <section>
-            <SectionHeader 
+          <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
+            <SectionHeaderTopRight 
               title="This Week" 
               style={sectionStyles.thisWeek} 
             />
@@ -353,8 +381,8 @@ const Index = () => {
 
         {/* Most Watched */}
         {mostWatchedAnime.length > 0 && (
-          <section>
-            <SectionHeader 
+          <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
+            <SectionHeaderTopRight 
               title="Most Watched" 
               style={sectionStyles.mostWatched} 
             />
@@ -371,8 +399,8 @@ const Index = () => {
 
         {/* Top 10 */}
         {top10Anime.length > 0 && (
-          <section>
-            <SectionHeader 
+          <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
+            <SectionHeaderTopRight 
               title="Top Rated" 
               style={sectionStyles.top10} 
             />
@@ -391,8 +419,8 @@ const Index = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Romance */}
           {romanceAnime.length > 0 && (
-            <section>
-              <SectionHeader 
+            <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
+              <SectionHeaderSide 
                 title="Romance" 
                 style={sectionStyles.romance} 
               />
@@ -409,8 +437,8 @@ const Index = () => {
 
           {/* Action */}
           {actionAnime.length > 0 && (
-            <section>
-              <SectionHeader 
+            <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
+              <SectionHeaderSide 
                 title="Action" 
                 style={sectionStyles.action} 
               />
@@ -427,8 +455,8 @@ const Index = () => {
 
           {/* Fantasy */}
           {fantasyAnime.length > 0 && (
-            <section>
-              <SectionHeader 
+            <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
+              <SectionHeaderSide 
                 title="Fantasy" 
                 style={sectionStyles.fantasy} 
               />
@@ -445,8 +473,8 @@ const Index = () => {
 
           {/* Comedy */}
           {comedyAnime.length > 0 && (
-            <section>
-              <SectionHeader 
+            <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
+              <SectionHeaderSide 
                 title="Comedy" 
                 style={sectionStyles.comedy} 
               />
@@ -464,7 +492,7 @@ const Index = () => {
 
         {/* New Series */}
         {latestSeries.length > 0 && (
-          <section>
+          <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
             <SectionHeader 
               title="New Series" 
               style={sectionStyles.newSeries} 
@@ -482,7 +510,7 @@ const Index = () => {
 
         {/* Movies */}
         {latestMovies.length > 0 && (
-          <section>
+          <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
             <SectionHeader 
               title="Latest Movies" 
               style={sectionStyles.movies} 
@@ -500,7 +528,7 @@ const Index = () => {
 
         {/* Coming Soon */}
         {upcomingAnime.length > 0 && (
-          <section>
+          <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
             <SectionHeader 
               title="Coming Soon" 
               style={sectionStyles.comingSoon} 
