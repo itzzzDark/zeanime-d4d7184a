@@ -191,77 +191,77 @@ const Index = () => {
   // Section styling configurations with soft colors and descriptions
   const sectionStyles = {
     trending: {
-      icon: <TrendingUp className="h-5 w-5" />,
+      icon: TrendingUp,
       textColor: "text-rose-300",
       bgColor: "bg-rose-500/10",
       borderColor: "border-rose-500/20",
       description: "Most popular anime trending right now"
     },
     mostWatched: {
-      icon: <Users className="h-5 w-5" />,
+      icon: Users,
       textColor: "text-amber-300",
       bgColor: "bg-amber-500/10",
       borderColor: "border-amber-500/20",
       description: "Highest view count anime of all time"
     },
     newSeries: {
-      icon: <Sparkles className="h-5 w-5" />,
+      icon: Sparkles,
       textColor: "text-violet-300",
       bgColor: "bg-violet-500/10",
       borderColor: "border-violet-500/20",
       description: "Latest anime series just added"
     },
     top10: {
-      icon: <Star className="h-5 w-5" />,
+      icon: Star,
       textColor: "text-blue-300",
       bgColor: "bg-blue-500/10",
       borderColor: "border-blue-500/20",
       description: "Top rated anime by community"
     },
     movies: {
-      icon: <Film className="h-5 w-5" />,
+      icon: Film,
       textColor: "text-emerald-300",
       bgColor: "bg-emerald-500/10",
       borderColor: "border-emerald-500/20",
       description: "Newest anime movie releases"
     },
     comingSoon: {
-      icon: <Calendar className="h-5 w-5" />,
+      icon: Calendar,
       textColor: "text-indigo-300",
       bgColor: "bg-indigo-500/10",
       borderColor: "border-indigo-500/20",
       description: "Upcoming anime to watch out for"
     },
     romance: {
-      icon: <Heart className="h-5 w-5" />,
+      icon: Heart,
       textColor: "text-pink-300",
       bgColor: "bg-pink-500/10",
       borderColor: "border-pink-500/20",
       description: "Heartwarming love stories and relationships"
     },
     action: {
-      icon: <Swords className="h-5 w-5" />,
+      icon: Swords,
       textColor: "text-red-300",
       bgColor: "bg-red-500/10",
       borderColor: "border-red-500/20",
       description: "High-octane battles and adventures"
     },
     fantasy: {
-      icon: <Castle className="h-5 w-5" />,
+      icon: Castle,
       textColor: "text-purple-300",
       bgColor: "bg-purple-500/10",
       borderColor: "border-purple-500/20",
       description: "Magical worlds and epic quests"
     },
     comedy: {
-      icon: <Laugh className="h-5 w-5" />,
+      icon: Laugh,
       textColor: "text-yellow-300",
       bgColor: "bg-yellow-500/10",
       borderColor: "border-yellow-500/20",
       description: "Hilarious moments and funny stories"
     },
     thisWeek: {
-      icon: <Clock4 className="h-5 w-5" />,
+      icon: Clock4,
       textColor: "text-cyan-300",
       bgColor: "bg-cyan-500/10",
       borderColor: "border-cyan-500/20",
