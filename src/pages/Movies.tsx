@@ -1,26 +1,54 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { AnimeCard } from "@/components/AnimeCard";
-import { Loader2, Search, Filter, Grid3X3, List } from "lucide-react";
-import { useState, useMemo } from "react";
+import { 
+  Loader2, 
+  Search, 
+  Filter, 
+  Grid3X3, 
+  List, 
+  SlidersHorizontal,
+  X,
+  Star,
+  Calendar
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+
+type SortOption = "newest" | "oldest" | "rating" | "title";
+type ViewMode = "grid" | "list";
+type StatusFilter = "all" | "released" | "upcoming";
 
 const Movies = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<string>("newest");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [genreFilters, setGenreFilters] = useState<string[]>([]);
+  const [yearFilter, setYearFilter] = useState<string>("all");
+  const [ratingFilter, setRatingFilter] = useState<number>(0);
 
   const { data: movies, isLoading } = useQuery({
     queryKey: ["movies"],
@@ -36,203 +64,362 @@ const Movies = () => {
     },
   });
 
+  const { data: genres } = useQuery({
+    queryKey: ["movie-genres"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("anime")
+        .select("genres")
+        .eq("type", "movie");
+      
+      if (error) throw error;
+      
+      const allGenres = data.flatMap(anime => 
+        anime.genres ? JSON.parse(anime.genres) : []
+      );
+      return [...new Set(allGenres)].sort();
+    },
+  });
+
   const filteredAndSortedMovies = useMemo(() => {
     if (!movies) return [];
 
-    let filtered = movies.filter(movie => 
-      movie.title?.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      (statusFilter === "all" || movie.status === statusFilter)
-    );
+    let filtered = movies.filter(movie => {
+      // Search filter
+      const matchesSearch = movie.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           movie.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // Status filter
+      const matchesStatus = statusFilter === "all" || 
+                           (statusFilter === "released" && movie.status === "finished") ||
+                           (statusFilter === "upcoming" && movie.status === "upcoming");
+      
+      // Genre filter
+      const matchesGenre = genreFilters.length === 0 || 
+                          (movie.genres && genreFilters.some(genre => 
+                            JSON.parse(movie.genres).includes(genre)
+                          ));
+      
+      // Year filter
+      const movieYear = new Date(movie.release_date || movie.created_at).getFullYear().toString();
+      const matchesYear = yearFilter === "all" || movieYear === yearFilter;
+      
+      // Rating filter
+      const matchesRating = !ratingFilter || (movie.rating && movie.rating >= ratingFilter);
 
-    // Apply sorting
-    switch (sortBy) {
-      case "newest":
-        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        break;
-      case "oldest":
-        filtered.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-        break;
-      case "rating":
-        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-        break;
-      case "title":
-        filtered.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
-        break;
-    }
+      return matchesSearch && matchesStatus && matchesGenre && matchesYear && matchesRating;
+    });
+
+    // Sort
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "oldest":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "rating":
+          return (b.rating || 0) - (a.rating || 0);
+        case "title":
+          return (a.title || "").localeCompare(b.title || "");
+        default:
+          return 0;
+      }
+    });
 
     return filtered;
-  }, [movies, searchQuery, statusFilter, sortBy]);
+  }, [movies, searchQuery, sortBy, statusFilter, genreFilters, yearFilter, ratingFilter]);
 
-  const statusCounts = useMemo(() => {
-    if (!movies) return {};
-    return movies.reduce((acc: any, movie) => {
-      acc[movie.status] = (acc[movie.status] || 0) + 1;
-      return acc;
-    }, { all: movies.length });
+  const availableYears = useMemo(() => {
+    if (!movies) return [];
+    const years = movies
+      .map(movie => new Date(movie.release_date || movie.created_at).getFullYear())
+      .filter(year => !isNaN(year));
+    return [...new Set(years)].sort((a, b) => b - a);
   }, [movies]);
+
+  const activeFilterCount = genreFilters.length + (yearFilter !== "all" ? 1 : 0) + (ratingFilter > 0 ? 1 : 0);
+
+  const clearAllFilters = () => {
+    setGenreFilters([]);
+    setYearFilter("all");
+    setRatingFilter(0);
+    setStatusFilter("all");
+    setSearchQuery("");
+  };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="min-h-screen flex flex-col">
         <Navbar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <Loader2 className="h-12 w-12 animate-spin text-purple-400 mx-auto" />
-            <p className="text-lg text-purple-200">Loading cinematic experiences...</p>
+        <div className="flex-1 container px-4 py-8">
+          <Skeleton className="h-12 w-64 mb-8" />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-[3/4] rounded-lg" />
+            ))}
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/20">
       <Navbar />
       
       <div className="flex-1">
-        {/* Minimal Header */}
-        <div className="border-b border-purple-800/50">
-          <div className="container px-4 py-8">
-            <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent animate-slide-up">
-              Anime Movies
-            </h1>
-          </div>
-        </div>
-
-        {/* Controls Section */}
-        <div className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-md border-b border-purple-800/30 shadow-lg">
-          <div className="container px-4 py-4">
-            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-              {/* Search Bar */}
-              <div className="relative w-full lg:w-80">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-purple-400" />
+        <div className="container px-4 py-8">
+          {/* Header Section */}
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
+            <div className="space-y-2">
+              <h1 className="text-4xl font-bold text-gradient bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                Anime Movies
+              </h1>
+              <p className="text-muted-foreground">
+                Discover {filteredAndSortedMovies.length} amazing anime movies
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-2 w-full lg:w-auto">
+              {/* Search */}
+              <div className="relative flex-1 lg:flex-initial">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   placeholder="Search movies..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 h-11 rounded-xl bg-slate-800/50 border-purple-800/50 text-white placeholder:text-purple-200/50 focus:border-purple-500"
+                  className="pl-10 pr-4 w-full lg:w-80"
                 />
               </div>
 
-              {/* Filters and View Controls */}
-              <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-                {/* Status Filter */}
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-32 h-9 rounded-xl bg-slate-800/50 border-purple-800/50 text-white">
-                    <Filter className="h-4 w-4 mr-2 text-purple-400" />
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-purple-800/50 text-white">
-                    <SelectItem value="all" className="focus:bg-purple-600">
-                      All ({statusCounts.all || 0})
-                    </SelectItem>
-                    <SelectItem value="completed" className="focus:bg-purple-600">
-                      Completed ({statusCounts.completed || 0})
-                    </SelectItem>
-                    <SelectItem value="ongoing" className="focus:bg-purple-600">
-                      Ongoing ({statusCounts.ongoing || 0})
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {/* Sort By */}
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-32 h-9 rounded-xl bg-slate-800/50 border-purple-800/50 text-white">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-purple-800/50 text-white">
-                    <SelectItem value="newest" className="focus:bg-purple-600">Newest</SelectItem>
-                    <SelectItem value="oldest" className="focus:bg-purple-600">Oldest</SelectItem>
-                    <SelectItem value="rating" className="focus:bg-purple-600">Rating</SelectItem>
-                    <SelectItem value="title" className="focus:bg-purple-600">Title</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {/* View Mode Toggle */}
-                <div className="flex items-center gap-1 border border-purple-800/50 rounded-xl p-1 bg-slate-800/50">
-                  <Button
-                    variant={viewMode === "grid" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setViewMode("grid")}
-                    className="h-7 w-7 rounded-lg bg-purple-600 hover:bg-purple-700 text-white"
-                  >
+              {/* View Toggle */}
+              <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
+                <TabsList className="grid w-20 grid-cols-2">
+                  <TabsTrigger value="grid" size="sm">
                     <Grid3X3 className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === "list" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setViewMode("list")}
-                    className="h-7 w-7 rounded-lg text-purple-300 hover:text-white hover:bg-purple-600/50"
-                  >
+                  </TabsTrigger>
+                  <TabsTrigger value="list" size="sm">
                     <List className="h-4 w-4" />
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+
+              {/* Filter Sheet */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="relative">
+                    <SlidersHorizontal className="h-4 w-4 mr-2" />
+                    Filters
+                    {activeFilterCount > 0 && (
+                      <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
+                        {activeFilterCount}
+                      </Badge>
+                    )}
                   </Button>
-                </div>
-              </div>
+                </SheetTrigger>
+                <SheetContent className="sm:max-w-md">
+                  <SheetHeader>
+                    <SheetTitle>Filter Movies</SheetTitle>
+                  </SheetHeader>
+                  
+                  <ScrollArea className="h-full py-6">
+                    <div className="space-y-6">
+                      {/* Status Filter */}
+                      <div>
+                        <h4 className="font-medium mb-3">Status</h4>
+                        <div className="space-y-2">
+                          {["all", "released", "upcoming"].map((status) => (
+                            <Button
+                              key={status}
+                              variant={statusFilter === status ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setStatusFilter(status as StatusFilter)}
+                              className="w-full justify-start capitalize"
+                            >
+                              {status}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Rating Filter */}
+                      <div>
+                        <h4 className="font-medium mb-3">Minimum Rating</h4>
+                        <div className="space-y-2">
+                          {[0, 7, 8, 9].map((rating) => (
+                            <Button
+                              key={rating}
+                              variant={ratingFilter === rating ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setRatingFilter(rating)}
+                              className="w-full justify-start"
+                            >
+                              <Star className="h-4 w-4 mr-2 fill-current" />
+                              {rating === 0 ? "Any rating" : `${rating}+`}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Year Filter */}
+                      <div>
+                        <h4 className="font-medium mb-3">Release Year</h4>
+                        <div className="max-h-40 overflow-y-auto">
+                          <Button
+                            variant={yearFilter === "all" ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setYearFilter("all")}
+                            className="w-full justify-start mb-2"
+                          >
+                            All years
+                          </Button>
+                          {availableYears.map((year) => (
+                            <Button
+                              key={year}
+                              variant={yearFilter === year.toString() ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setYearFilter(year.toString())}
+                              className="w-full justify-start mb-1"
+                            >
+                              <Calendar className="h-4 w-4 mr-2" />
+                              {year}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Genre Filter */}
+                      {genres && genres.length > 0 && (
+                        <div>
+                          <h4 className="font-medium mb-3">Genres</h4>
+                          <div className="max-h-60 overflow-y-auto space-y-1">
+                            {genres.map((genre) => (
+                              <div key={genre} className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  id={`genre-${genre}`}
+                                  checked={genreFilters.includes(genre)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setGenreFilters([...genreFilters, genre]);
+                                    } else {
+                                      setGenreFilters(genreFilters.filter(g => g !== genre));
+                                    }
+                                  }}
+                                  className="rounded border-gray-300"
+                                />
+                                <label htmlFor={`genre-${genre}`} className="text-sm capitalize">
+                                  {genre}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                  
+                  <div className="absolute bottom-6 left-6 right-6">
+                    <Button onClick={clearAllFilters} variant="outline" className="w-full">
+                      Clear All Filters
+                    </Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
+
+              {/* Sort Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Filter className="h-4 w-4 mr-2" />
+                    Sort
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuCheckboxItem
+                    checked={sortBy === "newest"}
+                    onCheckedChange={() => setSortBy("newest")}
+                  >
+                    Newest First
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={sortBy === "oldest"}
+                    onCheckedChange={() => setSortBy("oldest")}
+                  >
+                    Oldest First
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuCheckboxItem
+                    checked={sortBy === "rating"}
+                    onCheckedChange={() => setSortBy("rating")}
+                  >
+                    Highest Rated
+                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem
+                    checked={sortBy === "title"}
+                    onCheckedChange={() => setSortBy("title")}
+                  >
+                    Title A-Z
+                  </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-
-            {/* Active Filters */}
-            {(searchQuery || statusFilter !== "all") && (
-              <div className="flex items-center gap-2 mt-4 flex-wrap">
-                <span className="text-sm text-purple-300">Active filters:</span>
-                {searchQuery && (
-                  <Badge variant="secondary" className="text-sm bg-purple-600/50 text-purple-200 border-purple-500/50">
-                    Search: "{searchQuery}"
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="ml-2 hover:text-pink-400 transition-colors"
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                )}
-                {statusFilter !== "all" && (
-                  <Badge variant="secondary" className="text-sm bg-purple-600/50 text-purple-200 border-purple-500/50">
-                    Status: {statusFilter}
-                    <button
-                      onClick={() => setStatusFilter("all")}
-                      className="ml-2 hover:text-pink-400 transition-colors"
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSearchQuery("");
-                    setStatusFilter("all");
-                  }}
-                  className="h-6 text-xs text-purple-300 hover:text-white hover:bg-purple-600/50"
-                >
-                  Clear all
-                </Button>
-              </div>
-            )}
           </div>
-        </div>
 
-        {/* Results Section */}
-        <div className="container px-4 py-8">
-          {/* Results Count */}
-          <div className="flex items-center justify-between mb-6">
-            <p className="text-purple-300">
-              Showing {filteredAndSortedMovies.length} of {movies?.length} movies
-            </p>
-          </div>
+          {/* Active Filters */}
+          {activeFilterCount > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              {genreFilters.map(genre => (
+                <Badge key={genre} variant="secondary" className="flex items-center gap-1">
+                  {genre}
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => setGenreFilters(genreFilters.filter(g => g !== genre))}
+                  />
+                </Badge>
+              ))}
+              {yearFilter !== "all" && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  Year: {yearFilter}
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => setYearFilter("all")}
+                  />
+                </Badge>
+              )}
+              {ratingFilter > 0 && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  Rating: {ratingFilter}+
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => setRatingFilter(0)}
+                  />
+                </Badge>
+              )}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={clearAllFilters}
+                className="h-6 px-2 text-xs"
+              >
+                Clear All
+              </Button>
+            </div>
+          )}
 
           {/* Movies Grid/List */}
           {filteredAndSortedMovies.length > 0 ? (
             <div className={
               viewMode === "grid" 
                 ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
-                : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                : "space-y-4 max-w-4xl"
             }>
               {filteredAndSortedMovies.map((movie, index) => (
                 <div 
                   key={movie.id} 
                   className="animate-scale-in"
-                  style={{ animationDelay: `${index * 0.03}s` }}
+                  style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   <AnimeCard 
                     id={movie.slug || movie.id}
@@ -241,39 +428,24 @@ const Movies = () => {
                     rating={movie.rating || undefined}
                     status={movie.status}
                     episodes={movie.total_episodes || undefined}
-                    variant={viewMode === "list" ? "horizontal" : "vertical"}
+                    description={viewMode === "list" ? movie.description : undefined}
+                    variant={viewMode === "list" ? "list" : "default"}
                   />
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 space-y-6">
-              <div className="w-24 h-24 mx-auto bg-purple-900/50 rounded-full flex items-center justify-center border border-purple-800/50">
-                <Search className="h-12 w-12 text-purple-400/50" />
+            <div className="text-center py-20 space-y-4">
+              <div className="w-24 h-24 mx-auto bg-muted rounded-full flex items-center justify-center">
+                <Search className="h-10 w-10 text-muted-foreground" />
               </div>
-              <div className="space-y-2">
-                <h3 className="text-2xl font-bold text-purple-200">
-                  No movies found
-                </h3>
-                <p className="text-purple-300 max-w-md mx-auto">
-                  {searchQuery || statusFilter !== "all" 
-                    ? "Try adjusting your search or filters to find what you're looking for."
-                    : "No movies are currently available. Check back later for new additions!"
-                  }
-                </p>
-              </div>
-              {(searchQuery || statusFilter !== "all") && (
-                <Button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setStatusFilter("all");
-                  }}
-                  variant="outline"
-                  className="border-purple-600 text-purple-300 hover:bg-purple-600 hover:text-white"
-                >
-                  Clear filters
-                </Button>
-              )}
+              <h3 className="text-xl font-semibold">No movies found</h3>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                Try adjusting your search or filters to find what you're looking for.
+              </p>
+              <Button onClick={clearAllFilters} variant="outline">
+                Clear all filters
+              </Button>
             </div>
           )}
         </div>
