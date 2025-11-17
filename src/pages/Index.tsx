@@ -17,7 +17,8 @@ import {
   Castle,
   Laugh,
   Film,
-  Clock4
+  Clock4,
+  ChevronRight
 } from "lucide-react";
 
 const Index = () => {
@@ -235,49 +236,33 @@ const Index = () => {
     }
   };
 
-  // Updated title component - moved to bottom of section container
-  const SectionHeader = ({ title, style }: { title: string; style: any }) => (
-    <div className="flex flex-col items-center justify-center mt-6 pt-4 border-t border-white/10">
-      <div className="flex items-center gap-2">
-        <div className="p-1.5 rounded-md bg-white/5 backdrop-blur-sm border border-white/10">
+  // Enhanced title component with View All
+  const SectionTitle = ({ title, style, viewAllLink }: { title: string; style: any; viewAllLink: string }) => (
+    <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
           {style.icon}
         </div>
-        <h2 className={`text-lg font-semibold uppercase tracking-wide ${style.textColor}`}>
+        <h2 className={`text-xl font-bold uppercase tracking-wider ${style.textColor}`}>
           {title}
         </h2>
+        <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent ml-4" />
       </div>
-    </div>
-  );
-
-  // Alternative: Category badge at top-right of section container
-  const SectionHeaderTopRight = ({ title, style }: { title: string; style: any }) => (
-    <div className="flex justify-end mb-4">
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 backdrop-blur-sm border border-white/10">
-        {style.icon}
-        <span className={`text-sm font-medium ${style.textColor}`}>
-          {title}
-        </span>
-      </div>
-    </div>
-  );
-
-  // Alternative: Side category label
-  const SectionHeaderSide = ({ title, style }: { title: string; style: any }) => (
-    <div className="flex items-center mb-4">
-      <div className="flex items-center gap-2 pr-4 border-r border-white/10">
-        <div className="p-1.5 rounded-md bg-white/5 backdrop-blur-sm border border-white/10">
-          {style.icon}
-        </div>
-        <h2 className={`text-lg font-semibold uppercase tracking-wide ${style.textColor} whitespace-nowrap`}>
-          {title}
-        </h2>
-      </div>
+      
+      {/* View All link with icon in one line */}
+      <a 
+        href={viewAllLink}
+        className="flex items-center gap-1 px-3 py-1 text-sm text-gray-400 hover:text-white transition-colors duration-200 hover:bg-white/5 rounded-lg border border-transparent hover:border-white/10"
+      >
+        View All
+        <ChevronRight className="h-3 w-3" />
+      </a>
     </div>
   );
 
   // Skeleton loading components
   const ScrollSkeleton = () => (
-    <div className="flex gap-3 overflow-hidden">
+    <div className="flex gap-4 overflow-hidden">
       {Array.from({ length: 6 }).map((_, index) => (
         <div key={index} className="flex-shrink-0 w-48">
           <Skeleton className="w-full h-64 rounded-lg bg-white/10" />
@@ -288,10 +273,15 @@ const Index = () => {
     </div>
   );
 
-  const SectionHeaderSkeleton = () => (
-    <div className="flex flex-col items-center justify-center mb-6">
-      <Skeleton className="w-8 h-8 rounded-lg bg-white/10 mb-2" />
-      <Skeleton className="w-32 h-6 bg-white/10" />
+  const GridSkeleton = () => (
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index}>
+          <Skeleton className="w-full h-48 rounded-lg bg-white/10" />
+          <Skeleton className="w-3/4 h-4 mt-2 bg-white/10" />
+          <Skeleton className="w-1/2 h-3 mt-1 bg-white/10" />
+        </div>
+      ))}
     </div>
   );
 
@@ -300,28 +290,49 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a]">
         <Navbar />
-        <div className="container mx-auto px-4 py-8 space-y-8">
+        <div className="container mx-auto px-4 py-8 space-y-12">
           {/* Banner Skeleton */}
           <Skeleton className="w-full h-80 rounded-lg bg-white/10" />
           
           {/* Trending Skeleton */}
           <div>
-            <SectionHeaderSkeleton />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Skeleton className="w-8 h-8 rounded-lg bg-white/10" />
+                <Skeleton className="w-32 h-6 bg-white/10" />
+                <Skeleton className="flex-1 h-px bg-white/10 ml-4" />
+              </div>
+              <Skeleton className="w-20 h-6 bg-white/10 rounded" />
+            </div>
             <ScrollSkeleton />
           </div>
 
           {/* This Week Skeleton */}
           <div>
-            <SectionHeaderSkeleton />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Skeleton className="w-8 h-8 rounded-lg bg-white/10" />
+                <Skeleton className="w-32 h-6 bg-white/10" />
+                <Skeleton className="flex-1 h-px bg-white/10 ml-4" />
+              </div>
+              <Skeleton className="w-20 h-6 bg-white/10 rounded" />
+            </div>
             <ScrollSkeleton />
           </div>
 
           {/* Genre Grid Skeleton */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {Array.from({ length: 4 }).map((_, index) => (
               <div key={index}>
-                <SectionHeaderSkeleton />
-                <ScrollSkeleton />
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="w-8 h-8 rounded-lg bg-white/10" />
+                    <Skeleton className="w-24 h-6 bg-white/10" />
+                    <Skeleton className="flex-1 h-px bg-white/10 ml-4" />
+                  </div>
+                  <Skeleton className="w-20 h-6 bg-white/10 rounded" />
+                </div>
+                <GridSkeleton />
               </div>
             ))}
           </div>
@@ -342,149 +353,149 @@ const Index = () => {
       </section>
 
       {/* Main Sections */}
-      <main className="relative z-20 container mx-auto px-4 py-8 space-y-8">
+      <main className="relative z-20 container mx-auto px-4 py-8 space-y-12">
         {/* Trending */}
         {trendingAnime.length > 0 && (
-          <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
-            <SectionHeaderTopRight 
+          <section>
+            <SectionTitle 
               title="Trending Now" 
               style={sectionStyles.trending} 
+              viewAllLink="/trending" 
             />
             <AnimeSection
               title=""
               animes={trendingAnime}
               viewAllLink="/trending"
               layout="scroll"
-              cardGap="gap-3"
-              hideHeader={true}
+              cardGap="gap-4"
             />
           </section>
         )}
 
         {/* This Week */}
         {thisWeekAnime.length > 0 && (
-          <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
-            <SectionHeaderTopRight 
+          <section>
+            <SectionTitle 
               title="This Week" 
               style={sectionStyles.thisWeek} 
+              viewAllLink="/schedule" 
             />
             <AnimeSection
               title=""
               animes={thisWeekAnime}
               viewAllLink="/schedule"
               layout="scroll"
-              cardGap="gap-3"
-              hideHeader={true}
+              cardGap="gap-4"
             />
           </section>
         )}
 
         {/* Most Watched */}
         {mostWatchedAnime.length > 0 && (
-          <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
-            <SectionHeaderTopRight 
+          <section>
+            <SectionTitle 
               title="Most Watched" 
               style={sectionStyles.mostWatched} 
+              viewAllLink="/most-watched" 
             />
             <AnimeSection
               title=""
               animes={mostWatchedAnime}
               viewAllLink="/most-watched"
               layout="scroll"
-              cardGap="gap-3"
-              hideHeader={true}
+              cardGap="gap-4"
             />
           </section>
         )}
 
         {/* Top 10 */}
         {top10Anime.length > 0 && (
-          <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
-            <SectionHeaderTopRight 
+          <section>
+            <SectionTitle 
               title="Top Rated" 
               style={sectionStyles.top10} 
+              viewAllLink="/top" 
             />
             <AnimeSection
               title=""
               animes={top10Anime}
               viewAllLink="/top"
               layout="scroll"
-              cardGap="gap-3"
-              hideHeader={true}
+              cardGap="gap-4"
             />
           </section>
         )}
 
         {/* Genre Sections Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Romance */}
           {romanceAnime.length > 0 && (
-            <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
-              <SectionHeaderSide 
+            <section>
+              <SectionTitle 
                 title="Romance" 
                 style={sectionStyles.romance} 
+                viewAllLink="/genre/romance" 
               />
               <AnimeSection
                 title=""
                 animes={romanceAnime}
                 viewAllLink="/genre/romance"
                 layout="scroll"
-                cardGap="gap-3"
-                hideHeader={true}
+                cardGap="gap-4"
               />
             </section>
           )}
 
           {/* Action */}
           {actionAnime.length > 0 && (
-            <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
-              <SectionHeaderSide 
+            <section>
+              <SectionTitle 
                 title="Action" 
                 style={sectionStyles.action} 
+                viewAllLink="/genre/action" 
               />
               <AnimeSection
                 title=""
                 animes={actionAnime}
                 viewAllLink="/genre/action"
                 layout="scroll"
-                cardGap="gap-3"
-                hideHeader={true}
+                cardGap="gap-4"
               />
             </section>
           )}
 
           {/* Fantasy */}
           {fantasyAnime.length > 0 && (
-            <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
-              <SectionHeaderSide 
+            <section>
+              <SectionTitle 
                 title="Fantasy" 
                 style={sectionStyles.fantasy} 
+                viewAllLink="/genre/fantasy" 
               />
               <AnimeSection
                 title=""
                 animes={fantasyAnime}
                 viewAllLink="/genre/fantasy"
                 layout="scroll"
-                cardGap="gap-3"
-                hideHeader={true}
+                cardGap="gap-4"
               />
             </section>
           )}
 
           {/* Comedy */}
           {comedyAnime.length > 0 && (
-            <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
-              <SectionHeaderSide 
+            <section>
+              <SectionTitle 
                 title="Comedy" 
                 style={sectionStyles.comedy} 
+                viewAllLink="/genre/comedy" 
               />
               <AnimeSection
                 title=""
                 animes={comedyAnime}
                 viewAllLink="/genre/comedy"
                 layout="scroll"
-                cardGap="gap-3"
-                hideHeader={true}
+                cardGap="gap-4"
               />
             </section>
           )}
@@ -492,54 +503,54 @@ const Index = () => {
 
         {/* New Series */}
         {latestSeries.length > 0 && (
-          <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
-            <SectionHeader 
+          <section>
+            <SectionTitle 
               title="New Series" 
               style={sectionStyles.newSeries} 
+              viewAllLink="/series" 
             />
             <AnimeSection
               title=""
               animes={latestSeries}
               viewAllLink="/series"
               layout="scroll"
-              cardGap="gap-3"
-              hideHeader={true}
+              cardGap="gap-4"
             />
           </section>
         )}
 
         {/* Movies */}
         {latestMovies.length > 0 && (
-          <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
-            <SectionHeader 
+          <section>
+            <SectionTitle 
               title="Latest Movies" 
               style={sectionStyles.movies} 
+              viewAllLink="/movies" 
             />
             <AnimeSection
               title=""
               animes={latestMovies}
               viewAllLink="/movies"
               layout="scroll"
-              cardGap="gap-3"
-              hideHeader={true}
+              cardGap="gap-4"
             />
           </section>
         )}
 
         {/* Coming Soon */}
         {upcomingAnime.length > 0 && (
-          <section className="bg-white/5 rounded-xl p-6 backdrop-blur-sm border border-white/10">
-            <SectionHeader 
+          <section>
+            <SectionTitle 
               title="Coming Soon" 
               style={sectionStyles.comingSoon} 
+              viewAllLink="/upcoming" 
             />
             <AnimeSection
               title=""
               animes={upcomingAnime}
               viewAllLink="/upcoming"
               layout="scroll"
-              cardGap="gap-3"
-              hideHeader={true}
+              cardGap="gap-4"
             />
           </section>
         )}
