@@ -188,75 +188,92 @@ const Index = () => {
     latestMoviesLoading || top10Loading || upcomingLoading ||
     romanceLoading || actionLoading || fantasyLoading || comedyLoading || thisWeekLoading;
 
-  // Section styling configurations
+  // Section styling configurations with descriptions
   const sectionStyles = {
     trending: {
       icon: <TrendingUp className="h-4 w-4" />,
       textColor: "text-rose-400",
+      description: "Most popular anime trending right now"
     },
     mostWatched: {
       icon: <Users className="h-4 w-4" />,
       textColor: "text-amber-400",
+      description: "Highest view count anime of all time"
     },
     newSeries: {
       icon: <Sparkles className="h-4 w-4" />,
       textColor: "text-violet-400",
+      description: "Latest anime series just added"
     },
     top10: {
       icon: <Star className="h-4 w-4" />,
       textColor: "text-blue-400",
+      description: "Top rated anime by community"
     },
     movies: {
       icon: <Film className="h-4 w-4" />,
       textColor: "text-emerald-400",
+      description: "Newest anime movie releases"
     },
     comingSoon: {
       icon: <Calendar className="h-4 w-4" />,
       textColor: "text-indigo-400",
+      description: "Upcoming anime to watch out for"
     },
     romance: {
       icon: <Heart className="h-4 w-4" />,
       textColor: "text-pink-400",
+      description: "Heartwarming love stories and relationships"
     },
     action: {
       icon: <Swords className="h-4 w-4" />,
       textColor: "text-red-400",
+      description: "High-octane battles and adventures"
     },
     fantasy: {
       icon: <Castle className="h-4 w-4" />,
       textColor: "text-purple-400",
+      description: "Magical worlds and epic quests"
     },
     comedy: {
       icon: <Laugh className="h-4 w-4" />,
       textColor: "text-yellow-400",
+      description: "Hilarious moments and funny stories"
     },
     thisWeek: {
       icon: <Clock4 className="h-4 w-4" />,
       textColor: "text-cyan-400",
+      description: "New episodes releasing this week"
     }
   };
 
-  // Enhanced title component with View All
+  // Enhanced title component with description
   const SectionTitle = ({ title, style, viewAllLink }: { title: string; style: any; viewAllLink: string }) => (
-    <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
-          {style.icon}
+    <div className="mb-6">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+            {style.icon}
+          </div>
+          <h2 className={`text-xl font-bold uppercase tracking-wider ${style.textColor}`}>
+            {title}
+          </h2>
         </div>
-        <h2 className={`text-xl font-bold uppercase tracking-wider ${style.textColor}`}>
-          {title}
-        </h2>
-        <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent ml-4" />
+        
+        {/* View All link with icon in one line */}
+        <a 
+          href={viewAllLink}
+          className="flex items-center gap-1 px-3 py-1 text-sm text-gray-400 hover:text-white transition-colors duration-200 hover:bg-white/5 rounded-lg border border-transparent hover:border-white/10"
+        >
+          View All
+          <ChevronRight className="h-3 w-3" />
+        </a>
       </div>
       
-      {/* View All link with icon in one line */}
-      <a 
-        href={viewAllLink}
-        className="flex items-center gap-1 px-3 py-1 text-sm text-gray-400 hover:text-white transition-colors duration-200 hover:bg-white/5 rounded-lg border border-transparent hover:border-white/10"
-      >
-        View All
-        <ChevronRight className="h-3 w-3" />
-      </a>
+      {/* One-line description */}
+      <p className="text-sm text-gray-400 ml-11">
+        {style.description}
+      </p>
     </div>
   );
 
@@ -296,26 +313,30 @@ const Index = () => {
           
           {/* Trending Skeleton */}
           <div>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <Skeleton className="w-8 h-8 rounded-lg bg-white/10" />
-                <Skeleton className="w-32 h-6 bg-white/10" />
-                <Skeleton className="flex-1 h-px bg-white/10 ml-4" />
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="w-8 h-8 rounded-lg bg-white/10" />
+                  <Skeleton className="w-32 h-6 bg-white/10" />
+                </div>
+                <Skeleton className="w-20 h-6 bg-white/10 rounded" />
               </div>
-              <Skeleton className="w-20 h-6 bg-white/10 rounded" />
+              <Skeleton className="w-48 h-4 ml-11 bg-white/10" />
             </div>
             <ScrollSkeleton />
           </div>
 
           {/* This Week Skeleton */}
           <div>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <Skeleton className="w-8 h-8 rounded-lg bg-white/10" />
-                <Skeleton className="w-32 h-6 bg-white/10" />
-                <Skeleton className="flex-1 h-px bg-white/10 ml-4" />
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="w-8 h-8 rounded-lg bg-white/10" />
+                  <Skeleton className="w-32 h-6 bg-white/10" />
+                </div>
+                <Skeleton className="w-20 h-6 bg-white/10 rounded" />
               </div>
-              <Skeleton className="w-20 h-6 bg-white/10 rounded" />
+              <Skeleton className="w-48 h-4 ml-11 bg-white/10" />
             </div>
             <ScrollSkeleton />
           </div>
@@ -324,13 +345,15 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {Array.from({ length: 4 }).map((_, index) => (
               <div key={index}>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="w-8 h-8 rounded-lg bg-white/10" />
-                    <Skeleton className="w-24 h-6 bg-white/10" />
-                    <Skeleton className="flex-1 h-px bg-white/10 ml-4" />
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="w-8 h-8 rounded-lg bg-white/10" />
+                      <Skeleton className="w-24 h-6 bg-white/10" />
+                    </div>
+                    <Skeleton className="w-20 h-6 bg-white/10 rounded" />
                   </div>
-                  <Skeleton className="w-20 h-6 bg-white/10 rounded" />
+                  <Skeleton className="w-48 h-4 ml-11 bg-white/10" />
                 </div>
                 <GridSkeleton />
               </div>
