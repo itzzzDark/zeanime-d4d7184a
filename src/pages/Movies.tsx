@@ -73,12 +73,12 @@ const Movies = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-            <p className="text-lg text-muted-foreground">Loading amazing movies...</p>
+            <Loader2 className="h-12 w-12 animate-spin text-purple-400 mx-auto" />
+            <p className="text-lg text-purple-200">Loading cinematic experiences...</p>
           </div>
         </div>
       </div>
@@ -86,47 +86,31 @@ const Movies = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-blue-50/30">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <Navbar />
       
       <div className="flex-1">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 border-b">
-          <div className="container px-4 py-12">
-            <div className="text-center space-y-4 max-w-3xl mx-auto">
-              <h1 className="text-5xl md:text-6xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent animate-slide-up">
-                Anime Movies
-              </h1>
-              <p className="text-xl text-muted-foreground animate-slide-up delay-100">
-                Discover breathtaking anime feature films and cinematic experiences
-              </p>
-              <div className="flex items-center justify-center gap-2 pt-4 animate-slide-up delay-200">
-                <Badge variant="secondary" className="text-sm">
-                  {movies?.length || 0} Movies
-                </Badge>
-                <Badge variant="secondary" className="text-sm">
-                  HD Quality
-                </Badge>
-                <Badge variant="secondary" className="text-sm">
-                  Multiple Genres
-                </Badge>
-              </div>
-            </div>
+        {/* Minimal Header */}
+        <div className="border-b border-purple-800/50">
+          <div className="container px-4 py-8">
+            <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent animate-slide-up">
+              Anime Movies
+            </h1>
           </div>
         </div>
 
         {/* Controls Section */}
-        <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b shadow-sm">
+        <div className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-md border-b border-purple-800/30 shadow-lg">
           <div className="container px-4 py-4">
             <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
               {/* Search Bar */}
               <div className="relative w-full lg:w-80">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-purple-400" />
                 <Input
                   placeholder="Search movies..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 h-11 rounded-2xl bg-white/50 border-slate-200"
+                  className="pl-10 pr-4 h-11 rounded-xl bg-slate-800/50 border-purple-800/50 text-white placeholder:text-purple-200/50 focus:border-purple-500"
                 />
               </div>
 
@@ -134,18 +118,18 @@ const Movies = () => {
               <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
                 {/* Status Filter */}
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-32 h-9 rounded-2xl">
-                    <Filter className="h-4 w-4 mr-2" />
+                  <SelectTrigger className="w-32 h-9 rounded-xl bg-slate-800/50 border-purple-800/50 text-white">
+                    <Filter className="h-4 w-4 mr-2 text-purple-400" />
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
+                  <SelectContent className="bg-slate-800 border-purple-800/50 text-white">
+                    <SelectItem value="all" className="focus:bg-purple-600">
                       All ({statusCounts.all || 0})
                     </SelectItem>
-                    <SelectItem value="completed">
+                    <SelectItem value="completed" className="focus:bg-purple-600">
                       Completed ({statusCounts.completed || 0})
                     </SelectItem>
-                    <SelectItem value="ongoing">
+                    <SelectItem value="ongoing" className="focus:bg-purple-600">
                       Ongoing ({statusCounts.ongoing || 0})
                     </SelectItem>
                   </SelectContent>
@@ -153,24 +137,24 @@ const Movies = () => {
 
                 {/* Sort By */}
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-32 h-9 rounded-2xl">
+                  <SelectTrigger className="w-32 h-9 rounded-xl bg-slate-800/50 border-purple-800/50 text-white">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newest">Newest</SelectItem>
-                    <SelectItem value="oldest">Oldest</SelectItem>
-                    <SelectItem value="rating">Rating</SelectItem>
-                    <SelectItem value="title">Title</SelectItem>
+                  <SelectContent className="bg-slate-800 border-purple-800/50 text-white">
+                    <SelectItem value="newest" className="focus:bg-purple-600">Newest</SelectItem>
+                    <SelectItem value="oldest" className="focus:bg-purple-600">Oldest</SelectItem>
+                    <SelectItem value="rating" className="focus:bg-purple-600">Rating</SelectItem>
+                    <SelectItem value="title" className="focus:bg-purple-600">Title</SelectItem>
                   </SelectContent>
                 </Select>
 
                 {/* View Mode Toggle */}
-                <div className="flex items-center gap-1 border rounded-2xl p-1 bg-white/50">
+                <div className="flex items-center gap-1 border border-purple-800/50 rounded-xl p-1 bg-slate-800/50">
                   <Button
                     variant={viewMode === "grid" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setViewMode("grid")}
-                    className="h-7 w-7 rounded-xl"
+                    className="h-7 w-7 rounded-lg bg-purple-600 hover:bg-purple-700 text-white"
                   >
                     <Grid3X3 className="h-4 w-4" />
                   </Button>
@@ -178,7 +162,7 @@ const Movies = () => {
                     variant={viewMode === "list" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setViewMode("list")}
-                    className="h-7 w-7 rounded-xl"
+                    className="h-7 w-7 rounded-lg text-purple-300 hover:text-white hover:bg-purple-600/50"
                   >
                     <List className="h-4 w-4" />
                   </Button>
@@ -189,24 +173,24 @@ const Movies = () => {
             {/* Active Filters */}
             {(searchQuery || statusFilter !== "all") && (
               <div className="flex items-center gap-2 mt-4 flex-wrap">
-                <span className="text-sm text-muted-foreground">Active filters:</span>
+                <span className="text-sm text-purple-300">Active filters:</span>
                 {searchQuery && (
-                  <Badge variant="secondary" className="text-sm">
+                  <Badge variant="secondary" className="text-sm bg-purple-600/50 text-purple-200 border-purple-500/50">
                     Search: "{searchQuery}"
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="ml-2 hover:text-destructive"
+                      className="ml-2 hover:text-pink-400 transition-colors"
                     >
                       ×
                     </button>
                   </Badge>
                 )}
                 {statusFilter !== "all" && (
-                  <Badge variant="secondary" className="text-sm">
+                  <Badge variant="secondary" className="text-sm bg-purple-600/50 text-purple-200 border-purple-500/50">
                     Status: {statusFilter}
                     <button
                       onClick={() => setStatusFilter("all")}
-                      className="ml-2 hover:text-destructive"
+                      className="ml-2 hover:text-pink-400 transition-colors"
                     >
                       ×
                     </button>
@@ -219,7 +203,7 @@ const Movies = () => {
                     setSearchQuery("");
                     setStatusFilter("all");
                   }}
-                  className="h-6 text-xs"
+                  className="h-6 text-xs text-purple-300 hover:text-white hover:bg-purple-600/50"
                 >
                   Clear all
                 </Button>
@@ -232,7 +216,7 @@ const Movies = () => {
         <div className="container px-4 py-8">
           {/* Results Count */}
           <div className="flex items-center justify-between mb-6">
-            <p className="text-muted-foreground">
+            <p className="text-purple-300">
               Showing {filteredAndSortedMovies.length} of {movies?.length} movies
             </p>
           </div>
@@ -264,14 +248,14 @@ const Movies = () => {
             </div>
           ) : (
             <div className="text-center py-20 space-y-6">
-              <div className="w-24 h-24 mx-auto bg-muted/50 rounded-full flex items-center justify-center">
-                <Search className="h-12 w-12 text-muted-foreground/50" />
+              <div className="w-24 h-24 mx-auto bg-purple-900/50 rounded-full flex items-center justify-center border border-purple-800/50">
+                <Search className="h-12 w-12 text-purple-400/50" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-2xl font-bold text-foreground">
+                <h3 className="text-2xl font-bold text-purple-200">
                   No movies found
                 </h3>
-                <p className="text-muted-foreground max-w-md mx-auto">
+                <p className="text-purple-300 max-w-md mx-auto">
                   {searchQuery || statusFilter !== "all" 
                     ? "Try adjusting your search or filters to find what you're looking for."
                     : "No movies are currently available. Check back later for new additions!"
@@ -285,6 +269,7 @@ const Movies = () => {
                     setStatusFilter("all");
                   }}
                   variant="outline"
+                  className="border-purple-600 text-purple-300 hover:bg-purple-600 hover:text-white"
                 >
                   Clear filters
                 </Button>
