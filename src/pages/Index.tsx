@@ -17,8 +17,7 @@ import {
   Castle,
   Laugh,
   Film,
-  Clock4,
-  ChevronRight
+  Clock4
 } from "lucide-react";
 
 const Index = () => {
@@ -236,27 +235,15 @@ const Index = () => {
     }
   };
 
-  // Enhanced title component with View All on same line
-  const SectionHeader = ({ title, style, viewAllLink, hideViewAll = false }: { title: string; style: any; viewAllLink: string; hideViewAll?: boolean }) => (
-    <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
-          {style.icon}
-        </div>
-        <h2 className={`text-xl font-bold uppercase tracking-wider ${style.textColor}`}>
-          {title}
-        </h2>
+  // Updated title component - centered with icon above text, no View All
+  const SectionHeader = ({ title, style }: { title: string; style: any }) => (
+    <div className="flex flex-col items-center justify-center mb-6">
+      <div className="p-2 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 mb-2">
+        {style.icon}
       </div>
-      
-      {!hideViewAll && (
-        <a 
-          href={viewAllLink}
-          className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors group"
-        >
-          View All
-          <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-        </a>
-      )}
+      <h2 className={`text-xl font-bold uppercase tracking-wider ${style.textColor}`}>
+        {title}
+      </h2>
     </div>
   );
 
@@ -274,12 +261,9 @@ const Index = () => {
   );
 
   const SectionHeaderSkeleton = () => (
-    <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center gap-3">
-        <Skeleton className="w-8 h-8 rounded-lg bg-white/10" />
-        <Skeleton className="w-32 h-6 bg-white/10" />
-      </div>
-      <Skeleton className="w-16 h-4 bg-white/10" />
+    <div className="flex flex-col items-center justify-center mb-6">
+      <Skeleton className="w-8 h-8 rounded-lg bg-white/10 mb-2" />
+      <Skeleton className="w-32 h-6 bg-white/10" />
     </div>
   );
 
@@ -337,7 +321,6 @@ const Index = () => {
             <SectionHeader 
               title="Trending Now" 
               style={sectionStyles.trending} 
-              viewAllLink="/trending" 
             />
             <AnimeSection
               title=""
@@ -356,7 +339,6 @@ const Index = () => {
             <SectionHeader 
               title="This Week" 
               style={sectionStyles.thisWeek} 
-              viewAllLink="/schedule" 
             />
             <AnimeSection
               title=""
@@ -369,14 +351,12 @@ const Index = () => {
           </section>
         )}
 
-        {/* Most Watched - Updated to match the image with no View All button */}
+        {/* Most Watched */}
         {mostWatchedAnime.length > 0 && (
           <section>
             <SectionHeader 
               title="Most Watched" 
               style={sectionStyles.mostWatched} 
-              viewAllLink="/most-watched" 
-              hideViewAll={true}
             />
             <AnimeSection
               title=""
@@ -395,7 +375,6 @@ const Index = () => {
             <SectionHeader 
               title="Top Rated" 
               style={sectionStyles.top10} 
-              viewAllLink="/top" 
             />
             <AnimeSection
               title=""
@@ -416,7 +395,6 @@ const Index = () => {
               <SectionHeader 
                 title="Romance" 
                 style={sectionStyles.romance} 
-                viewAllLink="/genre/romance" 
               />
               <AnimeSection
                 title=""
@@ -435,7 +413,6 @@ const Index = () => {
               <SectionHeader 
                 title="Action" 
                 style={sectionStyles.action} 
-                viewAllLink="/genre/action" 
               />
               <AnimeSection
                 title=""
@@ -454,7 +431,6 @@ const Index = () => {
               <SectionHeader 
                 title="Fantasy" 
                 style={sectionStyles.fantasy} 
-                viewAllLink="/genre/fantasy" 
               />
               <AnimeSection
                 title=""
@@ -473,7 +449,6 @@ const Index = () => {
               <SectionHeader 
                 title="Comedy" 
                 style={sectionStyles.comedy} 
-                viewAllLink="/genre/comedy" 
               />
               <AnimeSection
                 title=""
@@ -493,7 +468,6 @@ const Index = () => {
             <SectionHeader 
               title="New Series" 
               style={sectionStyles.newSeries} 
-              viewAllLink="/series" 
             />
             <AnimeSection
               title=""
@@ -512,7 +486,6 @@ const Index = () => {
             <SectionHeader 
               title="Latest Movies" 
               style={sectionStyles.movies} 
-              viewAllLink="/movies" 
             />
             <AnimeSection
               title=""
@@ -531,7 +504,6 @@ const Index = () => {
             <SectionHeader 
               title="Coming Soon" 
               style={sectionStyles.comingSoon} 
-              viewAllLink="/upcoming" 
             />
             <AnimeSection
               title=""
