@@ -1,4 +1,4 @@
-import { Search, Menu, User, LogOut, Shield, Home, Film, Calendar, Compass, Users, TrendingUp, Grid } from "lucide-react";
+import { Search, Menu, User, LogOut, Shield, Home, Film, Calendar, Compass, TrendingUp, Grid, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useLocation } from "react-router-dom";
@@ -29,7 +29,6 @@ export const Navbar = ({ onSearch }: NavbarProps) => {
   const { user, signOut, isAdmin } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -58,25 +57,20 @@ export const Navbar = ({ onSearch }: NavbarProps) => {
   };
 
   return (
-    <nav 
-      className={cn(
-        "fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-6xl transition-all duration-500 ease-out",
-        scrolled || isHovered
-          ? "bg-background/95 backdrop-blur-xl border border-border/50 shadow-2xl rounded-2xl scale-100"
-          : "bg-background/80 backdrop-blur-lg border border-border/30 shadow-lg rounded-2xl scale-98",
-        "hover:bg-background/95 hover:backdrop-blur-xl hover:border-border/50 hover:shadow-2xl hover:scale-100"
-      )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div className="flex h-16 items-center justify-between px-6">
+    <nav className={cn(
+      "sticky top-0 z-50 w-full transition-all duration-300 ease-in-out",
+      scrolled 
+        ? "border-b border-border/60 bg-background/90 backdrop-blur-xl shadow-sm" 
+        : "border-b border-border/20 bg-background/70 backdrop-blur-lg"
+    )}>
+      <div className="container flex h-16 items-center justify-between px-4">
         {/* Logo and Navigation */}
         <div className="flex items-center gap-8">
           <Link 
             to="/" 
             className="flex items-center gap-3 group transition-all duration-300"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-purple-600 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-purple-600 shadow-lg group-hover:shadow-xl transition-shadow duration-300">
               <span className="text-lg font-bold text-white tracking-tight">R</span>
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
@@ -95,19 +89,16 @@ export const Navbar = ({ onSearch }: NavbarProps) => {
                   <Button
                     variant="ghost"
                     className={cn(
-                      "relative px-4 py-2 text-sm font-medium transition-all duration-300 group",
+                      "relative px-4 py-2 text-sm font-medium transition-all duration-200",
                       isActive
-                        ? "text-primary bg-primary/10 rounded-xl shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent/30 rounded-xl"
+                        ? "text-primary bg-primary/5 rounded-lg"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                     )}
                   >
-                    <Icon className={cn(
-                      "h-4 w-4 mr-2 transition-transform duration-300",
-                      isActive ? "scale-110" : "group-hover:scale-105"
-                    )} />
+                    <Icon className="h-4 w-4 mr-2" />
                     {item.label}
                     {isActive && (
-                      <div className="absolute bottom-1 left-1/2 w-4 h-0.5 bg-primary rounded-full -translate-x-1/2 transition-all duration-300" />
+                      <div className="absolute bottom-0 left-1/2 w-1 h-1 bg-primary rounded-full -translate-x-1/2" />
                     )}
                   </Button>
                 </Link>
@@ -119,18 +110,12 @@ export const Navbar = ({ onSearch }: NavbarProps) => {
         {/* Search and User Actions */}
         <div className="flex items-center gap-3">
           {/* Search Bar */}
-          <div className={cn(
-            "relative transition-all duration-500 ease-out",
-            scrolled || isHovered ? "opacity-100 scale-100" : "opacity-90 scale-98"
-          )}>
+          <div className="relative hidden md:block">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
             <Input
               type="search"
               placeholder="Search anime..."
-              className={cn(
-                "w-72 pl-10 pr-4 h-9 bg-background/50 border-border/40 transition-all duration-300",
-                "rounded-xl focus:border-primary/50 focus:bg-background/70 focus:shadow-md"
-              )}
+              className="w-72 pl-10 pr-4 h-9 bg-background/50 border-border/40 rounded-xl focus:border-primary/50 transition-colors"
               onChange={(e) => onSearch?.(e.target.value)}
             />
           </div>
@@ -139,31 +124,10 @@ export const Navbar = ({ onSearch }: NavbarProps) => {
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                {/* Community Link */}
-                <Link to="/community">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className={cn(
-                      "relative h-9 w-9 rounded-xl transition-all duration-300",
-                      "hover:bg-accent/30 hover:scale-105",
-                      isActivePath("/community") && "text-primary bg-primary/10"
-                    )}
-                  >
-                    <Users className="h-4 w-4" />
-                  </Button>
-                </Link>
-
                 {/* User Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      className={cn(
-                        "relative h-9 w-9 rounded-xl p-0 transition-all duration-300",
-                        "hover:scale-105 hover:shadow-md"
-                      )}
-                    >
+                    <Button variant="ghost" className="relative h-9 w-9 rounded-xl p-0">
                       <Avatar className="h-9 w-9 border-2 border-background shadow-sm">
                         <AvatarImage src={user.avatar} alt={user.name} />
                         <AvatarFallback className="bg-gradient-to-br from-primary to-purple-600 text-white text-sm">
@@ -174,10 +138,10 @@ export const Navbar = ({ onSearch }: NavbarProps) => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent 
                     align="end" 
-                    className="w-56 rounded-xl shadow-2xl border-border/50 bg-background/95 backdrop-blur-lg animate-in zoom-in-95"
+                    className="w-56 rounded-xl shadow-lg border-border/50 bg-background/95 backdrop-blur-lg animate-in zoom-in-95"
                   >
-                    <div className="flex items-center gap-3 p-3 border-b border-border/20">
-                      <Avatar className="h-10 w-10 border border-border/30">
+                    <div className="flex items-center gap-3 p-2 border-b border-border/20">
+                      <Avatar className="h-10 w-10">
                         <AvatarImage src={user.avatar} alt={user.name} />
                         <AvatarFallback className="bg-gradient-to-br from-primary to-purple-600 text-white">
                           {user.name?.[0]?.toUpperCase() || "U"}
@@ -189,24 +153,17 @@ export const Navbar = ({ onSearch }: NavbarProps) => {
                       </div>
                     </div>
                     
-                    <DropdownMenuItem asChild className="cursor-pointer rounded-lg my-1 transition-coluration-200">
+                    <DropdownMenuItem asChild className="cursor-pointer rounded-lg my-1">
                       <Link to="/profile" className="flex items-center">
                         <User className="h-4 w-4 mr-2 text-muted-foreground" />
                         Profile
-                      </Link>
-                    </DropdownMenuItem>
-                    
-                    <DropdownMenuItem asChild className="cursor-pointer rounded-lg my-1 transition-coluration-200">
-                      <Link to="/community" className="flex items-center">
-                        <Users className="h-4 w-4 mr-2 text-muted-foreground" />
-                        Community
                       </Link>
                     </DropdownMenuItem>
 
                     {isAdmin && (
                       <>
                         <DropdownMenuSeparator className="bg-border/20" />
-                        <DropdownMenuItem asChild className="cursor-pointer rounded-lg my-1 transition-coluration-200">
+                        <DropdownMenuItem asChild className="cursor-pointer rounded-lg my-1">
                           <Link to="/admin" className="flex items-center">
                             <Shield className="h-4 w-4 mr-2 text-muted-foreground" />
                             Admin Panel
@@ -218,7 +175,7 @@ export const Navbar = ({ onSearch }: NavbarProps) => {
                     <DropdownMenuSeparator className="bg-border/20" />
                     <DropdownMenuItem 
                       onClick={signOut}
-                      className="cursor-pointer rounded-lg my-1 text-destructive focus:text-destructive transition-coluration-200"
+                      className="cursor-pointer rounded-lg my-1 text-destructive focus:text-destructive"
                     >
                       <LogOut className="h-4 w-4 mr-2" />
                       Sign Out
@@ -228,123 +185,140 @@ export const Navbar = ({ onSearch }: NavbarProps) => {
               </>
             ) : (
               <Link to="/auth">
-                <Button className={cn(
-                  "rounded-xl px-6 bg-gradient-to-r from-primary to-purple-600 transition-all duration-300",
-                  "hover:from-primary/90 hover:to-purple-600/90 hover:shadow-lg hover:scale-105",
-                  "shadow-md"
-                )}>
+                <Button className="rounded-xl px-6 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 transition-all duration-200 shadow-sm hover:shadow-md">
                   Sign In
                 </Button>
               </Link>
             )}
             
-            {/* Mobile Menu */}
+            {/* Floating Mobile Menu */}
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className={cn(
-                    "lg:hidden h-9 w-9 rounded-xl transition-all duration-300",
-                    "hover:scale-105 hover:bg-accent/30"
-                  )}
-                >
+                <Button variant="ghost" size="icon" className="lg:hidden h-9 w-9 rounded-xl">
                   <Menu className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
               <SheetContent 
                 side="right" 
-                className="w-[320px] border-l-border/20 bg-background/95 backdrop-blur-lg"
+                className="w-[85vw] max-w-md sm:w-[320px] border-0 bg-transparent shadow-none"
               >
-                <SheetHeader className="border-b border-border/20 pb-4">
-                  <SheetTitle className="text-left text-lg font-semibold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
-                    Menu
-                  </SheetTitle>
-                </SheetHeader>
-                
-                <div className="mt-6 flex flex-col gap-2">
-                  {/* Mobile Search */}
-                  <div className="relative mb-4">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
-                    <Input
-                      type="search"
-                      placeholder="Search anime..."
-                      className="pl-10 h-10 bg-background/50 border-border/40 rounded-xl"
-                      onChange={(e) => onSearch?.(e.target.value)}
-                    />
-                  </div>
-                  
-                  {/* Mobile Navigation Items */}
-                  {navItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = isActivePath(item.path);
-                    
-                    return (
-                      <Link 
-                        key={item.path} 
-                        to={item.path} 
-                        onClick={() => setMobileOpen(false)}
-                      >
-                        <Button
-                          variant="ghost"
-                          className={cn(
-                            "w-full justify-start h-12 text-base rounded-xl transition-all duration-200 group",
-                            isActive
-                              ? "text-primary bg-primary/10 border border-primary/20"
-                              : "text-foreground/80 hover:text-foreground hover:bg-accent/30"
-                          )}
-                        >
-                          <Icon className={cn(
-                            "h-5 w-5 mr-3 transition-transform duration-200",
-                            isActive ? "scale-110" : "group-hover:scale-105"
-                          )} />
-                          {item.label}
-                        </Button>
-                      </Link>
-                    );
-                  })}
-                  
-                  {/* User Section in Mobile */}
-                  {user && (
-                    <>
-                      <div className="border-t border-border/20 my-4" />
+                <div className="ml-auto mt-4 mr-4 w-full max-w-xs">
+                  {/* Floating Menu Container */}
+                  <div className="bg-background/95 backdrop-blur-xl border border-border/40 rounded-2xl shadow-2xl shadow-black/20 overflow-hidden">
+                    {/* Header with gradient */}
+                    <div className="bg-gradient-to-r from-primary/10 to-purple-600/10 border-b border-border/20 p-4">
+                      <div className="flex items-center justify-between">
+                        <SheetTitle className="text-lg font-semibold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                          Menu
+                        </SheetTitle>
+                        {user && (
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8 border-2 border-background/80">
+                              <AvatarImage src={user.avatar} alt={user.name} />
+                              <AvatarFallback className="bg-gradient-to-br from-primary to-purple-600 text-white text-xs">
+                                {user.name?.[0]?.toUpperCase() || "U"}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
+                        )}
+                      </div>
                       
-                      <Link to="/profile" onClick={() => setMobileOpen(false)}>
-                        <Button variant="ghost" className="w-full justify-start h-12 text-base rounded-xl transition-all duration-200 hover:bg-accent/30">
-                          <User className="h-5 w-5 mr-3" />
-                          Profile
-                        </Button>
-                      </Link>
-                      
-                      <Link to="/community" onClick={() => setMobileOpen(false)}>
-                        <Button variant="ghost" className="w-full justify-start h-12 text-base rounded-xl transition-all duration-200 hover:bg-accent/30">
-                          <Users className="h-5 w-5 mr-3" />
-                          Community
-                        </Button>
-                      </Link>
+                      {/* Mobile Search */}
+                      <div className="relative mt-3">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
+                        <Input
+                          type="search"
+                          placeholder="Search anime..."
+                          className="pl-10 h-9 bg-background/80 border-border/40 rounded-xl text-sm"
+                          onChange={(e) => {
+                            onSearch?.(e.target.value);
+                            setMobileOpen(false);
+                          }}
+                        />
+                      </div>
+                    </div>
 
-                      {isAdmin && (
-                        <Link to="/admin" onClick={() => setMobileOpen(false)}>
-                          <Button variant="ghost" className="w-full justify-start h-12 text-base rounded-xl transition-all duration-200 hover:bg-accent/30">
-                            <Shield className="h-5 w-5 mr-3" />
-                            Admin Panel
+                    {/* Navigation Items */}
+                    <div className="p-2 max-h-[60vh] overflow-y-auto">
+                      {navItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = isActivePath(item.path);
+                        
+                        return (
+                          <Link 
+                            key={item.path} 
+                            to={item.path} 
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            <Button
+                              variant="ghost"
+                              className={cn(
+                                "w-full justify-start h-11 text-sm rounded-xl transition-all duration-200 mb-1",
+                                isActive
+                                  ? "text-primary bg-primary/10 border border-primary/20 shadow-sm"
+                                  : "text-foreground/80 hover:text-foreground hover:bg-accent/50"
+                              )}
+                            >
+                              <Icon className={cn(
+                                "h-4 w-4 mr-3 transition-transform duration-200",
+                                isActive && "scale-110"
+                              )} />
+                              {item.label}
+                              {isActive && (
+                                <div className="ml-auto w-2 h-2 bg-primary rounded-full animate-pulse" />
+                              )}
+                            </Button>
+                          </Link>
+                        );
+                      })}
+                      
+                      {/* User Section */}
+                      {user && (
+                        <>
+                          <div className="border-t border-border/20 my-2" />
+                          
+                          <Link to="/profile" onClick={() => setMobileOpen(false)}>
+                            <Button variant="ghost" className="w-full justify-start h-11 text-sm rounded-xl mb-1">
+                              <User className="h-4 w-4 mr-3" />
+                              Profile
+                            </Button>
+                          </Link>
+
+                          {isAdmin && (
+                            <Link to="/admin" onClick={() => setMobileOpen(false)}>
+                              <Button variant="ghost" className="w-full justify-start h-11 text-sm rounded-xl mb-1">
+                                <Shield className="h-4 w-4 mr-3" />
+                                Admin Panel
+                              </Button>
+                            </Link>
+                          )}
+                          
+                          <Button 
+                            variant="ghost" 
+                            className="w-full justify-start h-11 text-sm rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 mb-1"
+                            onClick={() => {
+                              signOut();
+                              setMobileOpen(false);
+                            }}
+                          >
+                            <LogOut className="h-4 w-4 mr-3" />
+                            Sign Out
+                          </Button>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Footer */}
+                    {!user && (
+                      <div className="border-t border-border/20 p-3 bg-gradient-to-r from-background to-background/80">
+                        <Link to="/auth" onClick={() => setMobileOpen(false)}>
+                          <Button className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 transition-all duration-200 shadow-sm">
+                            Sign In
                           </Button>
                         </Link>
-                      )}
-                      
-                      <Button 
-                        variant="ghost" 
-                        className="w-full justify-start h-12 text-base rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 transition-all duration-200"
-                        onClick={() => {
-                          signOut();
-                          setMobileOpen(false);
-                        }}
-                      >
-                        <LogOut className="h-5 w-5 mr-3" />
-                        Sign Out
-                      </Button>
-                    </>
-                  )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
