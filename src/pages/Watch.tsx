@@ -17,20 +17,18 @@ import {
   ChevronLeft,
   ChevronRight,
   Server,
-  Maximize,
-  Minimize,
   SkipForward,
-  PictureInPicture2,
   MessageSquare,
   Clock,
-  Eye,
   Calendar,
   Sparkles,
-  ThumbsUp,
   Share,
-  Bookmark,
   Settings,
-  Volume2
+  Volume2,
+  Grid3X3,
+  List,
+  MonitorPlay,
+  Zap
 } from 'lucide-react';
 import { AnimeSection } from '@/components/AnimeSection';
 import { useQuery } from '@tanstack/react-query';
@@ -81,11 +79,13 @@ export default function Watch() {
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
   const [selectedServer, setSelectedServer] = useState<string>('');
   const [episodeRange, setEpisodeRange] = useState(0);
-  const [isTheaterMode, setIsTheaterMode] = useState(false);
   const [autoPlay, setAutoPlay] = useState(true);
+  const [autoNext, setAutoNext] = useState(true);
   const [watchProgress, setWatchProgress] = useState(0);
   const [isLoadingEmbed, setIsLoadingEmbed] = useState(true);
   const [showControls, setShowControls] = useState(false);
+  const [episodeViewMode, setEpisodeViewMode] = useState<'grid' | 'list' | 'detailed'>('grid');
+  const [videoQuality, setVideoQuality] = useState<string>('auto');
 
   // Supabase queries
   const { data: servers = [] } = useQuery({
@@ -162,7 +162,7 @@ export default function Watch() {
     return (episodes || []).filter(e => e.season_number === selectedSeason);
   }, [episodes, selectedSeason]);
 
-  const episodesPerPage = 100;
+  const episodesPerPage = episodeViewMode === 'detailed' ? 12 : episodeViewMode === 'list' ? 20 : 24;
   const totalPages = Math.max(1, Math.ceil(seasonEpisodes.length / episodesPerPage));
   const displayedEpisodes = seasonEpisodes.slice(episodeRange * episodesPerPage, (episodeRange + 1) * episodesPerPage);
 
@@ -291,9 +291,14 @@ export default function Watch() {
     const idx = episodes.findIndex(e => e.id === selectedEpisode.id);
     if (idx < episodes.length - 1) {
       saveWatchHistory(selectedEpisode, 100);
-      handleEpisodeSelect(episodes[idx + 1], autoPlay);
+      handleEpisodeSelect(episodes[idx + 1], autoNext);
+    } else {
+      toast({
+        title: "You've reached the end!",
+        description: "No more episodes available.",
+      });
     }
-  }, [episodes, selectedEpisode, saveWatchHistory, handleEpisodeSelect, autoPlay]);
+  }, [episodes, selectedEpisode, saveWatchHistory, handleEpisodeSelect, autoNext, toast]);
 
   const handlePrev = useCallback(() => {
     if (!episodes || !selectedEpisode) return;
@@ -301,24 +306,44 @@ export default function Watch() {
     if (idx > 0) handleEpisodeSelect(episodes[idx - 1]);
   }, [episodes, selectedEpisode, handleEpisodeSelect]);
 
-  const handlePiP = useCallback(async () => {
-    toast({
-      title: 'Picture-in-Picture',
-      description: 'PiP is controlled by the embedded player. Use the player controls to enable PiP if supported.',
-    });
-  }, [toast]);
+  // Auto-next functionality
+  useEffect(() => {
+    if (!autoNext || !selectedEpisode || !episodes) return;
+
+    const handleVideoEnd = () => {
+      const currentIndex = episodes.findIndex(e => e.id === selectedEpisode.id);
+      if (currentIndex < episodes.length - 1) {
+        setTimeout(() => {
+          handleNext();
+        }, 3000); // 3 second delay before auto-next
+      }
+    };
+
+    // This would typically be connected to the video player's ended event
+    // For now, we'll simulate with a keyboard shortcut for demo
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'E' && autoNext) {
+        handleVideoEnd();
+      }
+    };
+
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [autoNext, selectedEpisode, episodes, handleNext]);
 
   // Keyboard controls
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') handleNext();
       if (e.key === 'ArrowLeft') handlePrev();
-      if (e.key.toLowerCase() === 'f') setIsTheaterMode(prev => !prev);
-      if (e.key.toLowerCase() === 'p') handlePiP();
+      if (e.key === ' ') {
+        e.preventDefault();
+        // Spacebar for play/pause would go here
+      }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [handleNext, handlePrev, handlePiP]);
+  }, [handleNext, handlePrev]);
 
   const isLoading = isLoadingAnime || isLoadingEpisodes;
 
@@ -342,14 +367,12 @@ export default function Watch() {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-background/95 to-background/90">
       <Navbar />
 
-      <div className={`flex-1 container mx-auto px-4 py-6 space-y-6 ${isTheaterMode ? 'max-w-screen-2xl' : 'max-w-7xl'}`}>
+      <div className="flex-1 container mx-auto px-4 py-6 space-y-6 max-w-7xl">
         {/* VIDEO PLAYER SECTION */}
         <div className="space-y-4">
           <Card className="overflow-hidden border-0 bg-gradient-to-br from-card/80 to-card/60 backdrop-blur-xl shadow-2xl">
             <div 
-              className={`relative group rounded-xl overflow-hidden bg-black ${
-                isTheaterMode ? 'shadow-none' : 'shadow-2xl'
-              }`}
+              className="relative group rounded-xl overflow-hidden bg-black shadow-2xl"
               onMouseEnter={() => setShowControls(true)}
               onMouseLeave={() => setShowControls(false)}
             >
@@ -390,9 +413,12 @@ export default function Watch() {
                   <Badge className="bg-black/60 text-white backdrop-blur-sm">
                     S{selectedEpisode.season_number}E{selectedEpisode.episode_number}
                   </Badge>
-                  <Badge className="bg-black/60 text-white backdrop-blur-sm">
-                    Press F for theater
-                  </Badge>
+                  {autoNext && (
+                    <Badge className="bg-green-500/80 text-white backdrop-blur-sm flex items-center gap-1">
+                      <Zap className="h-3 w-3" />
+                      Auto-Next
+                    </Badge>
+                  )}
                 </div>
               )}
             </div>
@@ -446,16 +472,6 @@ export default function Watch() {
                   >
                     Next
                     <ChevronRight className="h-4 w-4" />
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setIsTheaterMode(v => !v)}
-                    className="gap-2"
-                  >
-                    {isTheaterMode ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-                    {isTheaterMode ? 'Exit' : 'Theater'}
                   </Button>
                 </div>
               </div>
@@ -514,10 +530,27 @@ export default function Watch() {
                     Autoplay
                   </label>
                   
-                  <Button size="sm" variant="ghost" onClick={handlePiP} className="gap-2">
-                    <PictureInPicture2 className="h-4 w-4" />
-                    PiP
-                  </Button>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={autoNext}
+                      onChange={(e) => setAutoNext(e.target.checked)}
+                      className="rounded border-border"
+                    />
+                    Auto-Next
+                  </label>
+
+                  <Select value={videoQuality} onValueChange={setVideoQuality}>
+                    <SelectTrigger className="w-32 h-8 text-xs">
+                      <SelectValue placeholder="Quality" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">Auto</SelectItem>
+                      <SelectItem value="1080p">1080p</SelectItem>
+                      <SelectItem value="720p">720p</SelectItem>
+                      <SelectItem value="480p">480p</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -525,10 +558,7 @@ export default function Watch() {
                     <Share className="h-4 w-4" />
                   </Button>
                   <Button size="sm" variant="ghost">
-                    <Bookmark className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" variant="ghost">
-                    <ThumbsUp className="h-4 w-4" />
+                    <Settings className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -562,6 +592,34 @@ export default function Watch() {
               </div>
 
               <div className="flex items-center gap-4">
+                {/* View Mode Selector */}
+                <div className="flex items-center gap-1 bg-background/50 rounded-lg p-1">
+                  <Button
+                    size="sm"
+                    variant={episodeViewMode === 'grid' ? "default" : "ghost"}
+                    onClick={() => setEpisodeViewMode('grid')}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Grid3X3 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={episodeViewMode === 'list' ? "default" : "ghost"}
+                    onClick={() => setEpisodeViewMode('list')}
+                    className="h-8 w-8 p-0"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={episodeViewMode === 'detailed' ? "default" : "ghost"}
+                    onClick={() => setEpisodeViewMode('detailed')}
+                    className="h-8 w-8 p-0"
+                  >
+                    <MonitorPlay className="h-4 w-4" />
+                  </Button>
+                </div>
+
                 {/* Season Selector */}
                 {seasons.length > 1 && (
                   <Select value={selectedSeason.toString()} onValueChange={(v) => setSelectedSeason(parseInt(v))}>
@@ -597,11 +655,123 @@ export default function Watch() {
             </div>
 
             {/* Episode Grid */}
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-3">
+            <div className={`
+              gap-3
+              ${episodeViewMode === 'detailed' 
+                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                : episodeViewMode === 'list'
+                ? 'grid grid-cols-1'
+                : 'grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12'
+              }
+            `}>
               {displayedEpisodes.map((ep) => {
                 const isCurrent = selectedEpisode?.id === ep.id;
                 const isWatched = watchProgress >= 90 && isCurrent;
                 
+                if (episodeViewMode === 'detailed') {
+                  return (
+                    <Card
+                      key={ep.id}
+                      className={`
+                        cursor-pointer transition-all duration-300 border-2 group overflow-hidden
+                        ${isCurrent 
+                          ? "bg-gradient-to-br from-purple-600 to-pink-600 border-purple-500/50 shadow-lg shadow-purple-500/25 scale-105" 
+                          : "bg-background/50 border-border/50 hover:border-primary/50 hover:bg-primary/5"}
+                        backdrop-blur-sm
+                      `}
+                      onClick={() => handleEpisodeSelect(ep)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex gap-3">
+                          {ep.thumbnail ? (
+                            <img 
+                              src={ep.thumbnail} 
+                              alt={`Episode ${ep.episode_number}`}
+                              className="w-16 h-12 object-cover rounded-lg flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-16 h-12 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
+                              <Play className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between">
+                              <h3 className="font-semibold text-sm leading-tight">
+                                Episode {ep.episode_number}
+                              </h3>
+                              {ep.duration && (
+                                <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                                  {ep.duration}m
+                                </span>
+                              )}
+                            </div>
+                            {ep.title && (
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                {ep.title}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Watched Indicator */}
+                        {isWatched && (
+                          <div className="absolute top-2 right-2 w-2 h-2 bg-green-500 rounded-full border-2 border-background shadow-lg" />
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                }
+
+                if (episodeViewMode === 'list') {
+                  return (
+                    <div
+                      key={ep.id}
+                      className={`
+                        flex items-center gap-4 p-3 rounded-lg cursor-pointer transition-all duration-300 border
+                        ${isCurrent 
+                          ? "bg-gradient-to-r from-purple-600 to-pink-600 border-purple-500/50 shadow-lg" 
+                          : "bg-background/50 border-border/50 hover:border-primary/50 hover:bg-primary/5"}
+                        backdrop-blur-sm
+                      `}
+                      onClick={() => handleEpisodeSelect(ep)}
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className={`
+                          w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
+                          ${isCurrent ? 'bg-white/20' : 'bg-muted'}
+                        `}>
+                          <span className={`text-sm font-semibold ${isCurrent ? 'text-white' : 'text-foreground'}`}>
+                            {ep.episode_number}
+                          </span>
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <h3 className={`font-medium text-sm ${isCurrent ? 'text-white' : 'text-foreground'}`}>
+                            {ep.title || `Episode ${ep.episode_number}`}
+                          </h3>
+                          {ep.description && (
+                            <p className={`text-xs mt-1 line-clamp-1 ${isCurrent ? 'text-white/80' : 'text-muted-foreground'}`}>
+                              {ep.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        {ep.duration && (
+                          <span className={`text-xs ${isCurrent ? 'text-white/80' : 'text-muted-foreground'}`}>
+                            {ep.duration}m
+                          </span>
+                        )}
+                        {isWatched && (
+                          <div className="w-2 h-2 bg-green-500 rounded-full border-2 border-background shadow-lg" />
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Default grid view
                 return (
                   <Button
                     key={ep.id}
