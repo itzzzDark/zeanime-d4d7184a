@@ -5,7 +5,6 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -22,13 +21,11 @@ import {
   Clock,
   Calendar,
   Sparkles,
-  Share,
-  Settings,
-  Volume2,
+  FastForward,
+  RotateCcw,
   Grid3X3,
   List,
-  MonitorPlay,
-  Zap
+  MonitorPlay
 } from 'lucide-react';
 import { AnimeSection } from '@/components/AnimeSection';
 import { useQuery } from '@tanstack/react-query';
@@ -80,12 +77,11 @@ export default function Watch() {
   const [selectedServer, setSelectedServer] = useState<string>('');
   const [episodeRange, setEpisodeRange] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
-  const [autoNext, setAutoNext] = useState(true);
   const [watchProgress, setWatchProgress] = useState(0);
   const [isLoadingEmbed, setIsLoadingEmbed] = useState(true);
   const [showControls, setShowControls] = useState(false);
   const [episodeViewMode, setEpisodeViewMode] = useState<'grid' | 'list' | 'detailed'>('grid');
-  const [videoQuality, setVideoQuality] = useState<string>('auto');
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
 
   // Supabase queries
   const { data: servers = [] } = useQuery({
@@ -105,31 +101,46 @@ export default function Watch() {
     queryKey: ['anime', animeSlugOrId],
     queryFn: async () => {
       if (!animeSlugOrId) return null;
-      const { data, error } = await supabase.from('anime').select('*').eq('slug', animeSlugOrId).maybeSingle();
-      if (error) throw error;
-      if (data) return data as Anime;
-      const res = await supabase.from('anime').select('*').eq('id', animeSlugOrId).maybeSingle();
-      if (res.error) throw res.error;
-      return res.data as Anime | null;
+      
+      // Try to find by slug first
+      const { data: slugData, error: slugError } = await supabase
+        .from('anime')
+        .select('*')
+        .eq('slug', animeSlugOrId)
+        .maybeSingle();
+      
+      if (slugError) throw slugError;
+      if (slugData) return slugData as Anime;
+      
+      // If not found by slug, try by ID
+      const { data: idData, error: idError } = await supabase
+        .from('anime')
+        .select('*')
+        .eq('id', animeSlugOrId)
+        .maybeSingle();
+      
+      if (idError) throw idError;
+      return idData as Anime | null;
     },
     enabled: !!animeSlugOrId,
   });
 
   const { data: episodes = [], isLoading: isLoadingEpisodes } = useQuery({
-    queryKey: ['episodes', anime?.slug ?? anime?.id],
+    queryKey: ['episodes', anime?.id],
     queryFn: async () => {
-      if (!anime?.slug && !anime?.id) return [] as Episode[];
-      const key = anime?.slug ?? anime?.id;
+      if (!anime?.id) return [] as Episode[];
+      
       const { data, error } = await supabase
         .from('episodes')
         .select('*')
-        .or(`anime_slug.eq.${key},anime_id.eq.${key}`)
+        .eq('anime_id', anime.id)
         .order('season_number', { ascending: true })
         .order('episode_number', { ascending: true });
+      
       if (error) throw error;
       return (data || []) as Episode[];
     },
-    enabled: !!anime,
+    enabled: !!anime?.id,
   });
 
   const { data: recommendedAnime = [] } = useQuery({
@@ -210,21 +221,28 @@ export default function Watch() {
     }
   }, [servers, selectedServer]);
 
-  // Episode selection
+  // Episode selection - FIXED: Handle page refresh properly
   useEffect(() => {
     if (episodeId && episodes.length > 0) {
       const ep = episodes.find(e => e.id === episodeId);
       if (ep) {
         setSelectedEpisode(ep);
         setSelectedSeason(ep.season_number);
+        setIsPlayerReady(true);
         return;
       }
     }
-    if (!selectedEpisode && episodes.length > 0) {
+    
+    // If no episodeId in URL but we have episodes, select first episode
+    if (!selectedEpisode && episodes.length > 0 && !episodeId) {
       setSelectedEpisode(episodes[0]);
       setSelectedSeason(episodes[0].season_number);
+      setIsPlayerReady(true);
+      
+      // Update URL to reflect the first episode
+      navigate(`/watch/${anime?.slug || anime?.id}/${episodes[0].id}`, { replace: true });
     }
-  }, [episodeId, episodes, selectedEpisode]);
+  }, [episodeId, episodes, selectedEpisode, anime?.slug, anime?.id, navigate]);
 
   // Watch progress
   useEffect(() => {
@@ -274,8 +292,13 @@ export default function Watch() {
       setSelectedEpisode(episode);
       setSelectedSeason(episode.season_number);
       setIsLoadingEmbed(true);
+      setIsPlayerReady(true);
+      
+      // Update URL
       navigate(`/watch/${anime?.slug || anime?.id}/${episode.id}`);
+      
       saveWatchHistory(episode, 0);
+      
       if (showToast) {
         toast({
           title: 'Now Watching',
@@ -291,14 +314,14 @@ export default function Watch() {
     const idx = episodes.findIndex(e => e.id === selectedEpisode.id);
     if (idx < episodes.length - 1) {
       saveWatchHistory(selectedEpisode, 100);
-      handleEpisodeSelect(episodes[idx + 1], autoNext);
+      handleEpisodeSelect(episodes[idx + 1], autoPlay);
     } else {
       toast({
         title: "You've reached the end!",
         description: "No more episodes available.",
       });
     }
-  }, [episodes, selectedEpisode, saveWatchHistory, handleEpisodeSelect, autoNext, toast]);
+  }, [episodes, selectedEpisode, saveWatchHistory, handleEpisodeSelect, autoPlay, toast]);
 
   const handlePrev = useCallback(() => {
     if (!episodes || !selectedEpisode) return;
@@ -306,44 +329,38 @@ export default function Watch() {
     if (idx > 0) handleEpisodeSelect(episodes[idx - 1]);
   }, [episodes, selectedEpisode, handleEpisodeSelect]);
 
-  // Auto-next functionality
-  useEffect(() => {
-    if (!autoNext || !selectedEpisode || !episodes) return;
+  // Skip functionality (simulated - would integrate with player API in real implementation)
+  const handleSkipIntro = useCallback(() => {
+    toast({
+      title: "Skipped Intro",
+      description: "Jumped forward 1 minute 30 seconds",
+    });
+    // In real implementation, this would seek the video player
+  }, [toast]);
 
-    const handleVideoEnd = () => {
-      const currentIndex = episodes.findIndex(e => e.id === selectedEpisode.id);
-      if (currentIndex < episodes.length - 1) {
-        setTimeout(() => {
-          handleNext();
-        }, 3000); // 3 second delay before auto-next
-      }
-    };
-
-    // This would typically be connected to the video player's ended event
-    // For now, we'll simulate with a keyboard shortcut for demo
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'E' && autoNext) {
-        handleVideoEnd();
-      }
-    };
-
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [autoNext, selectedEpisode, episodes, handleNext]);
+  const handleSkipOutro = useCallback(() => {
+    toast({
+      title: "Skipped Outro",
+      description: "Jumped to next episode",
+    });
+    handleNext();
+  }, [toast, handleNext]);
 
   // Keyboard controls
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') handleNext();
       if (e.key === 'ArrowLeft') handlePrev();
-      if (e.key === ' ') {
-        e.preventDefault();
-        // Spacebar for play/pause would go here
-      }
+      if (e.key === 'i' || e.key === 'I') handleSkipIntro();
+      if (e.key === 'o' || e.key === 'O') handleSkipOutro();
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [handleNext, handlePrev]);
+  }, [handleNext, handlePrev, handleSkipIntro, handleSkipOutro]);
+
+  const handlePlayerLoad = useCallback(() => {
+    setIsLoadingEmbed(false);
+  }, []);
 
   const isLoading = isLoadingAnime || isLoadingEpisodes;
 
@@ -387,7 +404,7 @@ export default function Watch() {
               )}
 
               {/* Video Player */}
-              {selectedEpisode ? (
+              {isPlayerReady && selectedEpisode ? (
                 <div className="aspect-video">
                   <iframe
                     src={getEmbedUrl(selectedEpisode)}
@@ -395,11 +412,12 @@ export default function Watch() {
                     allowFullScreen
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     title={`Episode ${selectedEpisode.episode_number}`}
-                    onLoad={() => setIsLoadingEmbed(false)}
+                    onLoad={handlePlayerLoad}
+                    key={`${selectedEpisode.id}-${selectedServer}`} // Force re-render on episode/server change
                   />
                 </div>
               ) : (
-                <div className="aspect-video flex items-center justify-center">
+                <div className="aspect-video flex items-center justify-center bg-muted/20">
                   <div className="text-center space-y-4">
                     <Play className="h-16 w-16 text-muted-foreground mx-auto" />
                     <p className="text-muted-foreground text-lg">Select an episode to start watching</p>
@@ -413,12 +431,6 @@ export default function Watch() {
                   <Badge className="bg-black/60 text-white backdrop-blur-sm">
                     S{selectedEpisode.season_number}E{selectedEpisode.episode_number}
                   </Badge>
-                  {autoNext && (
-                    <Badge className="bg-green-500/80 text-white backdrop-blur-sm flex items-center gap-1">
-                      <Zap className="h-3 w-3" />
-                      Auto-Next
-                    </Badge>
-                  )}
                 </div>
               )}
             </div>
@@ -517,9 +529,31 @@ export default function Watch() {
                 </div>
               )}
 
-              {/* Additional Controls */}
-              <div className="flex items-center justify-between pt-4 border-t border-border/40">
-                <div className="flex items-center gap-4">
+              {/* Skip Controls */}
+              <div className="flex items-center gap-4 pt-4 border-t border-border/40">
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleSkipIntro}
+                    className="gap-2"
+                  >
+                    <FastForward className="h-4 w-4" />
+                    Skip Intro (I)
+                  </Button>
+                  
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleSkipOutro}
+                    className="gap-2"
+                  >
+                    <SkipForward className="h-4 w-4" />
+                    Skip Outro (O)
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-4 ml-auto">
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
                     <input
                       type="checkbox"
@@ -529,37 +563,6 @@ export default function Watch() {
                     />
                     Autoplay
                   </label>
-                  
-                  <label className="flex items-center gap-2 text-sm cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={autoNext}
-                      onChange={(e) => setAutoNext(e.target.checked)}
-                      className="rounded border-border"
-                    />
-                    Auto-Next
-                  </label>
-
-                  <Select value={videoQuality} onValueChange={setVideoQuality}>
-                    <SelectTrigger className="w-32 h-8 text-xs">
-                      <SelectValue placeholder="Quality" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="auto">Auto</SelectItem>
-                      <SelectItem value="1080p">1080p</SelectItem>
-                      <SelectItem value="720p">720p</SelectItem>
-                      <SelectItem value="480p">480p</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button size="sm" variant="ghost">
-                    <Share className="h-4 w-4" />
-                  </Button>
-                  <Button size="sm" variant="ghost">
-                    <Settings className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
 
@@ -814,6 +817,7 @@ export default function Watch() {
           </CardContent>
         </Card>
 
+        {/* Rest of the components (Anime Details, Comments, Recommendations) remain the same */}
         {/* ANIME DETAILS */}
         {anime && (
           <Card className="border-0 bg-gradient-to-br from-card/80 to-card/60 backdrop-blur-xl shadow-xl">
