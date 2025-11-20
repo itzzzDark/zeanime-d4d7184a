@@ -21,8 +21,7 @@ import {
   Clock,
   Calendar,
   Sparkles,
-  FastForward,
-  RotateCcw,
+  ArrowLeft,
   Grid3X3,
   List,
   MonitorPlay
@@ -67,6 +66,13 @@ interface EmbedServer {
   embed_url: string;
 }
 
+interface AutoPlaySettings {
+  enabled: boolean;
+  delay: number; // seconds
+  skipCredits: boolean;
+  autoNextEpisode: boolean;
+}
+
 export default function Watch() {
   const { animeId: animeSlugOrId, episodeId } = useParams();
   const navigate = useNavigate();
@@ -76,12 +82,17 @@ export default function Watch() {
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
   const [selectedServer, setSelectedServer] = useState<string>('');
   const [episodeRange, setEpisodeRange] = useState(0);
-  const [autoPlay, setAutoPlay] = useState(true);
   const [watchProgress, setWatchProgress] = useState(0);
   const [isLoadingEmbed, setIsLoadingEmbed] = useState(true);
   const [showControls, setShowControls] = useState(false);
   const [episodeViewMode, setEpisodeViewMode] = useState<'grid' | 'list' | 'detailed'>('grid');
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const [autoPlaySettings, setAutoPlaySettings] = useState<AutoPlaySettings>({
+    enabled: true,
+    delay: 5,
+    skipCredits: true,
+    autoNextEpisode: true
+  });
 
   // Supabase queries
   const { data: servers = [] } = useQuery({
@@ -314,14 +325,14 @@ export default function Watch() {
     const idx = episodes.findIndex(e => e.id === selectedEpisode.id);
     if (idx < episodes.length - 1) {
       saveWatchHistory(selectedEpisode, 100);
-      handleEpisodeSelect(episodes[idx + 1], autoPlay);
+      handleEpisodeSelect(episodes[idx + 1], autoPlaySettings.enabled);
     } else {
       toast({
         title: "You've reached the end!",
         description: "No more episodes available.",
       });
     }
-  }, [episodes, selectedEpisode, saveWatchHistory, handleEpisodeSelect, autoPlay, toast]);
+  }, [episodes, selectedEpisode, saveWatchHistory, handleEpisodeSelect, autoPlaySettings.enabled, toast]);
 
   const handlePrev = useCallback(() => {
     if (!episodes || !selectedEpisode) return;
@@ -329,34 +340,53 @@ export default function Watch() {
     if (idx > 0) handleEpisodeSelect(episodes[idx - 1]);
   }, [episodes, selectedEpisode, handleEpisodeSelect]);
 
-  // Skip functionality (simulated - would integrate with player API in real implementation)
-  const handleSkipIntro = useCallback(() => {
-    toast({
-      title: "Skipped Intro",
-      description: "Jumped forward 1 minute 30 seconds",
-    });
-    // In real implementation, this would seek the video player
-  }, [toast]);
+  // Advanced Auto-play functionality
+  useEffect(() => {
+    if (!autoPlaySettings.autoNextEpisode || !selectedEpisode || !episodes) return;
 
-  const handleSkipOutro = useCallback(() => {
-    toast({
-      title: "Skipped Outro",
-      description: "Jumped to next episode",
-    });
-    handleNext();
-  }, [toast, handleNext]);
+    const handleVideoEnd = () => {
+      const currentIndex = episodes.findIndex(e => e.id === selectedEpisode.id);
+      if (currentIndex < episodes.length - 1) {
+        setTimeout(() => {
+          if (autoPlaySettings.enabled) {
+            handleNext();
+          }
+        }, autoPlaySettings.delay * 1000);
+      }
+    };
+
+    // Simulate video end for demo (in real implementation, connect to player's ended event)
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'E' && autoPlaySettings.enabled) {
+        handleVideoEnd();
+      }
+    };
+
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [autoPlaySettings, selectedEpisode, episodes, handleNext]);
+
+  // Back to anime detail page
+  const handleBackToAnime = useCallback(() => {
+    if (anime?.slug) {
+      navigate(`/anime/${anime.slug}`);
+    } else if (anime?.id) {
+      navigate(`/anime/${anime.id}`);
+    } else {
+      navigate(-1); // Fallback to previous page
+    }
+  }, [anime?.slug, anime?.id, navigate]);
 
   // Keyboard controls
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') handleNext();
       if (e.key === 'ArrowLeft') handlePrev();
-      if (e.key === 'i' || e.key === 'I') handleSkipIntro();
-      if (e.key === 'o' || e.key === 'O') handleSkipOutro();
+      if (e.key === 'Escape') handleBackToAnime();
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [handleNext, handlePrev, handleSkipIntro, handleSkipOutro]);
+  }, [handleNext, handlePrev, handleBackToAnime]);
 
   const handlePlayerLoad = useCallback(() => {
     setIsLoadingEmbed(false);
@@ -385,6 +415,16 @@ export default function Watch() {
       <Navbar />
 
       <div className="flex-1 container mx-auto px-4 py-6 space-y-6 max-w-7xl">
+        {/* BACK BUTTON */}
+        <Button
+          variant="ghost"
+          onClick={handleBackToAnime}
+          className="gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to {anime?.title || 'Anime Details'}
+        </Button>
+
         {/* VIDEO PLAYER SECTION */}
         <div className="space-y-4">
           <Card className="overflow-hidden border-0 bg-gradient-to-br from-card/80 to-card/60 backdrop-blur-xl shadow-2xl">
@@ -431,6 +471,11 @@ export default function Watch() {
                   <Badge className="bg-black/60 text-white backdrop-blur-sm">
                     S{selectedEpisode.season_number}E{selectedEpisode.episode_number}
                   </Badge>
+                  {autoPlaySettings.enabled && (
+                    <Badge className="bg-green-500/80 text-white backdrop-blur-sm">
+                      Auto-Play
+                    </Badge>
+                  )}
                 </div>
               )}
             </div>
@@ -529,40 +574,55 @@ export default function Watch() {
                 </div>
               )}
 
-              {/* Skip Controls */}
-              <div className="flex items-center gap-4 pt-4 border-t border-border/40">
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleSkipIntro}
-                    className="gap-2"
-                  >
-                    <FastForward className="h-4 w-4" />
-                    Skip Intro (I)
-                  </Button>
-                  
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleSkipOutro}
-                    className="gap-2"
-                  >
-                    <SkipForward className="h-4 w-4" />
-                    Skip Outro (O)
-                  </Button>
-                </div>
-
-                <div className="flex items-center gap-4 ml-auto">
+              {/* Advanced Auto-play Controls */}
+              <div className="flex items-center justify-between pt-4 border-t border-border/40">
+                <div className="flex items-center gap-6">
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={autoPlay}
-                      onChange={(e) => setAutoPlay(e.target.checked)}
+                      checked={autoPlaySettings.enabled}
+                      onChange={(e) => setAutoPlaySettings(prev => ({
+                        ...prev,
+                        enabled: e.target.checked
+                      }))}
                       className="rounded border-border"
                     />
-                    Autoplay
+                    Auto-Play
                   </label>
+                  
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={autoPlaySettings.autoNextEpisode}
+                      onChange={(e) => setAutoPlaySettings(prev => ({
+                        ...prev,
+                        autoNextEpisode: e.target.checked
+                      }))}
+                      className="rounded border-border"
+                    />
+                    Auto-Next Episode
+                  </label>
+
+                  <div className="flex items-center gap-2 text-sm">
+                    <span>Delay:</span>
+                    <Select 
+                      value={autoPlaySettings.delay.toString()} 
+                      onValueChange={(v) => setAutoPlaySettings(prev => ({
+                        ...prev,
+                        delay: parseInt(v)
+                      }))}
+                    >
+                      <SelectTrigger className="w-20 h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="3">3s</SelectItem>
+                        <SelectItem value="5">5s</SelectItem>
+                        <SelectItem value="10">10s</SelectItem>
+                        <SelectItem value="15">15s</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
 
@@ -817,7 +877,7 @@ export default function Watch() {
           </CardContent>
         </Card>
 
-        {/* Rest of the components (Anime Details, Comments, Recommendations) remain the same */}
+        {/* Rest of the components remain the same */}
         {/* ANIME DETAILS */}
         {anime && (
           <Card className="border-0 bg-gradient-to-br from-card/80 to-card/60 backdrop-blur-xl shadow-xl">
