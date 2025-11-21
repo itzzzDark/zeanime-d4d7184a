@@ -217,7 +217,7 @@ const AnimeDetail = () => {
   // Loading state
   if (animeLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
         <Navbar />
         <div className="container px-4 py-8">
           <div className="grid lg:grid-cols-4 gap-8">
@@ -253,21 +253,19 @@ const AnimeDetail = () => {
 
   if (!anime) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
         <Navbar />
         <div className="container px-4 py-16 text-center">
           <div className="max-w-md mx-auto space-y-6">
-            <div className="w-24 h-24 mx-auto bg-purple-500/20 rounded-3xl flex items-center justify-center">
+            <div className="w-24 h-24 mx-auto bg-muted rounded-3xl flex items-center justify-center">
               <span className="text-4xl">🎌</span>
             </div>
-            <h1 className="text-4xl font-black bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
-              Anime Not Found
-            </h1>
-            <p className="text-purple-200/80 text-lg">
+            <h1 className="text-4xl font-black text-foreground">Anime Not Found</h1>
+            <p className="text-muted-foreground text-lg">
               The anime you're looking for doesn't exist or has been removed.
             </p>
             <Link to="/">
-              <Button size="lg" className="gap-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 h-12 px-8 rounded-2xl">
+              <Button size="lg" className="gap-3 h-12 px-8 rounded-2xl">
                 <ExternalLink className="h-5 w-5" />
                 Browse Anime
               </Button>
@@ -295,24 +293,24 @@ const AnimeDetail = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       <Navbar />
 
-      {/* Enhanced Hero Section with Glass Morphism */}
+      {/* Enhanced Hero Section */}
       <div className="relative h-[85vh] w-full overflow-hidden">
         {/* Background with multiple layers */}
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
           style={{
             backgroundImage: `url(${anime.banner_image || anime.cover_image || "/placeholder.svg"})`,
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/95 to-slate-900/80" />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-transparent to-slate-900" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/95 to-background/80" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background" />
         
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-conic from-purple-500/10 via-transparent to-pink-500/10 animate-spin-slow" />
+          <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-conic from-primary/10 via-transparent to-primary/10 animate-spin-slow" />
         </div>
 
         {/* Floating Content */}
@@ -322,18 +320,18 @@ const AnimeDetail = () => {
               {/* Text Content */}
               <div className="space-y-6">
                 <div className="space-y-4">
-                  <Badge variant="secondary" className="glass-effect border-white/20 text-white/90 px-4 py-2 text-sm font-semibold">
+                  <Badge variant="secondary" className="bg-background/80 border-border/50 text-foreground/90 px-4 py-2 text-sm font-semibold backdrop-blur-sm">
                     {anime.type} • {anime.status}
                   </Badge>
                   
                   <h1 className="text-6xl md:text-7xl lg:text-8xl font-black leading-none">
-                    <span className="bg-gradient-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent">
+                    <span className="bg-gradient-to-r from-foreground via-foreground/90 to-foreground/80 bg-clip-text text-transparent">
                       {anime.title}
                     </span>
                   </h1>
                   
                   {anime.title_english && (
-                    <p className="text-xl text-purple-200/90 font-medium">
+                    <p className="text-xl text-muted-foreground font-medium">
                       {anime.title_english}
                     </p>
                   )}
@@ -342,12 +340,12 @@ const AnimeDetail = () => {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl">
                   {stats.map((stat, index) => (
-                    <div key={index} className="glass-effect rounded-2xl p-4 border border-white/10 backdrop-blur-xl">
+                    <div key={index} className="bg-card/80 backdrop-blur-xl rounded-2xl p-4 border border-border/50 shadow-sm">
                       <div className="flex items-center gap-2 mb-1">
-                        <stat.icon className="h-4 w-4 text-purple-300" />
-                        <span className="text-white font-bold text-lg">{stat.value}</span>
+                        <stat.icon className="h-4 w-4 text-primary" />
+                        <span className="text-foreground font-bold text-lg">{stat.value}</span>
                       </div>
-                      <span className="text-purple-200/70 text-xs font-medium">{stat.label}</span>
+                      <span className="text-muted-foreground text-xs font-medium">{stat.label}</span>
                     </div>
                   ))}
                 </div>
@@ -356,7 +354,7 @@ const AnimeDetail = () => {
                 <div className="flex flex-wrap gap-3 pt-4">
                   {episodes && episodes.length > 0 && anime && (
                     <Link to={`/watch/${anime.slug || anime.id}/${episodes[0].id}`}>
-                      <Button size="lg" className="gap-3 h-14 px-8 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg hover:shadow-purple-500/25 transition-all duration-300">
+                      <Button size="lg" className="gap-3 h-14 px-8 rounded-2xl bg-primary hover:bg-primary/90 shadow-lg hover:shadow-primary/25 transition-all duration-300">
                         <Play className="h-5 w-5 fill-current" />
                         <span className="font-bold text-lg">Watch Now</span>
                       </Button>
@@ -366,14 +364,14 @@ const AnimeDetail = () => {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="gap-3 h-14 px-6 rounded-2xl border-white/20 bg-white/5 hover:bg-white/10 text-white backdrop-blur-xl"
+                    className="gap-3 h-14 px-6 rounded-2xl border-border bg-background/50 hover:bg-accent text-foreground backdrop-blur-xl"
                     onClick={() => favoriteMutation.mutate()}
                     disabled={!user || favoriteMutation.isPending}
                   >
                     {favoriteMutation.isPending ? (
                       <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (
-                      <Heart className={`h-5 w-5 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} />
+                      <Heart className={`h-5 w-5 ${isFavorited ? 'fill-primary text-primary' : ''}`} />
                     )}
                     <span className="font-semibold">{isFavorited ? 'Saved' : 'Save'}</span>
                   </Button>
@@ -383,7 +381,7 @@ const AnimeDetail = () => {
               {/* Cover Image with Glow Effect */}
               <div className="relative flex justify-end">
                 <div className="relative group">
-                  <div className="absolute -inset-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-300" />
+                  <div className="absolute -inset-4 bg-gradient-to-r from-primary/30 to-primary/20 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-300" />
                   <img 
                     src={anime.cover_image || "/placeholder.svg"} 
                     alt={anime.title}
@@ -392,10 +390,10 @@ const AnimeDetail = () => {
                   
                   {/* Rating Badge */}
                   {anime.rating && anime.rating > 0 && (
-                    <div className="absolute top-4 right-4 glass-effect rounded-full p-3 border border-white/20 backdrop-blur-xl">
+                    <div className="absolute top-4 right-4 bg-background/80 backdrop-blur-xl rounded-full p-3 border border-border/50">
                       <div className="flex items-center gap-1">
-                        <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                        <span className="text-white font-bold text-lg">
+                        <Star className="h-5 w-5 fill-yellow-500 text-yellow-500" />
+                        <span className="text-foreground font-bold text-lg">
                           {anime.rating.toFixed(1)}
                         </span>
                       </div>
@@ -415,9 +413,9 @@ const AnimeDetail = () => {
             {/* Sidebar */}
             <div className="lg:col-span-1 space-y-6">
               {/* Quick Info Card */}
-              <Card className="glass-effect border-white/10 backdrop-blur-xl rounded-3xl p-6">
-                <h3 className="font-bold text-white mb-4 flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-purple-400" />
+              <Card className="bg-card/80 backdrop-blur-xl border-border rounded-3xl p-6 shadow-sm">
+                <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
                   Quick Info
                 </h3>
                 <div className="space-y-4">
@@ -427,10 +425,10 @@ const AnimeDetail = () => {
                     { icon: Users, label: 'Studio', value: anime.studio },
                   ].map((item, index) => item.value && (
                     <div key={index} className="flex items-center gap-3">
-                      <item.icon className="h-4 w-4 text-purple-400" />
+                      <item.icon className="h-4 w-4 text-primary" />
                       <div className="flex-1">
-                        <div className="text-white/70 text-sm">{item.label}</div>
-                        <div className="text-white font-semibold">{item.value}</div>
+                        <div className="text-muted-foreground text-sm">{item.label}</div>
+                        <div className="text-foreground font-semibold">{item.value}</div>
                       </div>
                     </div>
                   ))}
@@ -438,14 +436,14 @@ const AnimeDetail = () => {
               </Card>
 
               {/* Genres */}
-              <Card className="glass-effect border-white/10 backdrop-blur-xl rounded-3xl p-6">
-                <h3 className="font-bold text-white mb-4">Genres</h3>
+              <Card className="bg-card/80 backdrop-blur-xl border-border rounded-3xl p-6 shadow-sm">
+                <h3 className="font-bold text-foreground mb-4">Genres</h3>
                 <div className="flex flex-wrap gap-2">
                   {anime.genres?.map((genre: string) => (
                     <Badge 
                       key={genre}
                       variant="secondary"
-                      className="bg-purple-500/20 text-purple-200 border-purple-500/30 hover:bg-purple-500/30 transition-colors cursor-pointer rounded-lg px-3 py-1"
+                      className="bg-primary/20 text-foreground hover:bg-primary/30 transition-colors cursor-pointer rounded-lg px-3 py-1 border-border"
                     >
                       {genre}
                     </Badge>
@@ -454,15 +452,15 @@ const AnimeDetail = () => {
               </Card>
 
               {/* Share Card */}
-              <Card className="glass-effect border-white/10 backdrop-blur-xl rounded-3xl p-6">
-                <h3 className="font-bold text-white mb-4">Share</h3>
+              <Card className="bg-card/80 backdrop-blur-xl border-border rounded-3xl p-6 shadow-sm">
+                <h3 className="font-bold text-foreground mb-4">Share</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {['twitter', 'facebook', 'reddit', 'copy'].map((platform) => (
                     <Button
                       key={platform}
                       variant="outline"
                       size="sm"
-                      className="justify-start gap-2 h-10 border-white/20 text-white/80 hover:text-white hover:bg-white/10 rounded-xl"
+                      className="justify-start gap-2 h-10 border-border text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl"
                       onClick={() => handleShare(platform)}
                     >
                       <span className="text-lg">
@@ -482,13 +480,13 @@ const AnimeDetail = () => {
             <div className="lg:col-span-3 space-y-8">
               {/* Synopsis */}
               {anime.description && (
-                <Card className="glass-effect border-white/10 backdrop-blur-xl rounded-3xl p-8">
+                <Card className="bg-card/80 backdrop-blur-xl border-border rounded-3xl p-8 shadow-sm">
                   <div className="space-y-4">
-                    <h3 className="text-2xl font-bold text-white flex items-center gap-3">
-                      <Bookmark className="h-6 w-6 text-purple-400" />
+                    <h3 className="text-2xl font-bold text-foreground flex items-center gap-3">
+                      <Bookmark className="h-6 w-6 text-primary" />
                       Synopsis
                     </h3>
-                    <div className="space-y-4 text-white/80 leading-relaxed">
+                    <div className="space-y-4 text-muted-foreground leading-relaxed">
                       {(showFullDescription ? descriptionParagraphs : descriptionParagraphs.slice(0, 3)).map((paragraph, index) => (
                         <p key={index} className="text-justify">{paragraph}</p>
                       ))}
@@ -496,7 +494,7 @@ const AnimeDetail = () => {
                         <Button
                           variant="ghost"
                           onClick={() => setShowFullDescription(!showFullDescription)}
-                          className="gap-2 text-purple-300 hover:text-purple-200 hover:bg-purple-500/20 px-0"
+                          className="gap-2 text-primary hover:text-primary/80 hover:bg-primary/10 px-0"
                         >
                           {showFullDescription ? (
                             <>
@@ -518,24 +516,24 @@ const AnimeDetail = () => {
 
               {/* Enhanced Tabs */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="glass-effect border-white/10 backdrop-blur-xl rounded-2xl p-1 w-full grid grid-cols-3">
+                <TabsList className="bg-card/80 backdrop-blur-xl border-border rounded-2xl p-1 w-full grid grid-cols-3">
                   <TabsTrigger 
                     value="episodes" 
-                    className="rounded-xl gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white"
+                    className="rounded-xl gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
                     <Play className="h-4 w-4" />
                     Episodes
                   </TabsTrigger>
                   <TabsTrigger 
                     value="details" 
-                    className="rounded-xl gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white"
+                    className="rounded-xl gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
                     <ThumbsUp className="h-4 w-4" />
                     Details
                   </TabsTrigger>
                   <TabsTrigger 
                     value="comments" 
-                    className="rounded-xl gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white"
+                    className="rounded-xl gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                   >
                     <span>💬</span>
                     Comments
@@ -550,9 +548,9 @@ const AnimeDetail = () => {
                       .map(([season, seasonEpisodes]) => (
                         <div key={season} className="space-y-6">
                           <div className="flex items-center gap-4">
-                            <div className="h-1 w-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />
-                            <h3 className="text-2xl font-bold text-white">Season {season}</h3>
-                            <Badge variant="outline" className="glass-effect border-white/20 text-white/80">
+                            <div className="h-1 w-12 bg-primary rounded-full" />
+                            <h3 className="text-2xl font-bold text-foreground">Season {season}</h3>
+                            <Badge variant="outline" className="bg-card/80 border-border text-muted-foreground">
                               {seasonEpisodes.length} episodes
                             </Badge>
                           </div>
@@ -564,7 +562,7 @@ const AnimeDetail = () => {
                                 to={`/watch/${anime.slug || anime.id}/${episode.id}`}
                                 className="group block"
                               >
-                                <Card className="glass-effect border-white/10 backdrop-blur-xl hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300 rounded-2xl p-0 overflow-hidden">
+                                <Card className="bg-card/80 backdrop-blur-xl border-border hover:border-primary/50 hover:bg-accent/50 transition-all duration-300 rounded-2xl p-0 overflow-hidden shadow-sm hover:shadow-md">
                                   <div className="flex gap-6">
                                     {/* Episode Thumbnail */}
                                     <div className="relative w-48 h-28 flex-shrink-0">
@@ -578,27 +576,27 @@ const AnimeDetail = () => {
                                           <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent" />
                                         </>
                                       ) : (
-                                        <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                                          <span className="text-2xl font-bold text-white">
+                                        <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                                          <span className="text-2xl font-bold text-foreground">
                                             {episode.episode_number}
                                           </span>
                                         </div>
                                       )}
                                       
                                       <div className="absolute bottom-2 left-2 flex items-center gap-2">
-                                        <Badge className="bg-black/80 text-white border-0 text-xs">
+                                        <Badge className="bg-foreground text-background border-0 text-xs">
                                           EP {episode.episode_number}
                                         </Badge>
                                         {episode.duration && (
-                                          <Badge variant="secondary" className="bg-white/20 text-white border-0 text-xs">
+                                          <Badge variant="secondary" className="bg-background/80 text-foreground border-0 text-xs">
                                             {Math.floor(episode.duration / 60)}m
                                           </Badge>
                                         )}
                                       </div>
                                       
                                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center shadow-lg">
-                                          <Play className="h-6 w-6 text-white fill-current" />
+                                        <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg">
+                                          <Play className="h-6 w-6 text-primary-foreground fill-current" />
                                         </div>
                                       </div>
                                     </div>
@@ -607,24 +605,24 @@ const AnimeDetail = () => {
                                     <div className="flex-1 py-4 pr-6 min-w-0">
                                       <div className="space-y-2">
                                         <div className="flex items-start justify-between gap-4">
-                                          <h4 className="font-semibold text-white group-hover:text-purple-300 transition-colors line-clamp-1 text-lg">
+                                          <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1 text-lg">
                                             Episode {episode.episode_number}
                                             {episode.title && `: ${episode.title}`}
                                           </h4>
                                           {episode.episode_views && episode.episode_views[0]?.count > 0 && (
-                                            <Badge variant="outline" className="glass-effect border-white/20 text-white/80 text-xs">
+                                            <Badge variant="outline" className="bg-card/80 border-border text-muted-foreground text-xs">
                                               {episode.episode_views[0].count} views
                                             </Badge>
                                           )}
                                         </div>
                                         
                                         {episode.description && (
-                                          <p className="text-white/70 line-clamp-2 text-sm leading-relaxed">
+                                          <p className="text-muted-foreground line-clamp-2 text-sm leading-relaxed">
                                             {episode.description}
                                           </p>
                                         )}
                                         
-                                        <div className="flex items-center gap-4 text-xs text-white/60">
+                                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
                                           <span>Season {episode.season_number || 1}</span>
                                           {episode.air_date && (
                                             <span>{new Date(episode.air_date).toLocaleDateString()}</span>
@@ -641,11 +639,11 @@ const AnimeDetail = () => {
                       ))
                   ) : (
                     <div className="text-center py-16">
-                      <div className="w-24 h-24 mx-auto bg-purple-500/20 rounded-3xl flex items-center justify-center mb-6">
-                        <Play className="h-10 w-10 text-purple-400" />
+                      <div className="w-24 h-24 mx-auto bg-muted rounded-3xl flex items-center justify-center mb-6">
+                        <Play className="h-10 w-10 text-muted-foreground" />
                       </div>
-                      <h3 className="text-2xl font-bold text-white mb-2">No Episodes Available</h3>
-                      <p className="text-purple-200/80">Check back later for new episodes.</p>
+                      <h3 className="text-2xl font-bold text-foreground mb-2">No Episodes Available</h3>
+                      <p className="text-muted-foreground">Check back later for new episodes.</p>
                     </div>
                   )}
                 </TabsContent>
@@ -653,8 +651,8 @@ const AnimeDetail = () => {
                 {/* Details Tab */}
                 <TabsContent value="details">
                   <div className="grid lg:grid-cols-2 gap-8">
-                    <Card className="glass-effect border-white/10 backdrop-blur-xl rounded-3xl p-8">
-                      <h4 className="font-bold text-white text-xl mb-6">Anime Information</h4>
+                    <Card className="bg-card/80 backdrop-blur-xl border-border rounded-3xl p-8 shadow-sm">
+                      <h4 className="font-bold text-foreground text-xl mb-6">Anime Information</h4>
                       <div className="space-y-4">
                         {[
                           { label: 'Type', value: anime.type, icon: '🎬' },
@@ -664,30 +662,30 @@ const AnimeDetail = () => {
                           { label: 'Total Episodes', value: anime.total_episodes, icon: '🎞️' },
                           { label: 'Schedule', value: anime.schedule_day && anime.schedule_time ? `${anime.schedule_day}s ${anime.schedule_time}` : null, icon: '⏰' },
                         ].map((item, index) => item.value && (
-                          <div key={index} className="flex items-center justify-between py-3 border-b border-white/10">
+                          <div key={index} className="flex items-center justify-between py-3 border-b border-border/50">
                             <div className="flex items-center gap-3">
                               <span className="text-lg">{item.icon}</span>
-                              <span className="text-white/80">{item.label}</span>
+                              <span className="text-muted-foreground">{item.label}</span>
                             </div>
-                            <span className="text-white font-semibold">{item.value}</span>
+                            <span className="text-foreground font-semibold">{item.value}</span>
                           </div>
                         ))}
                       </div>
                     </Card>
                     
-                    <Card className="glass-effect border-white/10 backdrop-blur-xl rounded-3xl p-8">
-                      <h4 className="font-bold text-white text-xl mb-6">Statistics</h4>
+                    <Card className="bg-card/80 backdrop-blur-xl border-border rounded-3xl p-8 shadow-sm">
+                      <h4 className="font-bold text-foreground text-xl mb-6">Statistics</h4>
                       <div className="space-y-6">
                         {anime.rating && (
                           <div className="space-y-3">
                             <div className="flex justify-between items-center">
-                              <span className="text-white/80">Rating</span>
-                              <span className="text-white font-semibold flex items-center gap-1">
-                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                              <span className="text-muted-foreground">Rating</span>
+                              <span className="text-foreground font-semibold flex items-center gap-1">
+                                <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
                                 {anime.rating.toFixed(1)}/10
                               </span>
                             </div>
-                            <Progress value={anime.rating * 10} className="h-2 bg-white/10" />
+                            <Progress value={anime.rating * 10} className="h-2 bg-muted" />
                           </div>
                         )}
                         
@@ -700,9 +698,9 @@ const AnimeDetail = () => {
                             <div key={index} className="flex justify-between items-center py-2">
                               <div className="flex items-center gap-3">
                                 <span>{stat.icon}</span>
-                                <span className="text-white/80">{stat.label}</span>
+                                <span className="text-muted-foreground">{stat.label}</span>
                               </div>
-                              <span className="text-white font-semibold">{stat.value}</span>
+                              <span className="text-foreground font-semibold">{stat.value}</span>
                             </div>
                           ))}
                         </div>
@@ -723,10 +721,10 @@ const AnimeDetail = () => {
           {recommendedAnime && recommendedAnime.length > 0 && (
             <div className="mb-16">
               <div className="space-y-6 mb-8">
-                <h2 className="text-4xl font-black text-white text-center">
+                <h2 className="text-4xl font-black text-foreground text-center">
                   Similar Anime You Might Like
                 </h2>
-                <p className="text-purple-200/80 text-center text-lg max-w-2xl mx-auto">
+                <p className="text-muted-foreground text-center text-lg max-w-2xl mx-auto">
                   Based on your current selection and viewing preferences
                 </p>
               </div>
@@ -746,14 +744,8 @@ const AnimeDetail = () => {
   );
 };
 
-// Add custom CSS for glass effect
+// Add custom CSS for animations
 const styles = `
-.glass-effect {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
 @keyframes spin-slow {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
