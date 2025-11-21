@@ -14,7 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Play, Star, Calendar, TrendingUp, Loader2, Clock, 
   Heart, Share2, SkipForward, ChevronDown, ChevronUp,
-  ExternalLink, Bookmark, ThumbsUp
+  ExternalLink, Bookmark, ThumbsUp, Sparkles, Eye,
+  Users, CalendarDays, Timer, Volume2
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -34,6 +35,16 @@ const AnimeDetail = () => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [activeTab, setActiveTab] = useState("episodes");
+  const [scrolled, setScrolled] = useState(false);
+
+  // Scroll effect for navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 100);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Fetch anime details by slug or ID
   const { data: anime, isLoading: animeLoading } = useQuery({
@@ -41,13 +52,13 @@ const AnimeDetail = () => {
     queryFn: async () => {
       if (!slugOrId) return null;
       
-      // Enhanced query with additional data
       const { data, error } = await supabase
         .from("anime")
         .select(`
           *,
           favorites(count),
-          anime_views(count)
+          anime_views(count),
+          comments(count)
         `)
         .or(`slug.eq.${slugOrId},id.eq.${slugOrId}`)
         .maybeSingle();
@@ -88,7 +99,7 @@ const AnimeDetail = () => {
     enabled: !!anime?.slug,
   });
 
-  // Fetch recommended anime with better filtering
+  // Fetch recommended anime
   const { data: recommendedAnime } = useQuery({
     queryKey: ['recommended', anime?.id],
     queryFn: async () => {
@@ -144,7 +155,6 @@ const AnimeDetail = () => {
       }
     },
     onMutate: async () => {
-      // Optimistic update
       setIsFavorited(!isFavorited);
     },
     onSuccess: () => {
@@ -154,7 +164,6 @@ const AnimeDetail = () => {
       });
     },
     onError: (error: any) => {
-      // Revert on error
       setIsFavorited(!isFavorited);
       toast({
         title: 'Error',
@@ -164,7 +173,7 @@ const AnimeDetail = () => {
     },
   });
 
-  // Share anime with enhanced tracking
+  // Share anime
   const handleShare = async (platform: string) => {
     const url = window.location.href;
     const text = `Check out ${anime?.title} on AnimeFlow!`;
@@ -208,34 +217,31 @@ const AnimeDetail = () => {
   // Loading state
   if (animeLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <Navbar />
         <div className="container px-4 py-8">
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Cover Image Skeleton */}
-            <div className="md:col-span-1">
-              <Skeleton className="w-full aspect-[3/4] rounded-2xl" />
+          <div className="grid lg:grid-cols-4 gap-8">
+            <div className="lg:col-span-1">
+              <Skeleton className="w-full aspect-[3/4] rounded-3xl" />
               <div className="mt-6 space-y-3">
-                <Skeleton className="w-full h-12 rounded-xl" />
+                <Skeleton className="w-full h-14 rounded-2xl" />
                 <div className="flex gap-2">
-                  <Skeleton className="flex-1 h-12 rounded-xl" />
-                  <Skeleton className="w-12 h-12 rounded-xl" />
+                  <Skeleton className="flex-1 h-12 rounded-2xl" />
+                  <Skeleton className="w-12 h-12 rounded-2xl" />
                 </div>
               </div>
             </div>
-            
-            {/* Content Skeleton */}
-            <div className="md:col-span-2 space-y-6">
-              <Skeleton className="h-12 w-3/4 rounded-lg" />
-              <Skeleton className="h-6 w-1/2 rounded-lg" />
+            <div className="lg:col-span-3 space-y-6">
+              <Skeleton className="h-16 w-3/4 rounded-2xl" />
+              <Skeleton className="h-6 w-1/2 rounded-2xl" />
               <div className="flex gap-3">
-                <Skeleton className="h-8 w-20 rounded-full" />
-                <Skeleton className="h-8 w-24 rounded-full" />
-                <Skeleton className="h-8 w-28 rounded-full" />
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton key={i} className="h-8 w-24 rounded-full" />
+                ))}
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 {[...Array(4)].map((_, i) => (
-                  <Skeleton key={i} className="h-20 rounded-xl" />
+                  <Skeleton key={i} className="h-24 rounded-2xl" />
                 ))}
               </div>
             </div>
@@ -247,20 +253,22 @@ const AnimeDetail = () => {
 
   if (!anime) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <Navbar />
         <div className="container px-4 py-16 text-center">
           <div className="max-w-md mx-auto space-y-6">
-            <div className="w-24 h-24 mx-auto bg-muted rounded-full flex items-center justify-center">
-              <span className="text-2xl">🎌</span>
+            <div className="w-24 h-24 mx-auto bg-purple-500/20 rounded-3xl flex items-center justify-center">
+              <span className="text-4xl">🎌</span>
             </div>
-            <h1 className="text-3xl font-bold">Anime Not Found</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-4xl font-black bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
+              Anime Not Found
+            </h1>
+            <p className="text-purple-200/80 text-lg">
               The anime you're looking for doesn't exist or has been removed.
             </p>
             <Link to="/">
-              <Button size="lg" className="gap-2">
-                <ExternalLink className="h-4 w-4" />
+              <Button size="lg" className="gap-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 h-12 px-8 rounded-2xl">
+                <ExternalLink className="h-5 w-5" />
                 Browse Anime
               </Button>
             </Link>
@@ -270,7 +278,6 @@ const AnimeDetail = () => {
     );
   }
 
-  // Format description with line breaks
   const formatDescription = (text: string) => {
     if (!text) return [];
     return text.split('\n').filter(line => line.trim() !== '');
@@ -279,60 +286,116 @@ const AnimeDetail = () => {
   const descriptionParagraphs = formatDescription(anime.description || '');
   const shouldTruncate = descriptionParagraphs.length > 3 || (anime.description?.length || 0) > 400;
 
+  // Stats items for the hero section
+  const stats = [
+    { icon: Star, value: anime.rating?.toFixed(1), label: 'Rating' },
+    { icon: Users, value: anime.favorites?.[0]?.count || 0, label: 'Favorites' },
+    { icon: Eye, value: anime.anime_views?.[0]?.count || 0, label: 'Views' },
+    { icon: Volume2, value: anime.comments?.[0]?.count || 0, label: 'Comments' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <Navbar />
 
-      {/* Enhanced Banner Section with Parallax */}
-      <div className="relative h-[70vh] w-full overflow-hidden">
+      {/* Enhanced Hero Section with Glass Morphism */}
+      <div className="relative h-[85vh] w-full overflow-hidden">
+        {/* Background with multiple layers */}
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105 transition-transform duration-700 ease-out"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: `url(${anime.banner_image || anime.cover_image || "/placeholder.svg"})`,
-            transform: 'scale(1.1)',
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/95 to-slate-900/80" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-transparent to-slate-900" />
         
-        {/* Floating Info Overlay */}
-        <div className="absolute bottom-8 left-8 right-8">
-          <div className="max-w-4xl">
-            <Badge variant="secondary" className="mb-4 backdrop-blur-sm bg-background/50">
-              {anime.type} • {anime.status}
-            </Badge>
-            <h1 className="text-5xl md:text-7xl font-black mb-4 text-white drop-shadow-2xl">
-              {anime.title}
-            </h1>
-            {anime.title_english && (
-              <p className="text-xl text-white/90 mb-2 drop-shadow-lg">{anime.title_english}</p>
-            )}
-          </div>
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-conic from-purple-500/10 via-transparent to-pink-500/10 animate-spin-slow" />
         </div>
-      </div>
 
-      {/* Content Section */}
-      <div className="container px-4 -mt-32 relative z-10">
-        <div className="grid lg:grid-cols-4 gap-8 mb-12">
-          {/* Cover Image & Actions Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-24 space-y-6">
-              {/* Enhanced Cover Image */}
-              <div className="relative group">
-                <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+        {/* Floating Content */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <div className="container px-4 pb-12">
+            <div className="grid lg:grid-cols-2 gap-12 items-end">
+              {/* Text Content */}
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <Badge variant="secondary" className="glass-effect border-white/20 text-white/90 px-4 py-2 text-sm font-semibold">
+                    {anime.type} • {anime.status}
+                  </Badge>
+                  
+                  <h1 className="text-6xl md:text-7xl lg:text-8xl font-black leading-none">
+                    <span className="bg-gradient-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent">
+                      {anime.title}
+                    </span>
+                  </h1>
+                  
+                  {anime.title_english && (
+                    <p className="text-xl text-purple-200/90 font-medium">
+                      {anime.title_english}
+                    </p>
+                  )}
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl">
+                  {stats.map((stat, index) => (
+                    <div key={index} className="glass-effect rounded-2xl p-4 border border-white/10 backdrop-blur-xl">
+                      <div className="flex items-center gap-2 mb-1">
+                        <stat.icon className="h-4 w-4 text-purple-300" />
+                        <span className="text-white font-bold text-lg">{stat.value}</span>
+                      </div>
+                      <span className="text-purple-200/70 text-xs font-medium">{stat.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-wrap gap-3 pt-4">
+                  {episodes && episodes.length > 0 && anime && (
+                    <Link to={`/watch/${anime.slug || anime.id}/${episodes[0].id}`}>
+                      <Button size="lg" className="gap-3 h-14 px-8 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg hover:shadow-purple-500/25 transition-all duration-300">
+                        <Play className="h-5 w-5 fill-current" />
+                        <span className="font-bold text-lg">Watch Now</span>
+                      </Button>
+                    </Link>
+                  )}
+                  
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="gap-3 h-14 px-6 rounded-2xl border-white/20 bg-white/5 hover:bg-white/10 text-white backdrop-blur-xl"
+                    onClick={() => favoriteMutation.mutate()}
+                    disabled={!user || favoriteMutation.isPending}
+                  >
+                    {favoriteMutation.isPending ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <Heart className={`h-5 w-5 ${isFavorited ? 'fill-red-500 text-red-500' : ''}`} />
+                    )}
+                    <span className="font-semibold">{isFavorited ? 'Saved' : 'Save'}</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Cover Image with Glow Effect */}
+              <div className="relative flex justify-end">
+                <div className="relative group">
+                  <div className="absolute -inset-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-300" />
                   <img 
                     src={anime.cover_image || "/placeholder.svg"} 
                     alt={anime.title}
-                    className="w-full aspect-[3/4] object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="relative w-80 h-[28rem] object-cover rounded-2xl shadow-2xl transform group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   
-                  {/* Rating Overlay */}
+                  {/* Rating Badge */}
                   {anime.rating && anime.rating > 0 && (
-                    <div className="absolute top-4 right-4 backdrop-blur-md bg-black/60 rounded-full p-3 border border-white/20">
+                    <div className="absolute top-4 right-4 glass-effect rounded-full p-3 border border-white/20 backdrop-blur-xl">
                       <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                        <span className="text-white font-bold text-sm">
+                        <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                        <span className="text-white font-bold text-lg">
                           {anime.rating.toFixed(1)}
                         </span>
                       </div>
@@ -340,147 +403,92 @@ const AnimeDetail = () => {
                   )}
                 </div>
               </div>
-              
-              {/* Enhanced Action Buttons */}
-              <div className="space-y-3">
-                {episodes && episodes.length > 0 && anime && (
-                  <Link to={`/watch/${anime.slug || anime.id}/${episodes[0].id}`}>
-                    <Button size="lg" className="w-full gap-3 h-14 bg-gradient-primary hover:shadow-lg transition-all duration-300">
-                      <Play className="h-5 w-5 fill-current" />
-                      <span className="font-semibold">Watch Now</span>
-                    </Button>
-                  </Link>
-                )}
-                
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    size="lg"
-                    variant={isFavorited ? "default" : "outline"}
-                    className="h-12 gap-2 transition-all duration-300"
-                    onClick={() => favoriteMutation.mutate()}
-                    disabled={!user || favoriteMutation.isPending}
-                  >
-                    {favoriteMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Heart className={`h-4 w-4 ${isFavorited ? 'fill-current' : ''}`} />
-                    )}
-                    {isFavorited ? 'Saved' : 'Save'}
-                  </Button>
-                  
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button size="lg" variant="outline" className="h-12 gap-2">
-                        <Share2 className="h-4 w-4" />
-                        Share
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem onClick={() => handleShare('twitter')} className="gap-2">
-                        <span className="text-blue-400">🐦</span>
-                        Twitter
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleShare('facebook')} className="gap-2">
-                        <span className="text-blue-600">📘</span>
-                        Facebook
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleShare('reddit')} className="gap-2">
-                        <span className="text-orange-500">🤖</span>
-                        Reddit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleShare('copy')} className="gap-2">
-                        <span>📋</span>
-                        Copy Link
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-              {/* Quick Stats */}
-              <Card className="p-4 bg-card/50 backdrop-blur border-border/50">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Status</span>
-                    <Badge variant="secondary">{anime.status}</Badge>
-                  </div>
-                  {anime.total_episodes && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Episodes</span>
-                      <span className="font-semibold">{anime.total_episodes}</span>
+      {/* Main Content */}
+      <div className="relative -mt-20">
+        <div className="container px-4">
+          <div className="grid lg:grid-cols-4 gap-8 mb-16">
+            {/* Sidebar */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* Quick Info Card */}
+              <Card className="glass-effect border-white/10 backdrop-blur-xl rounded-3xl p-6">
+                <h3 className="font-bold text-white mb-4 flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-purple-400" />
+                  Quick Info
+                </h3>
+                <div className="space-y-4">
+                  {[
+                    { icon: CalendarDays, label: 'Year', value: anime.release_year },
+                    { icon: Timer, label: 'Episodes', value: anime.total_episodes },
+                    { icon: Users, label: 'Studio', value: anime.studio },
+                  ].map((item, index) => item.value && (
+                    <div key={index} className="flex items-center gap-3">
+                      <item.icon className="h-4 w-4 text-purple-400" />
+                      <div className="flex-1">
+                        <div className="text-white/70 text-sm">{item.label}</div>
+                        <div className="text-white font-semibold">{item.value}</div>
+                      </div>
                     </div>
-                  )}
-                  {anime.release_year && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Year</span>
-                      <span className="font-semibold">{anime.release_year}</span>
-                    </div>
-                  )}
-                  {anime.studio && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Studio</span>
-                      <span className="font-semibold text-right">{anime.studio}</span>
-                    </div>
-                  )}
+                  ))}
+                </div>
+              </Card>
+
+              {/* Genres */}
+              <Card className="glass-effect border-white/10 backdrop-blur-xl rounded-3xl p-6">
+                <h3 className="font-bold text-white mb-4">Genres</h3>
+                <div className="flex flex-wrap gap-2">
+                  {anime.genres?.map((genre: string) => (
+                    <Badge 
+                      key={genre}
+                      variant="secondary"
+                      className="bg-purple-500/20 text-purple-200 border-purple-500/30 hover:bg-purple-500/30 transition-colors cursor-pointer rounded-lg px-3 py-1"
+                    >
+                      {genre}
+                    </Badge>
+                  ))}
+                </div>
+              </Card>
+
+              {/* Share Card */}
+              <Card className="glass-effect border-white/10 backdrop-blur-xl rounded-3xl p-6">
+                <h3 className="font-bold text-white mb-4">Share</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {['twitter', 'facebook', 'reddit', 'copy'].map((platform) => (
+                    <Button
+                      key={platform}
+                      variant="outline"
+                      size="sm"
+                      className="justify-start gap-2 h-10 border-white/20 text-white/80 hover:text-white hover:bg-white/10 rounded-xl"
+                      onClick={() => handleShare(platform)}
+                    >
+                      <span className="text-lg">
+                        {platform === 'twitter' && '🐦'}
+                        {platform === 'facebook' && '📘'}
+                        {platform === 'reddit' && '🤖'}
+                        {platform === 'copy' && '📋'}
+                      </span>
+                      {platform.charAt(0).toUpperCase() + platform.slice(1)}
+                    </Button>
+                  ))}
                 </div>
               </Card>
             </div>
-          </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-8">
-            {/* Enhanced Header Section */}
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-4xl md:text-5xl font-black mb-3 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
-                  {anime.title}
-                </h1>
-                <div className="flex items-center gap-4 text-muted-foreground">
-                  {anime.title_english && (
-                    <span className="text-lg">{anime.title_english}</span>
-                  )}
-                  {anime.title_japanese && (
-                    <span className="text-sm font-japanese">{anime.title_japanese}</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Enhanced Badges */}
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="default" className="px-3 py-1.5 text-sm font-semibold">
-                  {anime.type}
-                </Badge>
-                {anime.is_trending && (
-                  <Badge variant="destructive" className="gap-2 px-3 py-1.5">
-                    <TrendingUp className="h-3 w-3" />
-                    Trending
-                  </Badge>
-                )}
-                {anime.genres?.slice(0, 4).map((genre: string) => (
-                  <Badge 
-                    key={genre} 
-                    variant="secondary"
-                    className="px-3 py-1.5 text-sm hover:bg-primary/20 transition-colors cursor-pointer"
-                  >
-                    {genre}
-                  </Badge>
-                ))}
-                {anime.genres && anime.genres.length > 4 && (
-                  <Badge variant="outline" className="px-3 py-1.5 text-sm">
-                    +{anime.genres.length - 4} more
-                  </Badge>
-                )}
-              </div>
-
-              {/* Enhanced Synopsis */}
+            {/* Main Content */}
+            <div className="lg:col-span-3 space-y-8">
+              {/* Synopsis */}
               {anime.description && (
-                <Card className="p-6 bg-card/50 backdrop-blur border-border/50">
+                <Card className="glass-effect border-white/10 backdrop-blur-xl rounded-3xl p-8">
                   <div className="space-y-4">
-                    <h3 className="text-xl font-bold flex items-center gap-2">
-                      <Bookmark className="h-5 w-5 text-primary" />
+                    <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+                      <Bookmark className="h-6 w-6 text-purple-400" />
                       Synopsis
                     </h3>
-                    <div className="space-y-3 text-muted-foreground leading-relaxed">
+                    <div className="space-y-4 text-white/80 leading-relaxed">
                       {(showFullDescription ? descriptionParagraphs : descriptionParagraphs.slice(0, 3)).map((paragraph, index) => (
                         <p key={index} className="text-justify">{paragraph}</p>
                       ))}
@@ -488,7 +496,7 @@ const AnimeDetail = () => {
                         <Button
                           variant="ghost"
                           onClick={() => setShowFullDescription(!showFullDescription)}
-                          className="gap-2 text-primary hover:text-primary/80 px-0"
+                          className="gap-2 text-purple-300 hover:text-purple-200 hover:bg-purple-500/20 px-0"
                         >
                           {showFullDescription ? (
                             <>
@@ -507,198 +515,262 @@ const AnimeDetail = () => {
                   </div>
                 </Card>
               )}
-            </div>
 
-            {/* Enhanced Tabs Navigation */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3 lg:grid-cols-4 p-1 bg-muted/50 rounded-2xl">
-                <TabsTrigger value="episodes" className="rounded-xl gap-2">
-                  <Play className="h-4 w-4" />
-                  Episodes
-                </TabsTrigger>
-                <TabsTrigger value="details" className="rounded-xl gap-2">
-                  <ThumbsUp className="h-4 w-4" />
-                  Details
-                </TabsTrigger>
-                <TabsTrigger value="comments" className="rounded-xl gap-2">
-                  <span>💬</span>
-                  Comments
-                </TabsTrigger>
-              </TabsList>
+              {/* Enhanced Tabs */}
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+                <TabsList className="glass-effect border-white/10 backdrop-blur-xl rounded-2xl p-1 w-full grid grid-cols-3">
+                  <TabsTrigger 
+                    value="episodes" 
+                    className="rounded-xl gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white"
+                  >
+                    <Play className="h-4 w-4" />
+                    Episodes
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="details" 
+                    className="rounded-xl gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white"
+                  >
+                    <ThumbsUp className="h-4 w-4" />
+                    Details
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="comments" 
+                    className="rounded-xl gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white"
+                  >
+                    <span>💬</span>
+                    Comments
+                  </TabsTrigger>
+                </TabsList>
 
-              {/* Episodes Tab */}
-              <TabsContent value="episodes" className="space-y-6">
-                {episodesBySeason && Object.keys(episodesBySeason).length > 0 ? (
-                  Object.entries(episodesBySeason)
-                    .sort(([a], [b]) => Number(a) - Number(b))
-                    .map(([season, seasonEpisodes]) => (
-                      <div key={season} className="space-y-4">
-                        <div className="flex items-center gap-4">
-                          <div className="h-1 w-8 bg-gradient-primary rounded-full" />
-                          <h3 className="text-2xl font-bold">Season {season}</h3>
-                          <Badge variant="outline" className="ml-2">
-                            {seasonEpisodes.length} episodes
-                          </Badge>
+                {/* Episodes Tab */}
+                <TabsContent value="episodes" className="space-y-8">
+                  {episodesBySeason && Object.keys(episodesBySeason).length > 0 ? (
+                    Object.entries(episodesBySeason)
+                      .sort(([a], [b]) => Number(a) - Number(b))
+                      .map(([season, seasonEpisodes]) => (
+                        <div key={season} className="space-y-6">
+                          <div className="flex items-center gap-4">
+                            <div className="h-1 w-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />
+                            <h3 className="text-2xl font-bold text-white">Season {season}</h3>
+                            <Badge variant="outline" className="glass-effect border-white/20 text-white/80">
+                              {seasonEpisodes.length} episodes
+                            </Badge>
+                          </div>
+                          
+                          <div className="grid gap-4">
+                            {seasonEpisodes.map((episode: any) => (
+                              <Link
+                                key={episode.id}
+                                to={`/watch/${anime.slug || anime.id}/${episode.id}`}
+                                className="group block"
+                              >
+                                <Card className="glass-effect border-white/10 backdrop-blur-xl hover:border-purple-500/50 hover:bg-white/5 transition-all duration-300 rounded-2xl p-0 overflow-hidden">
+                                  <div className="flex gap-6">
+                                    {/* Episode Thumbnail */}
+                                    <div className="relative w-48 h-28 flex-shrink-0">
+                                      {episode.thumbnail ? (
+                                        <>
+                                          <img
+                                            src={episode.thumbnail}
+                                            alt={`Episode ${episode.episode_number}`}
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                          />
+                                          <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent" />
+                                        </>
+                                      ) : (
+                                        <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                                          <span className="text-2xl font-bold text-white">
+                                            {episode.episode_number}
+                                          </span>
+                                        </div>
+                                      )}
+                                      
+                                      <div className="absolute bottom-2 left-2 flex items-center gap-2">
+                                        <Badge className="bg-black/80 text-white border-0 text-xs">
+                                          EP {episode.episode_number}
+                                        </Badge>
+                                        {episode.duration && (
+                                          <Badge variant="secondary" className="bg-white/20 text-white border-0 text-xs">
+                                            {Math.floor(episode.duration / 60)}m
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      
+                                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center shadow-lg">
+                                          <Play className="h-6 w-6 text-white fill-current" />
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Episode Info */}
+                                    <div className="flex-1 py-4 pr-6 min-w-0">
+                                      <div className="space-y-2">
+                                        <div className="flex items-start justify-between gap-4">
+                                          <h4 className="font-semibold text-white group-hover:text-purple-300 transition-colors line-clamp-1 text-lg">
+                                            Episode {episode.episode_number}
+                                            {episode.title && `: ${episode.title}`}
+                                          </h4>
+                                          {episode.episode_views && episode.episode_views[0]?.count > 0 && (
+                                            <Badge variant="outline" className="glass-effect border-white/20 text-white/80 text-xs">
+                                              {episode.episode_views[0].count} views
+                                            </Badge>
+                                          )}
+                                        </div>
+                                        
+                                        {episode.description && (
+                                          <p className="text-white/70 line-clamp-2 text-sm leading-relaxed">
+                                            {episode.description}
+                                          </p>
+                                        )}
+                                        
+                                        <div className="flex items-center gap-4 text-xs text-white/60">
+                                          <span>Season {episode.season_number || 1}</span>
+                                          {episode.air_date && (
+                                            <span>{new Date(episode.air_date).toLocaleDateString()}</span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </Card>
+                              </Link>
+                            ))}
+                          </div>
                         </div>
-                        <div className="grid gap-3">
-                          {seasonEpisodes.map((episode: any) => (
-                            <Link
-                              key={episode.id}
-                              to={`/watch/${anime.slug || anime.id}/${episode.id}`}
-                              className="group block"
-                            >
-                              <Card className="p-4 border-border/30 bg-card/30 backdrop-blur-sm hover:bg-card/50 hover:border-primary/30 transition-all duration-300 hover:shadow-md">
-                                <div className="flex gap-4 items-start">
-                                  {/* Episode Thumbnail */}
-                                  <div className="relative w-32 h-20 rounded-lg overflow-hidden flex-shrink-0">
-                                    {episode.thumbnail ? (
-                                      <>
-                                        <img
-                                          src={episode.thumbnail}
-                                          alt={`Episode ${episode.episode_number}`}
-                                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                                      </>
-                                    ) : (
-                                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                                        <span className="text-2xl font-bold text-primary">
-                                          {episode.episode_number}
-                                        </span>
-                                      </div>
-                                    )}
-                                    <div className="absolute bottom-1 left-1 right-1 flex items-center justify-between">
-                                      <Badge variant="secondary" className="bg-black/80 text-white border-0 text-xs">
-                                        EP {episode.episode_number}
-                                      </Badge>
-                                      {episode.duration && (
-                                        <Badge variant="secondary" className="bg-black/80 text-white border-0 text-xs">
-                                          {Math.floor(episode.duration / 60)}m
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <div className="w-10 h-10 rounded-full bg-primary/90 flex items-center justify-center shadow-lg">
-                                        <Play className="h-5 w-5 text-white fill-current" />
-                                      </div>
-                                    </div>
-                                  </div>
+                      ))
+                  ) : (
+                    <div className="text-center py-16">
+                      <div className="w-24 h-24 mx-auto bg-purple-500/20 rounded-3xl flex items-center justify-center mb-6">
+                        <Play className="h-10 w-10 text-purple-400" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-white mb-2">No Episodes Available</h3>
+                      <p className="text-purple-200/80">Check back later for new episodes.</p>
+                    </div>
+                  )}
+                </TabsContent>
 
-                                  {/* Episode Info */}
-                                  <div className="flex-1 min-w-0 space-y-2">
-                                    <div className="flex items-start justify-between gap-2">
-                                      <h4 className="font-semibold group-hover:text-primary transition-colors line-clamp-1">
-                                        Episode {episode.episode_number}
-                                        {episode.title && `: ${episode.title}`}
-                                      </h4>
-                                      {episode.episode_views && episode.episode_views[0]?.count > 0 && (
-                                        <Badge variant="outline" className="text-xs flex-shrink-0">
-                                          {episode.episode_views[0].count} views
-                                        </Badge>
-                                      )}
-                                    </div>
-                                    {episode.description && (
-                                      <p className="text-sm text-muted-foreground line-clamp-2">
-                                        {episode.description}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              </Card>
-                            </Link>
+                {/* Details Tab */}
+                <TabsContent value="details">
+                  <div className="grid lg:grid-cols-2 gap-8">
+                    <Card className="glass-effect border-white/10 backdrop-blur-xl rounded-3xl p-8">
+                      <h4 className="font-bold text-white text-xl mb-6">Anime Information</h4>
+                      <div className="space-y-4">
+                        {[
+                          { label: 'Type', value: anime.type, icon: '🎬' },
+                          { label: 'Status', value: anime.status, icon: '📊' },
+                          { label: 'Studio', value: anime.studio, icon: '🏢' },
+                          { label: 'Release Year', value: anime.release_year, icon: '📅' },
+                          { label: 'Total Episodes', value: anime.total_episodes, icon: '🎞️' },
+                          { label: 'Schedule', value: anime.schedule_day && anime.schedule_time ? `${anime.schedule_day}s ${anime.schedule_time}` : null, icon: '⏰' },
+                        ].map((item, index) => item.value && (
+                          <div key={index} className="flex items-center justify-between py-3 border-b border-white/10">
+                            <div className="flex items-center gap-3">
+                              <span className="text-lg">{item.icon}</span>
+                              <span className="text-white/80">{item.label}</span>
+                            </div>
+                            <span className="text-white font-semibold">{item.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                    
+                    <Card className="glass-effect border-white/10 backdrop-blur-xl rounded-3xl p-8">
+                      <h4 className="font-bold text-white text-xl mb-6">Statistics</h4>
+                      <div className="space-y-6">
+                        {anime.rating && (
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-white/80">Rating</span>
+                              <span className="text-white font-semibold flex items-center gap-1">
+                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                {anime.rating.toFixed(1)}/10
+                              </span>
+                            </div>
+                            <Progress value={anime.rating * 10} className="h-2 bg-white/10" />
+                          </div>
+                        )}
+                        
+                        <div className="space-y-4">
+                          {[
+                            { label: 'Favorites', value: anime.favorites?.[0]?.count || 0, icon: '❤️' },
+                            { label: 'Total Views', value: anime.anime_views?.[0]?.count || 0, icon: '👁️' },
+                            { label: 'Comments', value: anime.comments?.[0]?.count || 0, icon: '💬' },
+                          ].map((stat, index) => (
+                            <div key={index} className="flex justify-between items-center py-2">
+                              <div className="flex items-center gap-3">
+                                <span>{stat.icon}</span>
+                                <span className="text-white/80">{stat.label}</span>
+                              </div>
+                              <span className="text-white font-semibold">{stat.value}</span>
+                            </div>
                           ))}
                         </div>
                       </div>
-                    ))
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="w-24 h-24 mx-auto bg-muted rounded-full flex items-center justify-center mb-4">
-                      <Play className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <h3 className="text-xl font-semibold mb-2">No Episodes Available</h3>
-                    <p className="text-muted-foreground">Check back later for new episodes.</p>
+                    </Card>
                   </div>
-                )}
-              </TabsContent>
+                </TabsContent>
 
-              {/* Details Tab */}
-              <TabsContent value="details">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <Card className="p-6">
-                    <h4 className="font-semibold mb-4">Anime Information</h4>
-                    <div className="space-y-3">
-                      {[
-                        { label: 'Type', value: anime.type },
-                        { label: 'Status', value: anime.status },
-                        { label: 'Studio', value: anime.studio },
-                        { label: 'Release Year', value: anime.release_year },
-                        { label: 'Total Episodes', value: anime.total_episodes },
-                        { label: 'Schedule', value: anime.schedule_day && anime.schedule_time ? `${anime.schedule_day}s ${anime.schedule_time}` : null },
-                      ].map((item, index) => item.value && (
-                        <div key={index} className="flex justify-between py-2 border-b border-border/50">
-                          <span className="text-muted-foreground">{item.label}</span>
-                          <span className="font-medium">{item.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                  
-                  <Card className="p-6">
-                    <h4 className="font-semibold mb-4">Statistics</h4>
-                    <div className="space-y-4">
-                      {anime.rating && (
-                        <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Rating</span>
-                            <span className="font-medium flex items-center gap-1">
-                              <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-                              {anime.rating.toFixed(1)}/10
-                            </span>
-                          </div>
-                          <Progress value={anime.rating * 10} className="h-2" />
-                        </div>
-                      )}
-                      {anime.favorites && (
-                        <div className="flex justify-between py-2 border-b border-border/50">
-                          <span className="text-muted-foreground">Favorites</span>
-                          <span className="font-medium">{anime.favorites[0]?.count || 0}</span>
-                        </div>
-                      )}
-                      {anime.anime_views && (
-                        <div className="flex justify-between py-2 border-b border-border/50">
-                          <span className="text-muted-foreground">Total Views</span>
-                          <span className="font-medium">{anime.anime_views[0]?.count || 0}</span>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                </div>
-              </TabsContent>
-
-              {/* Comments Tab */}
-              <TabsContent value="comments">
-                <Comments animeId={anime.id} />
-              </TabsContent>
-            </Tabs>
+                {/* Comments Tab */}
+                <TabsContent value="comments">
+                  <Comments animeId={anime.id} />
+                </TabsContent>
+              </Tabs>
+            </div>
           </div>
+
+          {/* Enhanced Recommendations */}
+          {recommendedAnime && recommendedAnime.length > 0 && (
+            <div className="mb-16">
+              <div className="space-y-6 mb-8">
+                <h2 className="text-4xl font-black text-white text-center">
+                  Similar Anime You Might Like
+                </h2>
+                <p className="text-purple-200/80 text-center text-lg max-w-2xl mx-auto">
+                  Based on your current selection and viewing preferences
+                </p>
+              </div>
+              <AnimeSection
+                title=""
+                description=""
+                animes={recommendedAnime}
+                layout="grid"
+              />
+            </div>
+          )}
         </div>
-
-        {/* Enhanced Recommendations */}
-        {recommendedAnime && recommendedAnime.length > 0 && (
-          <div className="mb-12">
-            <AnimeSection
-              title="Similar Anime You Might Like"
-              description="Based on your current selection"
-              animes={recommendedAnime}
-              layout="grid"
-            />
-          </div>
-        )}
       </div>
 
       <Footer />
     </div>
   );
 };
+
+// Add custom CSS for glass effect
+const styles = `
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+.bg-gradient-conic {
+  background: conic-gradient(from 0deg, transparent, currentColor, transparent);
+}
+`;
+
+// Inject styles
+const styleSheet = document.createElement("style");
+styleSheet.innerText = styles;
+document.head.appendChild(styleSheet);
 
 export default AnimeDetail;
