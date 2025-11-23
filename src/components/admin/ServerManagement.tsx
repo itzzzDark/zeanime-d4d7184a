@@ -8,13 +8,6 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -24,13 +17,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import {
   Loader2,
@@ -44,14 +30,7 @@ import {
   ExternalLink,
   CheckCircle,
   XCircle,
-  RefreshCw,
-  Shield,
-  AlertTriangle,
-  Zap,
-  Network,
-  Settings,
-  Eye,
-  EyeOff,
+  Search,
 } from 'lucide-react';
 
 interface EmbedServer {
@@ -60,12 +39,7 @@ interface EmbedServer {
   embed_url: string;
   is_active: boolean;
   order_index: number;
-  server_type: 'streaming' | 'download' | 'backup';
-  priority: 'high' | 'medium' | 'low';
-  health_status: 'healthy' | 'degraded' | 'offline';
-  last_checked?: string;
   created_at: string;
-  updated_at: string;
 }
 
 interface ServerFormData {
@@ -73,32 +47,22 @@ interface ServerFormData {
   embed_url: string;
   is_active: boolean;
   order_index: number;
-  server_type: 'streaming' | 'download' | 'backup';
-  priority: 'high' | 'medium' | 'low';
 }
 
 interface ServerStats {
   total: number;
   active: number;
-  byType: Record<string, number>;
-  health: {
-    healthy: number;
-    degraded: number;
-    offline: number;
-  };
+  inactive: number;
 }
 
-export default function AdvancedServerManagement() {
+export default function ServerManagement() {
   const [servers, setServers] = useState<EmbedServer[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingServer, setEditingServer] = useState<EmbedServer | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string; responseTime?: number } | null>(null);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [testing, setTesting] = useState(false);
-  const [healthCheckLoading, setHealthCheckLoading] = useState(false);
-  const [bulkAction, setBulkAction] = useState<string>('');
-  const [selectedServers, setSelectedServers] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
 
   const [formData, setFormData] = useState<ServerFormData>({
@@ -106,27 +70,15 @@ export default function AdvancedServerManagement() {
     embed_url: '',
     is_active: true,
     order_index: 0,
-    server_type: 'streaming',
-    priority: 'medium',
   });
 
-  // Memoized server statistics
+  // Server statistics
   const serverStats: ServerStats = useMemo(() => {
-    const stats = {
+    return {
       total: servers.length,
       active: servers.filter(s => s.is_active).length,
-      byType: {
-        streaming: servers.filter(s => s.server_type === 'streaming').length,
-        download: servers.filter(s => s.server_type === 'download').length,
-        backup: servers.filter(s => s.server_type === 'backup').length,
-      },
-      health: {
-        healthy: servers.filter(s => s.health_status === 'healthy').length,
-        degraded: servers.filter(s => s.health_status === 'degraded').length,
-        offline: servers.filter(s => s.health_status === 'offline').length,
-      }
+      inactive: servers.filter(s => !s.is_active).length,
     };
-    return stats;
   }, [servers]);
 
   // Filter servers based on search
@@ -147,14 +99,7 @@ export default function AdvancedServerManagement() {
         .order('order_index');
 
       if (error) throw error;
-      
-      // Initialize health status if not present
-      const serversWithHealth = (data || []).map(server => ({
-        ...server,
-        health_status: server.health_status || 'offline'
-      }));
-      
-      setServers(serversWithHealth);
+      setServers(data || []);
     } catch (error: any) {
       console.error('Error fetching servers:', error);
       toast({
@@ -171,40 +116,22 @@ export default function AdvancedServerManagement() {
     fetchServers();
   }, [fetchServers]);
 
-  // Enhanced URL validation
-  const validateUrl = (url: string): { isValid: boolean; message?: string } => {
-    if (!url.endsWith('/')) {
-      return { isValid: false, message: "Embed URL must end with a trailing slash (/) " };
-    }
-    
-    try {
-      new URL(url);
-      return { isValid: true };
-    } catch {
-      return { isValid: false, message: "Please enter a valid URL" };
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // Enhanced validation
-      const urlValidation = validateUrl(formData.embed_url);
-      if (!urlValidation.isValid) {
+      // Validate URL format
+      if (!formData.embed_url.endsWith('/')) {
         toast({
-          title: "Invalid URL",
-          description: urlValidation.message,
+          title: "Invalid URL Format",
+          description: "Embed URL must end with a trailing slash (/)",
           variant: "destructive",
         });
         return;
       }
 
-      const payload = { 
-        ...formData,
-        updated_at: new Date().toISOString()
-      };
+      const payload = { ...formData };
 
       if (editingServer) {
         const { error } = await supabase
@@ -221,10 +148,7 @@ export default function AdvancedServerManagement() {
       } else {
         const { error } = await supabase
           .from('embed_servers')
-          .insert([{
-            ...payload,
-            health_status: 'offline'
-          }]);
+          .insert([payload]);
 
         if (error) throw error;
         
@@ -274,50 +198,6 @@ export default function AdvancedServerManagement() {
     }
   };
 
-  const handleBulkAction = async () => {
-    if (!bulkAction || selectedServers.size === 0) return;
-
-    try {
-      const serverIds = Array.from(selectedServers);
-      
-      switch (bulkAction) {
-        case 'activate':
-          await supabase
-            .from('embed_servers')
-            .update({ is_active: true, updated_at: new Date().toISOString() })
-            .in('id', serverIds);
-          toast({ title: "Success", description: `${serverIds.length} servers activated` });
-          break;
-          
-        case 'deactivate':
-          await supabase
-            .from('embed_servers')
-            .update({ is_active: false, updated_at: new Date().toISOString() })
-            .in('id', serverIds);
-          toast({ title: "Success", description: `${serverIds.length} servers deactivated` });
-          break;
-          
-        case 'delete':
-          await supabase
-            .from('embed_servers')
-            .delete()
-            .in('id', serverIds);
-          toast({ title: "Success", description: `${serverIds.length} servers deleted` });
-          break;
-      }
-      
-      setSelectedServers(new Set());
-      setBulkAction('');
-      fetchServers();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Bulk operation failed",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleEdit = (server: EmbedServer) => {
     setEditingServer(server);
     setFormData({
@@ -325,8 +205,6 @@ export default function AdvancedServerManagement() {
       embed_url: server.embed_url,
       is_active: server.is_active,
       order_index: server.order_index,
-      server_type: server.server_type,
-      priority: server.priority,
     });
   };
 
@@ -336,16 +214,17 @@ export default function AdvancedServerManagement() {
     
     const targetServer = servers.find(s => s.order_index === targetIndex);
     
-    if (!targetServer && direction === 'down') return;
+    if (!targetServer && direction === 'down') {
+      return;
+    }
 
     try {
-      // Use transaction for atomic updates
       if (targetServer) {
-        await Promise.all([
-          supabase.from('embed_servers').update({ order_index: targetIndex }).eq('id', server.id),
-          supabase.from('embed_servers').update({ order_index: currentIndex }).eq('id', targetServer.id)
-        ]);
+        // Swap positions
+        await supabase.from('embed_servers').update({ order_index: targetIndex }).eq('id', server.id);
+        await supabase.from('embed_servers').update({ order_index: currentIndex }).eq('id', targetServer.id);
       } else {
+        // Move to new position
         await supabase.from('embed_servers').update({ order_index: targetIndex }).eq('id', server.id);
       }
       
@@ -367,81 +246,61 @@ export default function AdvancedServerManagement() {
       embed_url: '',
       is_active: true,
       order_index: getNextOrderIndex(),
-      server_type: 'streaming',
-      priority: 'medium',
     });
     setTestResult(null);
   };
 
-  // Enhanced URL testing with performance metrics
   const testEmbedUrl = async (server: EmbedServer) => {
     setTesting(true);
     setTestResult(null);
 
     try {
-      const startTime = performance.now();
+      // Create a test iframe to check if the embed URL works
       const testUrl = `${server.embed_url}test`;
       
-      const response = await fetch(testUrl, {
-        method: 'HEAD',
-        mode: 'no-cors',
-        cache: 'no-cache'
-      });
+      const iframe = document.createElement('iframe');
+      iframe.src = testUrl;
+      iframe.style.display = 'none';
+      
+      iframe.onload = () => {
+        setTestResult({
+          success: true,
+          message: "Embed URL loaded successfully"
+        });
+        document.body.removeChild(iframe);
+        setTesting(false);
+      };
+      
+      iframe.onerror = () => {
+        setTestResult({
+          success: false,
+          message: "Failed to load embed URL"
+        });
+        document.body.removeChild(iframe);
+        setTesting(false);
+      };
+      
+      document.body.appendChild(iframe);
 
-      const endTime = performance.now();
-      const responseTime = Math.round(endTime - startTime);
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+          setTestResult({
+            success: false,
+            message: "Test timed out - URL might be slow or invalid"
+          });
+          setTesting(false);
+        }
+      }, 5000);
 
-      // Update server health status
-      await supabase
-        .from('embed_servers')
-        .update({ 
-          health_status: 'healthy',
-          last_checked: new Date().toISOString()
-        })
-        .eq('id', server.id);
-
-      setTestResult({
-        success: true,
-        message: `Server responded successfully in ${responseTime}ms`,
-        responseTime
-      });
-
-      fetchServers(); // Refresh to update health status
     } catch (error) {
-      await supabase
-        .from('embed_servers')
-        .update({ 
-          health_status: 'offline',
-          last_checked: new Date().toISOString()
-        })
-        .eq('id', server.id);
-
       setTestResult({
         success: false,
-        message: "Server is not reachable"
+        message: "Error testing URL"
       });
-      
-      fetchServers();
-    } finally {
       setTesting(false);
     }
-  };
-
-  // Bulk health check
-  const performHealthCheck = async () => {
-    setHealthCheckLoading(true);
-    
-    for (const server of servers) {
-      await testEmbedUrl(server);
-      // Small delay to avoid overwhelming servers
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-    
-    setHealthCheckLoading(false);
-    toast({
-      title: "Health Check Complete",
-      description: `Checked ${servers.length} servers`,
-    });
   };
 
   const copyToClipboard = (text: string) => {
@@ -455,42 +314,6 @@ export default function AdvancedServerManagement() {
   const getNextOrderIndex = () => {
     if (servers.length === 0) return 0;
     return Math.max(...servers.map(s => s.order_index)) + 1;
-  };
-
-  const toggleServerSelection = (serverId: string) => {
-    const newSelected = new Set(selectedServers);
-    if (newSelected.has(serverId)) {
-      newSelected.delete(serverId);
-    } else {
-      newSelected.add(serverId);
-    }
-    setSelectedServers(newSelected);
-  };
-
-  const selectAllServers = () => {
-    if (selectedServers.size === filteredServers.length) {
-      setSelectedServers(new Set());
-    } else {
-      setSelectedServers(new Set(filteredServers.map(s => s.id)));
-    }
-  };
-
-  const getHealthIcon = (status: string) => {
-    switch (status) {
-      case 'healthy': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'degraded': return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
-      case 'offline': return <XCircle className="h-4 w-4 text-red-500" />;
-      default: return <Network className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case 'high': return <Zap className="h-4 w-4 text-red-500" />;
-      case 'medium': return <Shield className="h-4 w-4 text-yellow-500" />;
-      case 'low': return <Network className="h-4 w-4 text-green-500" />;
-      default: return <Shield className="h-4 w-4 text-gray-500" />;
-    }
   };
 
   const LoadingSkeleton = () => (
@@ -514,91 +337,61 @@ export default function AdvancedServerManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Enhanced Header with Stats */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* Header */}
+      <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Advanced Server Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Server Management</h1>
           <p className="text-gray-600 mt-1">
-            Manage embed servers with advanced monitoring and bulk operations
+            Manage embed servers for video playback
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={performHealthCheck} 
-            variant="outline" 
-            size="sm"
-            disabled={healthCheckLoading || servers.length === 0}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${healthCheckLoading ? 'animate-spin' : ''}`} />
-            Health Check
-          </Button>
-          <Button 
-            onClick={() => fetchServers()} 
-            variant="outline" 
-            size="sm"
-            disabled={loading}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-        </div>
-      </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Servers</p>
-              <p className="text-2xl font-bold text-gray-900">{serverStats.total}</p>
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card className="p-4 border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Servers</p>
+                <p className="text-2xl font-bold text-gray-900">{serverStats.total}</p>
+              </div>
+              <Server className="h-8 w-8 text-blue-500" />
             </div>
-            <Server className="h-8 w-8 text-blue-500" />
-          </div>
-        </Card>
-        
-        <Card className="p-4 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Active Servers</p>
-              <p className="text-2xl font-bold text-green-600">{serverStats.active}</p>
+          </Card>
+          
+          <Card className="p-4 border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Servers</p>
+                <p className="text-2xl font-bold text-green-600">{serverStats.active}</p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
-            <CheckCircle className="h-8 w-8 text-green-500" />
-          </div>
-        </Card>
-        
-        <Card className="p-4 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Healthy</p>
-              <p className="text-2xl font-bold text-green-600">{serverStats.health.healthy}</p>
+          </Card>
+          
+          <Card className="p-4 border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Inactive Servers</p>
+                <p className="text-2xl font-bold text-gray-600">{serverStats.inactive}</p>
+              </div>
+              <XCircle className="h-8 w-8 text-gray-500" />
             </div>
-            <Shield className="h-8 w-8 text-green-500" />
-          </div>
-        </Card>
-        
-        <Card className="p-4 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Offline</p>
-              <p className="text-2xl font-bold text-red-600">{serverStats.health.offline}</p>
-            </div>
-            <XCircle className="h-8 w-8 text-red-500" />
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
 
       {/* Server Form */}
       <Card className="p-6 border border-gray-200">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-blue-100 rounded-lg">
-            <Settings className="h-6 w-6 text-blue-600" />
+            <Server className="h-6 w-6 text-blue-600" />
           </div>
           <div>
             <h3 className="text-xl font-bold text-gray-900">
               {editingServer ? 'Edit Server' : 'Add New Server'}
             </h3>
             <p className="text-sm text-gray-600">
-              {editingServer ? 'Update server configuration' : 'Create a new embed server with advanced options'}
+              {editingServer ? 'Update server configuration' : 'Create a new embed server'}
             </p>
           </div>
         </div>
@@ -629,46 +422,6 @@ export default function AdvancedServerManagement() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="server_type">Server Type</Label>
-              <Select
-                value={formData.server_type}
-                onValueChange={(value: 'streaming' | 'download' | 'backup') => 
-                  setFormData({ ...formData, server_type: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="streaming">Streaming</SelectItem>
-                  <SelectItem value="download">Download</SelectItem>
-                  <SelectItem value="backup">Backup</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
-              <Select
-                value={formData.priority}
-                onValueChange={(value: 'high' | 'medium' | 'low') => 
-                  setFormData({ ...formData, priority: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="embed_url">Embed URL Base *</Label>
             <Input
@@ -695,10 +448,10 @@ export default function AdvancedServerManagement() {
             </Label>
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <Button 
               type="submit" 
-              className="gap-2"
+              className="gap-2 sm:flex-1"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
@@ -716,61 +469,28 @@ export default function AdvancedServerManagement() {
                 variant="outline" 
                 onClick={resetForm}
                 disabled={isSubmitting}
+                className="sm:flex-1"
               >
                 Cancel
               </Button>
             )}
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setFormData(prev => ({ ...prev, order_index: getNextOrderIndex() }))}
-              disabled={isSubmitting}
-            >
-              Auto Order
-            </Button>
           </div>
         </form>
       </Card>
 
-      {/* Enhanced Servers List with Bulk Actions */}
+      {/* Servers List */}
       <Card className="p-6 border border-gray-200">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div>
-            <h3 className="text-lg font-bold text-gray-900">Managed Servers</h3>
-            <p className="text-sm text-gray-600">
-              {filteredServers.length} of {servers.length} servers
-            </p>
-          </div>
+          <h3 className="text-lg font-bold text-gray-900">Managed Servers</h3>
           
-          <div className="flex gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search servers..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full sm:w-64"
+              className="pl-10 w-full"
             />
-            
-            {selectedServers.size > 0 && (
-              <div className="flex gap-2">
-                <Select value={bulkAction} onValueChange={setBulkAction}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Actions" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="activate">Activate</SelectItem>
-                    <SelectItem value="deactivate">Deactivate</SelectItem>
-                    <SelectItem value="delete">Delete</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button 
-                  onClick={handleBulkAction}
-                  variant="default"
-                  size="sm"
-                >
-                  Apply
-                </Button>
-              </div>
-            )}
           </div>
         </div>
 
@@ -789,204 +509,156 @@ export default function AdvancedServerManagement() {
             </Button>
           </Card>
         ) : (
-          <div className="space-y-3">
-            {/* Table Header */}
-            <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm font-medium text-gray-600 border-b">
-              <div className="col-span-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={selectAllServers}
-                  className="h-8 w-8 p-0"
-                >
-                  {selectedServers.size === filteredServers.length ? (
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  ) : (
-                    <div className="h-4 w-4 border border-gray-300 rounded" />
-                  )}
-                </Button>
-              </div>
-              <div className="col-span-3">Server</div>
-              <div className="col-span-2">Type</div>
-              <div className="col-span-2">Status</div>
-              <div className="col-span-2">Order</div>
-              <div className="col-span-2 text-right">Actions</div>
-            </div>
-
-            {/* Server Items */}
+          <div className="space-y-4">
             {filteredServers.map((server) => (
-              <div
-                key={server.id}
-                className={`grid grid-cols-12 gap-4 items-center p-4 rounded-lg border transition-all ${
+              <Card 
+                key={server.id} 
+                className={`p-4 border transition-all ${
                   server.is_active 
                     ? 'border-green-200 bg-green-50' 
                     : 'border-gray-200 bg-gray-50'
-                } ${selectedServers.has(server.id) ? 'ring-2 ring-blue-500' : ''}`}
+                }`}
               >
-                {/* Selection Checkbox */}
-                <div className="col-span-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleServerSelection(server.id)}
-                    className="h-8 w-8 p-0"
-                  >
-                    {selectedServers.has(server.id) ? (
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <div className="h-4 w-4 border border-gray-300 rounded" />
-                    )}
-                  </Button>
-                </div>
-
-                {/* Server Info */}
-                <div className="col-span-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  {/* Server Icon and Status */}
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className={`p-3 rounded-lg flex-shrink-0 ${
                       server.is_active ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
                     }`}>
                       <Server className="h-5 w-5" />
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{server.name}</h4>
-                      <div className="flex items-center gap-1 mt-1">
-                        <code className="text-xs text-gray-600 bg-white px-1 py-0.5 rounded border font-mono truncate max-w-[120px]">
-                          {server.embed_url}
+                    
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                        <h4 className="font-semibold text-gray-900 truncate">{server.name}</h4>
+                        <div className="flex gap-2">
+                          <Badge 
+                            variant={server.is_active ? "default" : "secondary"} 
+                            className={server.is_active ? "bg-green-500" : ""}
+                          >
+                            {server.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            Order: {server.order_index}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <code className="text-sm text-gray-600 bg-white px-2 py-1 rounded border font-mono truncate flex-1">
+                          {server.embed_url}[slug]
                         </code>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-6 w-6"
-                          onClick={() => copyToClipboard(server.embed_url)}
-                        >
-                          <Copy className="h-3 w-3" />
-                        </Button>
+                        <div className="flex gap-1 flex-shrink-0">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            onClick={() => copyToClipboard(server.embed_url)}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            onClick={() => window.open(server.embed_url, '_blank')}
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Type and Priority */}
-                <div className="col-span-2">
-                  <div className="flex items-center gap-2">
-                    {getPriorityIcon(server.priority)}
-                    <Badge variant="outline" className="capitalize">
-                      {server.server_type}
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Status */}
-                <div className="col-span-2">
-                  <div className="flex items-center gap-2">
-                    {getHealthIcon(server.health_status)}
-                    <div className="flex flex-col">
-                      <Badge 
-                        variant={server.is_active ? "default" : "secondary"} 
-                        className={`capitalize text-xs ${
-                          server.is_active ? 'bg-green-500' : 'bg-gray-500'
-                        }`}
-                      >
-                        {server.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                      <span className="text-xs text-gray-500 capitalize">
-                        {server.health_status}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Order */}
-                <div className="col-span-2">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">
-                      {server.order_index}
-                    </Badge>
+                  {/* Actions */}
+                  <div className="flex gap-2 w-full sm:w-auto justify-end">
                     <div className="flex gap-1">
                       <Button
                         size="icon"
-                        variant="ghost"
+                        variant="outline"
                         onClick={() => moveOrder(server, 'up')}
                         disabled={server.order_index === 0}
-                        className="h-6 w-6"
+                        className="h-9 w-9"
+                        title="Move up"
                       >
-                        <ArrowUp className="h-3 w-3" />
+                        <ArrowUp className="h-4 w-4" />
                       </Button>
                       <Button
                         size="icon"
-                        variant="ghost"
+                        variant="outline"
                         onClick={() => moveOrder(server, 'down')}
                         disabled={server.order_index === Math.max(...servers.map(s => s.order_index))}
-                        className="h-6 w-6"
+                        className="h-9 w-9"
+                        title="Move down"
                       >
-                        <ArrowDown className="h-3 w-3" />
+                        <ArrowDown className="h-4 w-4" />
                       </Button>
                     </div>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="col-span-2">
-                  <div className="flex justify-end gap-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => testEmbedUrl(server)}
-                      disabled={testing}
-                      className="h-8 w-8"
-                      title="Test URL"
-                    >
-                      {testing && editingServer?.id === server.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <CheckCircle className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleEdit(server)}
-                      className="h-8 w-8"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="destructive"
-                      onClick={() => setDeleteConfirm(server.id)}
-                      className="h-8 w-8"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => testEmbedUrl(server)}
+                        disabled={testing}
+                        className="h-9 w-9"
+                        title="Test URL"
+                      >
+                        {testing && editingServer?.id === server.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <CheckCircle className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => handleEdit(server)}
+                        className="h-9 w-9"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        onClick={() => setDeleteConfirm(server.id)}
+                        className="h-9 w-9"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Test Result */}
                 {testResult && editingServer?.id === server.id && (
-                  <div className="col-span-12 mt-2">
-                    <div className={`p-2 rounded text-sm ${
-                      testResult.success 
-                        ? 'bg-green-100 text-green-700 border border-green-200' 
-                        : 'bg-red-100 text-red-700 border border-red-200'
-                    }`}>
-                      <div className="flex items-center gap-2">
-                        {testResult.success ? (
-                          <CheckCircle className="h-4 w-4" />
-                        ) : (
-                          <XCircle className="h-4 w-4" />
-                        )}
-                        <span>{testResult.message}</span>
-                        {testResult.responseTime && (
-                          <Badge variant="outline" className="ml-auto">
-                            {testResult.responseTime}ms
-                          </Badge>
-                        )}
-                      </div>
+                  <div className={`mt-3 p-2 rounded text-sm ${
+                    testResult.success 
+                      ? 'bg-green-100 text-green-700 border border-green-200' 
+                      : 'bg-red-100 text-red-700 border border-red-200'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      {testResult.success ? (
+                        <CheckCircle className="h-4 w-4" />
+                      ) : (
+                        <XCircle className="h-4 w-4" />
+                      )}
+                      <span>{testResult.message}</span>
                     </div>
                   </div>
                 )}
-              </div>
+              </Card>
             ))}
+          </div>
+        )}
+
+        {/* No Results Message */}
+        {!loading && servers.length > 0 && filteredServers.length === 0 && (
+          <div className="text-center py-8">
+            <Search className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <h4 className="text-lg font-semibold mb-2 text-gray-900">No servers found</h4>
+            <p className="text-gray-600">
+              No servers match your search criteria.
+            </p>
           </div>
         )}
       </Card>
